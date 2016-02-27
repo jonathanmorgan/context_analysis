@@ -117,7 +117,7 @@ Once you've made the changes above, save the `settings.py` file, then go into th
     - Add:
 
             # sourcenet_analysis URLs:
-            url( r'^sourcenet_analysis/', include( 'sourcenet_analysis.urls' ) ),
+            url( r'^sourcenet/analysis/', include( 'sourcenet_analysis.urls' ) ),
 
     - Result:
 
@@ -140,7 +140,7 @@ Once you've made the changes above, save the `settings.py` file, then go into th
                 url( r'^sourcenet/', include( 'sourcenet.urls' ) ),
 
                 # sourcenet_analysis URLs:
-                url( r'^sourcenet_analysis/', include( 'sourcenet_analysis.urls' ) ),
+                url( r'^sourcenet/analysis/', include( 'sourcenet_analysis.urls' ) ),
 
             ]
             
@@ -148,7 +148,7 @@ Once you've made the changes above, save the `settings.py` file, then go into th
 
 - test by going to the URL:
 
-        http://<your_server>/sourcenet/sourcenet_analysis/index
+        http://<your_server>/sourcenet/sourcenet/analysis/index
 
 # Testing
 

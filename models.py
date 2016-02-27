@@ -57,6 +57,26 @@ class Reliability_Names( models.Model ):
     '''
 
     #----------------------------------------------------------------------
+    # constants-ish
+    #----------------------------------------------------------------------    
+
+
+    # property names for building disagreement output (if ues this elsewhere,
+    #     make Disagreement and DisagreementDetail objects).
+    PROP_NAME_INSTANCE = "instance"
+    PROP_NAME_ID = "id"
+    PROP_NAME_LABEL = "label"
+    PROP_NAME_ARTICLE_ID = "article_id"
+    PROP_NAME_PERSON_NAME = "person_name"
+    PROP_NAME_PERSON_ID = "person_id"
+    PROP_NAME_PERSON_TYPE = "person_type"
+    PROP_NAME_CODER_DETAILS_LIST = "coder_details_list"
+    PROP_NAME_CODER_ID = "coder_id"
+    PROP_NAME_CODER_DETECTED = "coder_detected"
+    PROP_NAME_CODER_PERSON_ID = "coder_person_id"
+    PROP_NAME_CODER_PERSON_TYPE = "coder_person_type"
+
+    #----------------------------------------------------------------------
     # model fields
     #----------------------------------------------------------------------
 
@@ -157,6 +177,123 @@ class Reliability_Names( models.Model ):
     # Meta-data for this class.
     class Meta:
         ordering = [ 'article', 'person_type', 'person' ]
+
+
+    #----------------------------------------------------------------------------
+    # class methods
+    #----------------------------------------------------------------------------
+
+
+    @classmethod
+    def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1 ):
+        
+        # return reference
+        qs_OUT = None
+        
+        # declare variables
+        my_label = ""
+        my_coder_count = -1
+        current_outer_index = -1
+        current_inner_index = -1
+
+        # declare variables - building up SQL statement.
+        sql_string = ""
+        sql_temp_string = ""
+        sql_detected_list = []
+        sql_person_id_list = []
+        sql_person_type_list = []
+        sql_raw_params_list = []
+        
+        # do we have a label?
+        if ( ( label_IN is not None ) and ( label_IN != "" ) ):
+
+            # yes - use it.
+            my_label = label_IN
+        
+        #-- END check to see if label --#
+        
+        # got coder_count_IN?
+        if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( coder_count_IN > 2 ) ):
+        
+            # yes, and is at least 2.  Use it.
+            my_coder_count = int( coder_count_IN )
+        
+        else:
+        
+            # no, or not at least 2.  Default to 2.
+            my_coder_count = 2
+            
+        #-- END check to see if coder count passed in. --#
+        
+        # loop over coders we've been asked to compare
+        sql_detected_list = []
+        sql_person_id_list = []
+        sql_person_type_list = []
+        for current_outer_index in range( 1, my_coder_count + 1 ):
+        
+            # loop over indices past the current one, adding SQL fragments to
+            #     our SQL lists for comparison of current to subsequent.
+            for current_inner_index in range( current_outer_index + 1, my_coder_count + 1 ):
+
+                # add inequality comparison for detected.
+                column_name_suffix = "_detected"
+                sql_temp_string = "( coder" + str( current_outer_index ) + column_name_suffix + " != coder" + str( current_inner_index ) + column_name_suffix + " )"
+                sql_detected_list.append( sql_temp_string )
+                
+                # add inequality comparison for lookup.
+                column_name_suffix = "_person_id"
+                sql_temp_string = "( coder" + str( current_outer_index ) + column_name_suffix + " != coder" + str( current_inner_index ) + column_name_suffix + " )"
+                sql_person_id_list.append( sql_temp_string )
+                
+                # add inequality comparison for type.
+                column_name_suffix = "_person_type"
+                sql_temp_string = "( coder" + str( current_outer_index ) + column_name_suffix + " != coder" + str( current_inner_index ) + column_name_suffix + " )"
+                sql_person_type_list.append( sql_temp_string )
+
+            #-- END loop over rest of indices past current --#
+        
+        #-- END loop over coders to compare --#
+        
+        # build SQL string
+        sql_string = "SELECT * FROM sourcenet_analysis_reliability_names WHERE "
+        
+        # got a label?
+        if ( ( my_label is not None ) and ( my_label != "" ) ):
+
+            # yes.  Add to WHERE clause.
+            sql_string += " label = %s AND ( "
+            
+            # and add value to params list.
+            sql_raw_params_list.append( my_label )
+
+        #-- END check to see if label set --#
+        
+        # append detected comparisons
+        sql_temp_string = " OR ".join( sql_detected_list )
+        sql_string += " ( " + sql_temp_string + " )"
+        
+        # append person id comparisons
+        sql_temp_string = " OR ".join( sql_person_id_list )
+        sql_string += " OR ( " + sql_temp_string + " )"
+
+        # append person type comparisons
+        sql_temp_string = " OR ".join( sql_person_type_list )
+        sql_string += " OR ( " + sql_temp_string + " )"
+        
+        # got a label?
+        if ( ( my_label is not None ) and ( my_label != "" ) ):
+
+            # yes.  Close parentheses.
+            sql_string += " )"
+
+        #-- END check to see if label set --#
+        
+        # execute raw query
+        qs_OUT = cls.objects.raw( sql_string, sql_raw_params_list )
+
+        return qs_OUT        
+    
+    #-- END class method lookup_disagreements() --#
 
 
     #----------------------------------------------------------------------------
