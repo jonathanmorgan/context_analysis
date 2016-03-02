@@ -1,3 +1,12 @@
+# postgresql
+import psycopg2.extensions
+
+# import sqlalchemy for pandas database connection
+import sqlalchemy
+
+# pandas
+import pandas
+
 # sourcenet imports
 from sourcenet.article_coding.manual_coding.manual_article_coder import ManualArticleCoder
 
@@ -6,7 +15,10 @@ from sourcenet_analysis.models import Reliability_Names
 
 # functions
 
-def test_agreement( value_list_1_IN, value_list_2_IN, person_type_IN,  )
+def test_agreement( value_list_1_IN, value_list_2_IN, person_type_IN ):
+    
+    pass
+
 
 '''
 testAgreement <- function( codingMatrixIN, labelIN = "testAgreement", fileIN = "", corUseIN = "all.obs", corMethodIN = "pearson" ) {
@@ -121,31 +133,77 @@ testAgreement <- function( codingMatrixIN, labelIN = "testAgreement", fileIN = "
 } #-- END function testAgreement() --#
 '''
 
-# declare variables
+# declare variables - set up database credentials
+db_username = ""
+db_password = ""
+pandas_db_engine = None
+selected_label = ""
+
+# declare variables - use django to verify selected label.
 reliability_qs = None
 label_in_list = []
-author_qs = None
-subject_qs = None
 coder_index = -1
 
-# start with all Reliability_Names rows.
-reliability_qs = Reliability_Names.objects.all()
+# declare variables - SQLAlchemy lookup.
+reliability_names_sql = ""
+reliability_names_df = None
 
-# filter on label?
-filter_in_list = [ "prelim_training_002", ]
-if ( ( filter_in_list is not None ) and ( len( filter_in_list ) > 0 ) ):
+# filter on a specific label.
+selected_label = "prelim_training_002"
 
-    # filter
-    reliability_qs = reliability_qs.filter( label__in = filter_in_list )
+# got a label?
+if ( ( selected_label is not None ) and ( selected_label != "" ) ):
+
+    # first, use django to retrieve rows, to see if it is a valid label.
+
+    # start with all Reliability_Names rows.
+    reliability_qs = Reliability_Names.objects.all()
     
-#-- END check to see if anything to filter on --#
+    # filter
+    reliability_qs = reliability_qs.filter( label__in = [ selected_label, ] )
 
-# how many coders, and in which indices (1 through 10)?
+    # got anything back?
+    if ( reliability_qs.count() > 0 ):
+    
+        # yes - switch over to SQLAlchemy and pandas.
 
+        # escape out any illegal characters (PostgreSQL-specific).
+        selected_label = psycopg2.extensions.adapt( selected_label ).getquoted()
+    
+        # yes - set up database credentials
+        db_username = "jonathanmorgan"
+        db_password = "mt75ebMHFCncuWBuA3uZqj"
+        db_host = "localhost"
+        db_name = "sourcenet"
+        
+        # Create SQLAlchemy database engine for pandas.
+        pandas_db = sqlalchemy.create_engine( "postgresql://%s:%s@%s/%s" % ( db_username, db_password, db_host, db_name ) )
+        
+        # create SQL to load data from database into pandas data frame.
+        reliability_names_sql = "SELECT * FROM sourcenet_analysis_reliability_names WHERE label = %s" % ( selected_label )
+        
+        # load the data
+        reliability_names_df = pandas.read_sql_query( reliability_names_sql, pandas_db, parse_dates = [ 'create_date', 'last_modified' ] )
+        
+        # break out into author and subject.
+        
+        # for each type, get columns/numpy arrays for fields we want to check, then:
+        # - percent agreement
+        # - krippendorff's alpha at appropriate measurement level.
+        # - if necessary, modified Scott's Pi.
+        # - build row(s) in database results table.
+        # - optionally, use pandas to output Excel.
+        
+    else:
+    
+        # no matches - either hack attack, or unknown label. Assume the latter.
+        print( "No matches for label " + selected_label )
+    
+    #-- END check to see if anything to filter on --#
 
-# break out into authors and subjects (very different, can't just lump together)
-#    based on person_type - "author" or "subject".
-author_qs = reliability_qs.filter( person_type = ManualArticleCoder.PERSON_TYPE_AUTHOR )
-subject_qs = reliability_qs.filter( person_type = ManualArticleCoder.PERSON_TYPE_SUBJECT )
+else:
 
-# first, work with author information
+    # no matches - either hack attack, or unknown label. Assume the latter.
+    print( "No label passed in - nothing to see here." )
+    
+#-- END check to make sure we have a label.
