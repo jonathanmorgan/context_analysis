@@ -93,6 +93,9 @@ class ReliabilityNamesBuilder( object ):
         self.coder_id_to_instance_map = {}        
         self.coder_id_to_index_map = {}
         
+        # limit users included
+        self.limit_to_user_ids = []
+        
         # variable to hold desired automated coder type
         self.limit_to_automated_coder_type = ""
         
@@ -690,55 +693,66 @@ class ReliabilityNamesBuilder( object ):
                 article_data_coder = current_article_data.coder
                 article_data_coder_id = article_data_coder.id
                 
-                # If not already there, add to list of IDs of coders for this article.
-                if article_data_coder_id not in article_coder_id_list:
-        
-                    # not there yet, add it.
-                    article_coder_id_list.append( article_data_coder_id )
-                    
-                #-- END check to see if ID is in coder ID list --#
-            
-                # If not already there, add to master coder dictionary, also.
-                if article_data_coder_id not in coder_id_to_instance_dict:
-        
-                    # not there yet.  Increment coder counter.
-                    coder_counter += 1
-                    
-                    # add coder to instance cache.
-                    coder_id_to_instance_dict[ article_data_coder_id ] = article_data_coder
-                    
-                    # and add to index map.
-                    coder_id_to_index_dict[ article_data_coder_id ] = coder_counter
-                    
-                #-- END check to see if ID is in master coder dictionary --#
-                            
-                # add Article_Data ID to list.
-                article_data_id = current_article_data.id
-                article_data_id_list.append( article_data_id )
+                # make sure there either isn't a list of users to include, or
+                #     that the coder is in the list of users to include.
+                if ( ( len( self.limit_to_user_ids ) == 0 ) or ( article_data_coder_id in self.limit_to_user_ids ) ):
                 
-                # get lists of authors and subjects.
-                article_data_author_qs = current_article_data.article_author_set.all()
-
-                # all subjects, or just sources?
-                if ( limit_to_sources_IN == True ):
-
-                    # just sources.
-                    article_data_subject_qs = current_article_data.get_quoted_article_sources_qs()
+                    # If not already there, add to list of IDs of coders for this article.
+                    if article_data_coder_id not in article_coder_id_list:
+            
+                        # not there yet, add it.
+                        article_coder_id_list.append( article_data_coder_id )
+                        
+                    #-- END check to see if ID is in coder ID list --#
+                
+                    # If not already there, add to master coder dictionary, also.
+                    if article_data_coder_id not in coder_id_to_instance_dict:
+            
+                        # not there yet.  Increment coder counter.
+                        coder_counter += 1
+                        
+                        # add coder to instance cache.
+                        coder_id_to_instance_dict[ article_data_coder_id ] = article_data_coder
+                        
+                        # and add to index map.
+                        coder_id_to_index_dict[ article_data_coder_id ] = coder_counter
+                        
+                    #-- END check to see if ID is in master coder dictionary --#
+                                
+                    # add Article_Data ID to list.
+                    article_data_id = current_article_data.id
+                    article_data_id_list.append( article_data_id )
+                    
+                    # get lists of authors and subjects.
+                    article_data_author_qs = current_article_data.article_author_set.all()
+    
+                    # all subjects, or just sources?
+                    if ( limit_to_sources_IN == True ):
+    
+                        # just sources.
+                        article_data_subject_qs = current_article_data.get_quoted_article_sources_qs()
+                        
+                    else:
+                    
+                        # all subjects (the default).
+                        article_data_subject_qs = current_article_data.article_subject_set.all()
+                        
+                    #-- END check to see if all subjects or just sources. --#
+                    
+                    # call process_person_qs for authors.
+                    person_type = self.PERSON_TYPE_AUTHOR
+                    author_info_dict = self.process_person_qs( article_data_coder, article_data_author_qs, author_info_dict, person_type )
+                            
+                    # and call process_person_qs for subjects.
+                    person_type = self.PERSON_TYPE_SUBJECT
+                    subject_info_dict = self.process_person_qs( article_data_coder, article_data_subject_qs, subject_info_dict, person_type )
                     
                 else:
                 
-                    # all subjects (the default).
-                    article_data_subject_qs = current_article_data.article_subject_set.all()
+                    # not processing coding by this user.  Move on.
+                    pass
                     
-                #-- END check to see if all subjects or just sources. --#
-                
-                # call process_person_qs for authors.
-                person_type = self.PERSON_TYPE_AUTHOR
-                author_info_dict = self.process_person_qs( article_data_coder, article_data_author_qs, author_info_dict, person_type )
-                        
-                # and call process_person_qs for subjects.
-                person_type = self.PERSON_TYPE_SUBJECT
-                subject_info_dict = self.process_person_qs( article_data_coder, article_data_subject_qs, subject_info_dict, person_type )
+                #-- END check to see if we are including current user's coding. --#
                         
             #-- END loop over related Article_Data
             

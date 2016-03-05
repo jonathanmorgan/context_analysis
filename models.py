@@ -52,7 +52,7 @@ class Reliability_Names( models.Model ):
        
         Examples of calculating reliability TK.
        
-        Includes columns for three coders.  If you need more, add more sets of
+        Includes columns for ten coders.  If you need more, add more sets of
         coder columns.
     '''
 
@@ -388,6 +388,150 @@ class Reliability_Names( models.Model ):
      
 
 #= END Reliability_Names model ===============================================#
+
+
+@python_2_unicode_compatible
+class Reliability_Names_Results( models.Model ):
+
+    '''
+    Class to hold agreement scores for comparisons between pairs of coders whose
+        coding data is captured in Reliability_Names.  To start, holds results
+        of agreement on detecting and looking up authors and subjects, and for 
+        subjects, on deciding if subject was source or simply mentioned.
+        For each, calculates percentage agreement and Krippendorff's Alpha.  If
+        desired, can also calculate a modified version of Scott's Pi for nominal
+        variables where there is little variation in the data (lots of 1s,
+        almost no 0s, for example) - this is only implemented for author and
+        subject detect (1 or 0), and subject type (0 through 3).
+
+        sourcenet_analysis/examples/reliability/reliability-assess_name_data.py
+    '''
+
+    #----------------------------------------------------------------------
+    # constants-ish
+    #----------------------------------------------------------------------    
+
+ 
+    #----------------------------------------------------------------------
+    # model fields
+    #----------------------------------------------------------------------
+
+    label = models.CharField( max_length = 255, blank = True, null = True )
+    coder1 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_results_coder1_set" )
+    coder1_coder_index = models.IntegerField( blank = True, null = True )
+    coder2 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_results_coder2_set" )
+    coder2_coder_index = models.IntegerField( blank = True, null = True )
+    author_count = models.IntegerField( blank = True, null = True )
+    author_detect_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    author_detect_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_detect_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_lookup_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    author_lookup_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_lookup_count = models.IntegerField( blank = True, null = True )
+    author_combined_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    author_combined_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_type_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    author_type_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_type_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_type_non_zero_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    author_type_non_zero_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_type_non_zero_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    author_type_non_zero_count = models.IntegerField( blank = True, null = True )
+    subject_count = models.IntegerField( blank = True, null = True )
+    subject_detect_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_detect_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_detect_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_lookup_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_lookup_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_lookup_count = models.IntegerField( blank = True, null = True )
+    subject_combined_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_combined_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_type_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_type_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_type_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_type_non_zero_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_type_non_zero_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_type_non_zero_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_type_non_zero_count = models.IntegerField( blank = True, null = True )
+    notes = models.TextField( blank = True, null = True )
+    create_date = models.DateTimeField( auto_now_add = True )
+    last_modified = models.DateTimeField( auto_now = True )
+
+
+    #----------------------------------------------------------------------------
+    # Meta class
+    #----------------------------------------------------------------------------
+
+    # Meta-data for this class.
+    class Meta:
+        ordering = [ 'label', 'coder1', 'coder2' ]
+
+
+    #----------------------------------------------------------------------------
+    # class methods
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # instance methods
+    #----------------------------------------------------------------------------
+
+
+    def __str__( self ):
+
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        temp_string = ""
+        
+        # start with stuff we should always have.
+        if ( self.id ):
+        
+            string_OUT += str( self.id )
+            
+        #-- END check to see if ID. --#
+        
+        # got a label?
+        if ( self.label ):
+        
+            # got a label
+            string_OUT += " - label: " + self.label
+            
+        #-- END check for label --#
+        
+        # got coder details?
+        if ( ( self.coder1 ) or ( self.coder2 ) ):
+        
+            # yes.  Output a summary of coding.
+            string_OUT += " - coders: "
+            
+            temp_string = ""
+            
+            if ( self.coder1 ):
+            
+                # output details for coder 1
+                string_OUT += "1"
+                temp_string += " ====> 1 - " + str( self.coder1.id ) + "; " + str( self.coder1_detected ) + "; " + str( self.coder1_person_id )
+                
+            #-- END check to see if coder1 --#
+
+            if ( self.coder2 ):
+            
+                # output details for coder 2
+                string_OUT += "2"
+                temp_string += " ====> 2 - " + str( self.coder2.id ) + "; " + str( self.coder2_detected ) + "; " + str( self.coder2_person_id )
+                
+            #-- END check to see if coder2 --#
+        
+            string_OUT += temp_string
+        
+        return string_OUT
+
+    #-- END method __str__() --#
+     
+
+#= END Reliability_Names_Results model ========================================#
 
 
 @python_2_unicode_compatible
