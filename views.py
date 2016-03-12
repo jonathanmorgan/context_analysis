@@ -163,14 +163,16 @@ def reliability_names_disagreement_view( request_IN ):
     reliability_names_filter_form = None
     reliability_names_label = ""
     reliability_names_coder_count = -1
+    reliability_names_only_disagree = False
     reliability_names_qs = None
     record_count = -1
-    reliability_names_list = None
+    reliability_names_instance_list = None
     
     # declare variables - pulling together disagreement info for output.
-    reliability_names_disagreement_list = ""
-    reliability_names_disagreement_info = ""
-    disagreement_count = -1
+    reliability_names_output_list = ""
+    reliability_names_output_info = ""
+    output_count = -1
+    disagreement_flag_list = []
     disagreement_details_list = []
     disagreement_details_dict = {}
     coder_index = -1
@@ -197,6 +199,12 @@ def reliability_names_disagreement_view( request_IN ):
         # get information we need from request...
         reliability_names_label = request_inputs.get( "reliability_names_label", "" )
         reliability_names_coder_count = request_inputs.get( "reliability_names_coder_count", -1 )
+        reliability_names_only_disagree = request_inputs.get( "reliability_names_only_disagree", False )
+        if ( reliability_names_only_disagree == "on" ):
+        
+            reliability_names_only_disagree = True
+        
+        #-- END check to see if checkbox "on" --#
 
         # ...and the form is ready.
         is_form_ready = True
@@ -208,9 +216,24 @@ def reliability_names_disagreement_view( request_IN ):
 
         if ( reliability_names_filter_form.is_valid() == True ):
 
-            # retrieve QuerySet of Reliability_Names that match label and
-            #    contain disagreements.
-            reliability_names_qs = Reliability_Names.lookup_disagreements( label_IN = reliability_names_label, coder_count_IN = reliability_names_coder_count )
+            # only disagreements?
+            if ( reliability_names_only_disagree == True ):
+
+                # retrieve QuerySet of Reliability_Names that match label and
+                #    contain disagreements.
+                reliability_names_qs = Reliability_Names.lookup_disagreements( label_IN = reliability_names_label, coder_count_IN = reliability_names_coder_count )
+                # response_dictionary[ 'output_string' ] = "ONLY DISAGREE ( " + str( reliability_names_only_disagree ) + " )"
+                
+            else:
+            
+                # no.  Just filter on label.
+                reliability_names_qs = Reliability_Names.objects.filter( label = reliability_names_label )
+                # response_dictionary[ 'output_string' ] = "ALL ( " + str( reliability_names_only_disagree ) + " )"
+                
+                # order by:
+                reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person__id" )
+                
+            #-- END check to see if only disagreements? --#
             
             # get count of queryset return items
             if ( reliability_names_qs is not None ):
@@ -219,66 +242,83 @@ def reliability_names_disagreement_view( request_IN ):
                 #record_count = reliability_names_qs.count()
                 
                 # to start, just make a list and pass it to the template.
-                reliability_names_list = list( reliability_names_qs )
+                reliability_names_instance_list = list( reliability_names_qs )
 
                 # build list of dictionaries with disagreement information.
-                reliability_names_disagreement_list = []
+                reliability_names_output_list = []
                 
-                # how many disagreements we got?
-                disagreement_count = len( reliability_names_list )
-                if ( disagreement_count > 0 ):
+                # how many isntances we got?
+                output_count = len( reliability_names_instance_list )
+                if ( output_count > 0 ):
                 
                     # at least one - loop.
-                    for reliability_names in reliability_names_list:
+                    reliability_names_counter = 0
+                    for reliability_names in reliability_names_instance_list:
+        
+                        # increment counter
+                        reliability_names_counter += 1
         
                         # store information per row in a dictionary, for access by the view.
-                        reliability_names_disagreement_info = {}
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_INSTANCE ] = reliability_names
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_ID ] = str( reliability_names.id )
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_LABEL ] = reliability_names.label
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_ARTICLE_ID ] = str( reliability_names.article_id )
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_PERSON_NAME ] = reliability_names.person_name
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_PERSON_TYPE ] = reliability_names.person_type
+                        reliability_names_output_info = {}
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_INDEX ] = reliability_names_counter
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_INSTANCE ] = reliability_names
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_ID ] = str( reliability_names.id )
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_LABEL ] = reliability_names.label
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_ARTICLE_ID ] = str( reliability_names.article_id )
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_NAME ] = reliability_names.person_name
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_TYPE ] = reliability_names.person_type
                         
-                        # build disagreement_details.
-                        disagreement_details_list = []
+                        # got disagreement?
+                        has_disagreement = reliability_names.has_disagreement( reliability_names_coder_count )
+                        #disagreement_flag_list.append( has_disagreement )
+                        if ( has_disagreement == True ):
+
+                            # yes - create list of details.
+                            disagreement_details_list = []
                         
-                        # create a record per coder we included when looking for
-                        #     disagreements.
-                        for coder_index in range( 1, int( reliability_names_coder_count ) + 1 ):
-                        
-                            # create dictionary to hold details for this coder
-                            disagreement_details_dict = {}
+                            # create a record per coder we included when looking for
+                            #     disagreements.
+                            for coder_index in range( 1, int( reliability_names_coder_count ) + 1 ):
                             
-                            # build column names based on index.
-                            coder_string = "coder" + str( coder_index )
-
-                            # retrieve data - coder ID
-                            current_field_name = coder_string + "_id"
-                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ID ] = getattr( reliability_names, current_field_name )
+                                # create dictionary to hold details for this coder
+                                disagreement_details_dict = {}
+                                
+                                # build column names based on index.
+                                coder_string = "coder" + str( coder_index )
+    
+                                # retrieve data - coder ID
+                                current_field_name = coder_string + "_id"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ID ] = getattr( reliability_names, current_field_name )
+                            
+                                # retrieve data - coder ID
+                                current_field_name = coder_string + "_detected"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_DETECTED ] = getattr( reliability_names, current_field_name )
+    
+                                # retrieve data - coder's selected person ID
+                                current_field_name = coder_string + "_person_id"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_ID ] = getattr( reliability_names, current_field_name )
+    
+                                # retrieve data - coder's selected person type
+                                current_field_name = coder_string + "_person_type"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_TYPE ] = getattr( reliability_names, current_field_name )
+    
+                                # add to list.
+                                disagreement_details_list.append( disagreement_details_dict )
+                            
+                            #-- END loop over coder indices --#
+                            
+                            # add details to current dictionary.
+                            reliability_names_output_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = disagreement_details_list
+                            
+                        else:
                         
-                            # retrieve data - coder ID
-                            current_field_name = coder_string + "_detected"
-                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_DETECTED ] = getattr( reliability_names, current_field_name )
-
-                            # retrieve data - coder's selected person ID
-                            current_field_name = coder_string + "_person_id"
-                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_ID ] = getattr( reliability_names, current_field_name )
-
-                            # retrieve data - coder's selected person type
-                            current_field_name = coder_string + "_person_type"
-                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_TYPE ] = getattr( reliability_names, current_field_name )
-
-                            # add to list.
-                            disagreement_details_list.append( disagreement_details_dict )
+                            # no disagreements - just set the list to None.
+                            reliability_names_output_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = None
                         
-                        #-- END loop over coder indices --#
-                        
-                        # add details to current dictionary.
-                        reliability_names_disagreement_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = disagreement_details_list
+                        #-- END check to see if disagreement --#
                         
                         # add current dictionary to list.
-                        reliability_names_disagreement_list.append( reliability_names_disagreement_info )
+                        reliability_names_output_list.append( reliability_names_output_info )
                         
                     #-- END loop over reliability_names --#
                     
@@ -286,9 +326,10 @@ def reliability_names_disagreement_view( request_IN ):
 
                 # seed response dictionary.
                 response_dictionary[ 'reliability_names_label' ] = reliability_names_label
-                response_dictionary[ 'reliability_names_list' ] = reliability_names_list
-                response_dictionary[ 'reliability_names_disagreement_list' ] = reliability_names_disagreement_list
+                response_dictionary[ 'reliability_names_instance_list' ] = reliability_names_instance_list
+                response_dictionary[ 'reliability_names_output_list' ] = reliability_names_output_list
                 response_dictionary[ 'rn_class' ] = Reliability_Names
+                #response_dictionary[ 'output_string' ] = str( disagreement_flag_list )
 
             else:
             

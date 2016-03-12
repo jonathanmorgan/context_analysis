@@ -63,6 +63,7 @@ class Reliability_Names( models.Model ):
 
     # property names for building disagreement output (if ues this elsewhere,
     #     make Disagreement and DisagreementDetail objects).
+    PROP_NAME_INDEX = "index"
     PROP_NAME_INSTANCE = "instance"
     PROP_NAME_ID = "id"
     PROP_NAME_LABEL = "label"
@@ -75,6 +76,13 @@ class Reliability_Names( models.Model ):
     PROP_NAME_CODER_DETECTED = "coder_detected"
     PROP_NAME_CODER_PERSON_ID = "coder_person_id"
     PROP_NAME_CODER_PERSON_TYPE = "coder_person_type"
+    
+    # field names
+    FIELD_NAME_PREFIX_CODER = "coder"
+    FIELD_NAME_SUFFIX_DETECTED = "detected"
+    FIELD_NAME_SUFFIX_PERSON_ID = "person_id"
+    FIELD_NAME_SUFFIX_PERSON_TYPE = "person_type"
+    DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST = [ FIELD_NAME_SUFFIX_DETECTED, FIELD_NAME_SUFFIX_PERSON_ID, FIELD_NAME_SUFFIX_PERSON_TYPE, ]
 
     #----------------------------------------------------------------------
     # model fields
@@ -288,6 +296,9 @@ class Reliability_Names( models.Model ):
 
         #-- END check to see if label set --#
         
+        # ORDER BY
+        sql_string += " ORDER BY article_id, person_type, person_id"
+        
         # execute raw query
         qs_OUT = cls.objects.raw( sql_string, sql_raw_params_list )
 
@@ -385,6 +396,82 @@ class Reliability_Names( models.Model ):
         return string_OUT
 
     #-- END method __str__() --#
+    
+    
+    def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None ):
+        
+        '''
+        Accepts count of coders we want to  
+        '''
+        
+        # return reference
+        value_OUT = False
+        
+        # declare variables
+        my_coder_count = -1
+        current_outer_index = -1
+        current_inner_index = -1
+        comparison_suffix_list = []
+        field_name_suffix = ""
+        field_name_1 = ""
+        field_name_2 = ""
+        field_value_1 = ""
+        field_value_2 = ""
+        
+        # init comparison suffix list
+        comparison_suffix_list = self.DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST
+
+        # got coder_count_IN?
+        if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( coder_count_IN > 2 ) ):
+        
+            # yes, and is at least 2.  Use it.
+            my_coder_count = int( coder_count_IN )
+        
+        else:
+        
+            # no, or not at least 2.  Default to 2.
+            my_coder_count = 2
+            
+        #-- END check to see if coder count passed in. --#
+        
+        # loop over coders we've been asked to compare
+        for current_outer_index in range( 1, my_coder_count + 1 ):
+        
+            # loop over indices past the current one, the "to whom" we will
+            #     compare.
+            for current_inner_index in range( current_outer_index + 1, my_coder_count + 1 ):
+
+                # loop over the list of fields to compare (contains the
+                #     suffixes).
+                for field_name_suffix in comparison_suffix_list:
+
+                    # do inequality comparison for detected.
+                    
+                    # make field/column names.
+                    field_name_1 = "coder" + str( current_outer_index ) + "_" + field_name_suffix
+                    field_name_2 = "coder" + str( current_inner_index ) + "_" + field_name_suffix
+
+                    # get field values
+                    field_value_1 = getattr( self, field_name_1 )
+                    field_value_2 = getattr( self, field_name_2 )
+
+                    # check for disagreement.
+                    if ( field_value_1 != field_value_2 ):
+                    
+                        # not the same
+                        value_OUT = True
+                    
+                    #-- END check to see if values are the same --#
+                
+                #-- END check to see if field values are different --#
+
+            #-- END loop over rest of indices past current --#
+        
+        #-- END loop over coders to compare --#
+                
+        return value_OUT
+        
+    #-- END method has_disagreement() --#
      
 
 #= END Reliability_Names model ===============================================#

@@ -95,6 +95,7 @@ class ReliabilityNamesBuilder( object ):
         
         # limit users included
         self.limit_to_user_ids = []
+        self.exclude_user_ids = []
         
         # variable to hold desired automated coder type
         self.limit_to_automated_coder_type = ""
@@ -693,9 +694,14 @@ class ReliabilityNamesBuilder( object ):
                 article_data_coder = current_article_data.coder
                 article_data_coder_id = article_data_coder.id
                 
-                # make sure there either isn't a list of users to include, or
-                #     that the coder is in the list of users to include.
-                if ( ( len( self.limit_to_user_ids ) == 0 ) or ( article_data_coder_id in self.limit_to_user_ids ) ):
+                # make sure that:
+                # - there either isn't a list of users to include, OR if there
+                #     is a list of users to include, the coder is in the list.
+                # - AND there either isn't a list of users to exclude, OR if
+                #     there is a list of users to exclude, the coder is not in
+                #     the list.
+                if ( ( ( len( self.limit_to_user_ids ) == 0 ) or ( article_data_coder_id in self.limit_to_user_ids ) )
+                    and ( ( len( self.exclude_user_ids ) == 0 ) or ( article_data_coder_id not in self.exclude_user_ids ) ) ):
                 
                     # If not already there, add to list of IDs of coders for this article.
                     if article_data_coder_id not in article_coder_id_list:

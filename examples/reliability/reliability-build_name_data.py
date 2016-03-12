@@ -16,9 +16,9 @@ my_reliability_instance = ReliabilityNamesBuilder()
 
 # process articles
 #tag_list = [ "prelim_reliability", ]
-tag_list = [ "prelim_training_002", ]
+tag_list = [ "prelim_training_003", ]
 my_reliability_instance.process_articles( tag_list )
 
 # output to database.
-label = "prelim_training_002"
+label = "prelim_training_003"
 my_reliability_instance.output_reliability_data( label )

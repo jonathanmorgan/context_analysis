@@ -1,10 +1,10 @@
 {% extends "sourcenet_analysis/base.html" %}
 
-{% block title %}View reliability name disagreements{% endblock %}
+{% block title %}View reliability name information{% endblock %}
 
 {% block content %}
 
-    <h1>View reliability name disagreements</h1>
+    <h1>View reliability name information</h1>
     
     {# got an output_string? #}
     {% if output_string %}
@@ -21,11 +21,9 @@
     
             {# always include CSRF token #}
             {% csrf_token %}
-                
-            <p>
-                {# output reliability names filter form #}
-                {{ reliability_names_filter_form }}
-            </p>
+                            
+            {# output reliability names filter form #}
+            {{ reliability_names_filter_form.as_p }}
 
             <p>
                 <input type="submit" />
@@ -35,15 +33,16 @@
         
     </div>
     
-    {% if reliability_names_list %}
+    {% if reliability_names_output_list %}
     
         <hr />
         
-        <div id="reliability_names_disagreement_view" name="reliability_names_disagreement_view">
+        <div id="reliability_names_instance_view" name="reliability_names_instance_view">
 
             <table class="gridtable">
                 
                 <tr>
+                    <th>index</th>
                     <th>ID</th>
                     <th>label</th>
                     <th>article ID</th>
@@ -52,39 +51,50 @@
                     <th>details</th>
                 </tr>
 
-                {% for disagreement in reliability_names_disagreement_list %}
+                {% for names_instance in reliability_names_output_list %}
 
                     <tr>
-                        <td>{{ disagreement.id }}</td>
-                        <td>{{ disagreement.label }}</td>
-                        <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ disagreement.article_id }}">{{ disagreement.article_id }}</a></td>
-                        <td>{{ disagreement.person_name }}</td>
-                        <td>{{ disagreement.person_type }}</td>
+                        <td>{{ names_instance.index }}</td>
+                        <td>{{ names_instance.id }}</td>
+                        <td>{{ names_instance.label }}</td>
+                        <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
+                        <td>{{ names_instance.person_name }}</td>
+                        <td>{{ names_instance.person_type }}</td>
                         <td>
-                            <table class="gridtable">
-                                <tr>
-                                    <th>Coder ID</th>
-                                    <th>Detected</th>
-                                    <th>Person ID</th>
-                                    <th>Person Type</th>
-                                </tr>
 
-                                {% for disagreement_details in disagreement.coder_details_list %}
+                            {% if names_instance.coder_details_list %}
 
+                                <table class="gridtable">
                                     <tr>
-                                        <td>{{ disagreement_details.coder_id }}</td>
-                                        <td>{{ disagreement_details.coder_detected }}</td>
-                                        <td>{{ disagreement_details.coder_person_id }}</td>
-                                        <td>{{ disagreement_details.coder_person_type }}</td>
+                                        <th>Coder ID</th>
+                                        <th>Detected</th>
+                                        <th>Person ID</th>
+                                        <th>Person Type</th>
                                     </tr>
-
-                                {% empty %}
-
-                                    <tr><td colspan="4">No Details returned...</td></tr>
-
-                                {% endfor %}
-
-                            </table>
+    
+                                    {% for disagreement_details in names_instance.coder_details_list %}
+    
+                                        <tr>
+                                            <td>{{ disagreement_details.coder_id }}</td>
+                                            <td>{{ disagreement_details.coder_detected }}</td>
+                                            <td>{{ disagreement_details.coder_person_id }}</td>
+                                            <td>{{ disagreement_details.coder_person_type }}</td>
+                                        </tr>
+    
+                                    {% empty %}
+    
+                                        <tr><td colspan="4">No Details returned...</td></tr>
+    
+                                    {% endfor %}
+    
+                                </table>
+                                
+                            {% else %}
+                            
+                                <p>No disagreement</p>
+                            
+                            {% endif %}
+                            
                         </td>
                     </tr>
 
