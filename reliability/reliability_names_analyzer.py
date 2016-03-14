@@ -83,7 +83,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     # column names in Reliability_Names_Results table
     RESULTS_COLUMN_NAME_DETECT = "detect"
     RESULTS_COLUMN_NAME_LOOKUP = "lookup"
-    RESULTS_COLUMN_NAME_COMBINED = "combined"
+    RESULTS_COLUMN_NAME_LOOKUP_NON_ZERO = "lookup_non_zero"
     RESULTS_COLUMN_NAME_TYPE = "type"
     RESULTS_COLUMN_NAME_TYPE_NON_ZERO = "type_non_zero"
     RESULTS_COLUMN_NAME_SUFFIX_PERCENT = "_percent"
@@ -113,7 +113,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
 
     # pre-built column info
     
-    # coderX_detected
+    # Reliability_Names.coderX_detected
     COLUMN_INFO_DETECTED = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_DETECTED,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
@@ -121,7 +121,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_DETECT
     }    
 
-    # coderX_person_id (no 0s)
+    # Reliability_Names.coderX_person_id (0s included)
     COLUMN_INFO_PERSON_ID_LOOKUP = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_ID,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
@@ -129,15 +129,15 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_LOOKUP
     }
     
-    # coderX_person_id (0s included)
-    COLUMN_INFO_PERSON_ID_COMBINED = {
+    # Reliability_Names.coderX_person_id (no 0s)
+    COLUMN_INFO_PERSON_ID_LOOKUP_NON_ZERO = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_ID,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
         CTC_COLUMN_VALUE_COUNT : "-1",
-        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_COMBINED
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_LOOKUP_NON_ZERO
     }
     
-    # coderx_person_type_int (0s included)
+    # Reliability_Names.coderx_person_type_int (0s included)
     COLUMN_INFO_PERSON_TYPE_INT = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_TYPE_INT,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
@@ -145,7 +145,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_TYPE
     }
     
-    # coderx_person_type_int (no 0s)
+    # Reliability_Names.coderx_person_type_int (no 0s)
     COLUMN_INFO_PERSON_TYPE_INT_NON_ZERO = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_TYPE_INT,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
@@ -153,7 +153,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_TYPE_NON_ZERO
     }
     
-    DEFAULT_COLUMN_INFO_LIST = [ COLUMN_INFO_DETECTED, COLUMN_INFO_PERSON_ID_COMBINED, COLUMN_INFO_PERSON_TYPE_INT ]
+    DEFAULT_COLUMN_INFO_LIST = [ COLUMN_INFO_DETECTED, COLUMN_INFO_PERSON_ID_LOOKUP, COLUMN_INFO_PERSON_TYPE_INT ]
 
     
     #---------------------------------------------------------------------------
@@ -445,7 +445,6 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         person_type_no_zeros_df = None
         person_type_no_zeros_count = -1
         column_name_person_type_no_zeros_count = ""
-        
 
         # get logger
         my_logger = self.get_logger()
@@ -499,7 +498,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                             #     value.  If either has a 0, remove the row.
                             
                             #--------------------------------------------------#
-                            # ! ==> Person lookup combined (no 0s)
+                            # ! ==> Person lookup (no 0s)
                             #--------------------------------------------------#
                             
                             # make names of person ID columns for indices we are
@@ -511,13 +510,17 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                             #    greater than 0 (so where both detected the
                             #    person and attempted a database lookup).
                             person_df_lookup = person_df_IN[ ( person_df_IN[ column_name_person_id_1 ] > 0 ) & ( person_df_IN[ column_name_person_id_2 ] > 0 ) ]
-    
+                            
+                            #temp_df = person_df_lookup[ person_df_lookup[ column_name_person_id_1 ] != person_df_lookup[ column_name_person_id_2 ] ]
+                            #temp_df = temp_df[ [ "id", column_name_person_id_1, column_name_person_id_2 ] ]
+                            #print( temp_df )
+
                             # then, call analyze_column() with column_info for
                             #     person lookup, rather than combined.
                             instance_OUT = self.analyze_column( index_1_IN,
                                                                 index_2_IN,
                                                                 person_df_lookup,
-                                                                self.COLUMN_INFO_PERSON_ID_LOOKUP,
+                                                                self.COLUMN_INFO_PERSON_ID_LOOKUP_NON_ZERO,
                                                                 instance_OUT,
                                                                 column_name_prefix )
                                                                 
@@ -525,7 +528,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                             #     in results (author_lookup_count or
                             #     subject_lookup_count).
                             lookup_count = len( person_df_lookup )
-                            column_name_lookup_count = person_type_IN + self.RESULTS_COLUMN_NAME_LOOKUP + self.RESULTS_COLUMN_NAME_SUFFIX_COUNT
+                            column_name_lookup_count = person_type_IN + self.RESULTS_COLUMN_NAME_LOOKUP_NON_ZERO + self.RESULTS_COLUMN_NAME_SUFFIX_COUNT
                             setattr( instance_OUT, column_name_lookup_count, lookup_count )
 
                             #--------------------------------------------------#

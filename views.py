@@ -72,9 +72,11 @@ from python_utilities.django_utils.django_view_helper import DjangoViewHelper
 
 # Import form classes
 from sourcenet_analysis.forms import ReliabilityNamesFilterForm
+from sourcenet_analysis.forms import ReliabilityNamesResultsForm
 
 # import models
 from sourcenet_analysis.models import Reliability_Names
+from sourcenet_analysis.models import Reliability_Names_Results
 
 #================================================================================
 # Shared variables and functions
@@ -152,7 +154,7 @@ def index( request_IN ):
 @login_required
 def reliability_names_disagreement_view( request_IN ):
 
-    #return reference
+    # return reference
     response_OUT = None
 
     # declare variables
@@ -361,4 +363,119 @@ def reliability_names_disagreement_view( request_IN ):
 
     return response_OUT
 
-#-- END view method article_view_article_data() --#
+#-- END view method reliability_names_disagreement_view() --#
+
+
+@login_required
+def reliability_names_results_view( request_IN ):
+
+    # return reference
+    response_OUT = None
+
+    # declare variables
+    me = "reliability_names_results_view"
+    response_dictionary = {}
+    default_template = ''
+    request_inputs = None
+    reliability_names_results_form = None
+    reliability_names_results_label = ""
+    reliability_names_results_qs = None
+    results_count = -1
+    reliability_names_results_instance_list = None
+    
+    # declare variables - pulling together reliability info for output.
+    results_info = None
+    author_results_list = None
+    subject_results_list = None
+    reliability_names_results_counter = -1
+    reliability_names_results = None
+    
+    # initialize response dictionary
+    response_dictionary = {}
+    response_dictionary.update( csrf( request_IN ) )
+
+    # set my default rendering template
+    default_template = 'sourcenet_analysis/reliability/coding-name-reliability-results.html'
+
+    # get request inputs
+    request_inputs = DjangoViewHelper.get_request_data( request_IN )
+    
+    # create ArticleLookupForm
+    reliability_names_results_form = ReliabilityNamesResultsForm( request_inputs )
+    response_dictionary[ 'reliability_names_results_form' ] = reliability_names_results_form
+
+    # got inputs?
+    if ( request_inputs is not None ):
+        
+        # get information we need from request...
+        reliability_names_results_label = request_inputs.get( "reliability_names_results_label", "" )
+
+        # ...and the form is ready.
+        is_form_ready = True
+    
+    #-- END check to see if inputs. --#
+    
+    # form ready?
+    if ( is_form_ready == True ):
+
+        if ( reliability_names_results_form.is_valid() == True ):
+
+            # OK.  Filter on label.
+            reliability_names_results_qs = Reliability_Names_Results.objects.filter( label = reliability_names_results_label )
+            # response_dictionary[ 'output_string' ] = "ALL ( " + str( reliability_names_only_disagree ) + " )"
+
+            # order by:
+            reliability_names_results_qs = reliability_names_results_qs.order_by( "coder1_coder_index", "coder2_coder_index", "id" )
+            
+            # get count of queryset return items
+            if ( reliability_names_results_qs is not None ):
+
+                # get count of reliability rows.
+                results_count = reliability_names_results_qs.count()
+
+                # got at least 1?
+                if ( results_count > 0 ):
+                
+                    # yes - add query set to response dictionary so we can use
+                    #     it when outputting.
+                    response_dictionary[ 'reliability_names_results_qs' ] = reliability_names_results_qs
+                      
+                #-- END check to see if any matching results --#
+
+                # seed response dictionary.
+                response_dictionary[ 'results_count' ] = results_count
+                response_dictionary[ 'reliability_names_results_label' ] = reliability_names_results_label
+                response_dictionary[ 'rnr_class' ] = Reliability_Names_Results
+                #response_dictionary[ 'output_string' ] = str( disagreement_flag_list )
+
+            else:
+            
+                # ERROR - nothing returned from attempt to get queryset (would expect empty query set)
+                response_dictionary[ 'output_string' ] = "ERROR - no QuerySet returned from call to filter().  This is odd."
+            
+            #-- END check to see if query set is None --#
+
+        else:
+
+            # not valid - render the form again
+            response_dictionary[ 'output_string' ] = "Please enter a label to use to filter reliability names results data."
+
+        #-- END check to see whether or not form is valid. --#
+
+    else:
+    
+        # new request, make an empty instance of network output form.
+        #response_dictionary[ 'output_string' ] = "Please enter a label to use to filter reliability names data."
+        pass
+
+    #-- END check to see if new request or POST --#
+    
+    # add on the "me" property.
+    response_dictionary[ 'current_view' ] = me        
+
+    # render response
+    response_OUT = render( request_IN, default_template, response_dictionary )
+
+    return response_OUT
+
+#-- END view method reliability_names_results_view() --#

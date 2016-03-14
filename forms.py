@@ -28,3 +28,16 @@ class ReliabilityNamesFilterForm( forms.Form ):
     #reliability_names_coder_id_list = forms.CharField( required = True, label = "Coders to compare (separated by commas)" )
 
 #-- END ReliabilityNamesFilterForm --#
+
+
+class ReliabilityNamesResultsForm( forms.Form ):
+
+    '''
+    form to hold variables used in looking up Reliability_Names_Results for a
+        given label.
+    '''
+
+    # label
+    reliability_names_results_label = forms.CharField( required = True, label = "Label" )
+
+#-- END ReliabilityNamesResultsForm --#

@@ -1,0 +1,185 @@
+{% extends "sourcenet_analysis/base.html" %}
+
+{% block title %}View reliability name results{% endblock %}
+
+{% block content %}
+
+    <h1>View reliability name results</h1>
+    
+    {# got an output_string? #}
+    {% if output_string %}
+    
+        <div id="article_message" name="article_message" style="background-color: yellow; border: 1px solid black;">
+            <p>{{ output_string }}</p>
+        </div>
+    
+    {% endif %}
+    
+    <div id="reliability_names_results_form" name="reliability_names_results_form">
+        
+        <form action="" method="post">
+    
+            {# always include CSRF token #}
+            {% csrf_token %}
+                            
+            {# output reliability names results form #}
+            {{ reliability_names_results_form.as_p }}
+
+            <p>
+                <input type="submit" />
+            </p>
+            
+        </form>
+        
+    </div>
+    <!-- results count = {{ results_count }} -->
+    <!-- reliability_names_results_qs.count() = {{ reliability_names_results_qs.count }} -->
+    <!-- label = {{ reliability_names_results_label }} -->
+    
+    {% if reliability_names_results_qs %}
+    
+        <hr />
+        
+        <div id="reliability_names_instance_view" name="reliability_names_instance_view">
+
+            <h2>Author reliability</h2>
+            <table class="gridtable">
+                
+                <tr>
+                    <th>label</th>
+                    <th>results ID</th>
+                    <th>coder1 index</th>
+                    <th>coder2 index</th>
+                    <th>coder1 ID</th>
+                    <th>coder2 ID</th>
+                    <th>count</th>
+                    <th>detect %</th>
+                    <th>detect A</th>
+                    <th>detect pi</th>
+                    <th>lookup %</th>
+                    <th>lookup A</th>
+                    <th>lookup-NZ %</th>
+                    <th>lookup-NZ A</th>
+                    <th>lookup-NZ N</th>
+                    <th>type %</th>
+                    <th>type A</th>
+                    <th>type pi</th>
+                    <th>type-NZ %</th>
+                    <th>type-NZ A</th>
+                    <th>type-NZ pi</th>
+                    <th>type-NZ N</th>
+                </tr>
+
+                {% for results_instance in reliability_names_results_qs %}
+
+                    <tr>
+                        <td>{{ results_instance.label }}</td>
+                        <td>{{ results_instance.id }}</td>
+                        <td>{{ results_instance.coder1_coder_index }}</td>
+                        <td>{{ results_instance.coder2_coder_index }}</td>
+                        <td>{{ results_instance.coder1.id }}</td>
+                        <td>{{ results_instance.coder2.id }}</td>
+                        <td>{{ results_instance.author_count }}</td>
+                        <td>{{ results_instance.author_detect_percent }}</td>
+                        <td>{{ results_instance.author_detect_alpha }}</td>
+                        <td>{{ results_instance.author_detect_pi }}</td>
+                        <!-- Lookup -->
+                        <td>{{ results_instance.author_lookup_percent }}</td>
+                        <td>{{ results_instance.author_lookup_alpha }}</td>
+                        <!-- Lookup Limited to Non-Zero (both detect) -->
+                        <td>{{ results_instance.author_lookup_non_zero_percent }}</td>
+                        <td>{{ results_instance.author_lookup_non_zero_alpha }}</td>
+                        <td>{{ results_instance.author_lookup_non_zero_count }}</td>
+                        <td>{{ results_instance.author_type_percent }}</td>
+                        <td>{{ results_instance.author_type_alpha }}</td>
+                        <td>{{ results_instance.author_type_pi }}</td>
+                        <td>{{ results_instance.author_type_non_zero_percent }}</td>
+                        <td>{{ results_instance.author_type_non_zero_alpha }}</td>
+                        <td>{{ results_instance.author_type_non_zero_pi }}</td>
+                        <td>{{ results_instance.author_type_non_zero_count }}</td>
+                    </tr>
+
+                {% empty %}
+
+                    <tr>No Reliability_Names_Results found for label {{ reliability_names_results_label }}.</tr>
+
+                {% endfor %}
+
+            </table>
+            
+            <hr />
+
+            <h2>Subject reliability</h2>
+            <table class="gridtable">
+                
+                <tr>
+                    <th>label</th>
+                    <th>results ID</th>
+                    <th>coder1 index</th>
+                    <th>coder1 ID</th>
+                    <th>coder2 index</th>
+                    <th>coder2 ID</th>
+                    <th>count</th>
+                    <th>detect %</th>
+                    <th>detect A</th>
+                    <th>detect pi</th>
+                    <th>lookup %</th>
+                    <th>lookup A</th>
+                    <th>lookup-NZ %</th>
+                    <th>lookup-NZ A</th>
+                    <th>lookup-NZ N</th>
+                    <th>type %</th>
+                    <th>type A</th>
+                    <th>type pi</th>
+                    <th>type-NZ %</th>
+                    <th>type-NZ A</th>
+                    <th>type-NZ pi</th>
+                    <th>type-NZ N</th>
+                </tr>
+
+                {% for results_instance in reliability_names_results_qs %}
+
+                    <tr>
+                        <td>{{ results_instance.label }}</td>
+                        <td>{{ results_instance.id }}</td>
+                        <td>{{ results_instance.coder1_coder_index }}</td>
+                        <td>{{ results_instance.coder2_coder_index }}</td>
+                        <td>{{ results_instance.coder1.id }}</td>
+                        <td>{{ results_instance.coder2.id }}</td>
+                        <td>{{ results_instance.subject_count }}</td>
+                        <td>{{ results_instance.subject_detect_percent }}</td>
+                        <td>{{ results_instance.subject_detect_alpha }}</td>
+                        <td>{{ results_instance.subject_detect_pi }}</td>
+                        <!-- Lookup -->
+                        <td>{{ results_instance.subject_lookup_percent }}</td>
+                        <td>{{ results_instance.subject_lookup_alpha }}</td>
+                        <!-- Lookup Limited to Non-Zero (both detect) -->
+                        <td>{{ results_instance.subject_lookup_non_zero_percent }}</td>
+                        <td>{{ results_instance.subject_lookup_non_zero_alpha }}</td>
+                        <td>{{ results_instance.subject_lookup_non_zero_count }}</td>
+                        <td>{{ results_instance.subject_type_percent }}</td>
+                        <td>{{ results_instance.subject_type_alpha }}</td>
+                        <td>{{ results_instance.subject_type_pi }}</td>
+                        <td>{{ results_instance.subject_type_non_zero_percent }}</td>
+                        <td>{{ results_instance.subject_type_non_zero_alpha }}</td>
+                        <td>{{ results_instance.subject_type_non_zero_pi }}</td>
+                        <td>{{ results_instance.subject_type_non_zero_count }}</td>
+                    </tr>
+
+                {% empty %}
+
+                    <tr>No Reliability_Names_Results found for label {{ reliability_names_results_label }}.</tr>
+
+                {% endfor %}
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <p><em>No results found for label {{ reliability_names_results_label }}</em></p>
+
+    {% endif %}
+
+{% endblock %}

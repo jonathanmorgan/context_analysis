@@ -46,4 +46,6 @@ urlpatterns = [
     # view disagreements
     url( r'^reliability/names/disagreement/view$', sourcenet_analysis.views.reliability_names_disagreement_view, name = "sourcenet_analysis-reliability-names-disagreement-view" ),
 
+    # view reliability results
+    url( r'^reliability/names/results/view$', sourcenet_analysis.views.reliability_names_results_view, name = "sourcenet_analysis-reliability-names-results-view" ),
 ]
