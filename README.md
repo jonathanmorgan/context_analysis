@@ -51,17 +51,12 @@ More details:
         
 - now you are in a virtual python environment independent of the system's.  If you do this, in the examples below, you don't need to use `sudo` when you use pip, etc.
 
-## Python packages
+## Get sourcenet_analysis from github
 
-- first, install all the packages required by sourcenet, including one for connecting to and interacting with your database of choice (but you should really choose postgresql, or sqlite if you want something simpler, rather than mysql - mysql struggles with large databases).  Inside the sourcenet project, requirements.txt contains all of these things, assumes you will use postgresql and so includes psycopg2.  To install requirements using requirements.txt from this repository:
+First step is to clone sourcenet_analysis into the django project folder where you installed sourcenet:
 
-        - install django now using pip: `(sudo) pip install django`
-        - continue on in this guide until you 
-        - `(sudo) pip install -r sourcenet/requirements.txt`
-
-- python packages that I find helpful:
-
-    - ipython - `(sudo) pip install ipython`
+    cd <project_directory>
+    git clone https://github.com/jonathanmorgan/sourcenet_analysis.git
 
 ## Other things to install
 
@@ -74,6 +69,23 @@ These are installed with sourcenet, but just so you know they are dependencies:
 - And you'll need django\_config.  Clone django\_config into the research folder alongside sourcenet:
 
         git clone https://github.com/jonathanmorgan/django_config.git
+
+## Python packages
+
+- first, install all the packages required by sourcenet, including one for connecting to and interacting with your database of choice (but you should really choose postgresql, or sqlite if you want something simpler, rather than mysql - mysql struggles with large databases).  Inside the sourcenet project, requirements.txt contains all of these things, assumes you will use postgresql and so includes psycopg2.  To install requirements using requirements.txt from the sourcenet repository:
+
+        - cd into your project directory.
+        - install django now using pip: `(sudo) pip install django`
+        - `(sudo) pip install -r sourcenet/requirements.txt`
+
+- python packages that I find helpful:
+
+    - ipython - `(sudo) pip install ipython`
+
+- next, install all the required packages for sourcenet_analysis using the requirements.txt file in sourcenet_analysis:
+
+    - cd into your django project directory.
+    - `(sudo) pip install -r sourcenet_analysis/requirements.txt`
 
 ## settings.py - Configure logging, database, applications:
 
@@ -104,13 +116,19 @@ Edit the `research/research/settings.py` file and add 'sourcenet_analysis' to yo
     
 ### initialize the database
 
-Once you've made the changes above, save the `settings.py` file, then go into the `research` directory where manage.py is installed, and run `python manage.py migrate`.
+Once you've made the changes above, save the `settings.py` file, then go into the `research` directory where manage.py is installed.
 
-    python manage.py migrate
+First, we'll just list out the pending migrations, so we make sure the `sourcenet_analysis` migrations are there and running migrate won't cause other changes we don't intend.
+
+    python manage.py migrate --list
+
+Next, we run migrations for sourcenet_analysis using `python manage.py migrate.
+
+    python manage.py migrate sourcenet_analysis
 
 ## Enable sourcenet_analysis pages
 
-- get the admins working and sourcenet pages working.
+- get the built-in django admins and sourcenet pages working.
 
 - add a line to resesarch/urls.py to enable the sourcenet_analysis URLs (in `sourcenet_analysis.urls`) to the urlpatterns structure.
 
@@ -121,30 +139,52 @@ Once you've made the changes above, save the `settings.py` file, then go into th
 
     - Result:
 
-            urlpatterns = [
+            """research URL Configuration
 
-                # Examples:
-                # url(r'^$', 'research.views.home', name='home'),
-                # url(r'^research/', include('research.foo.urls')),
-                
+            The `urlpatterns` list routes URLs to views. For more information please see:
+                https://docs.djangoproject.com/en/1.9/topics/http/urls/
+            Examples:
+            Function views
+                1. Add an import:  from my_app import views
+                2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
+            Class-based views
+                1. Add an import:  from other_app.views import Home
+                2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
+            Including another URLconf
+                1. Import the include() function: from django.conf.urls import url, include
+                2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
+            """
+            from django.conf.urls import url
+            from django.conf.urls import include
+            from django.contrib import admin
+
+            # django-ajax-selects URLs
+            from ajax_select import urls as ajax_select_urls
+
+            urlpatterns = [
+                url(r'^admin/', admin.site.urls),
+                url( r'^admin/doc/', include( 'django.contrib.admindocs.urls' ) ),
+
                 # django-ajax-select URLs
                 url( r'^admin/lookups/', include( ajax_select_urls ) ),
-                
-                # Uncomment the admin/doc line below to enable admin documentation:
-                url( r'^admin/doc/', include( 'django.contrib.admindocs.urls' ) ),
-            
-                # Uncomment the next line to enable the admin:
-                url( r'^admin/', include( admin.site.urls ) ),
-                
+
                 # sourcenet URLs:
                 url( r'^sourcenet/', include( 'sourcenet.urls' ) ),
-
+                
                 # sourcenet_analysis URLs:
                 url( r'^sourcenet/analysis/', include( 'sourcenet_analysis.urls' ) ),
-
             ]
             
 ### Test!
+
+- make sure everything is reloaded by updating the modified stamp on research/wsgi.py (assuming you named your django project "research" per the sourcenet documentation).
+
+        cd <django_project_directory>
+        # touch <django_project_name>/wsgi.py
+    
+    If you named your project "research", then you'd `cd` into the root research folder, and then run:
+
+        touch research/wsgi.py
 
 - test by going to the URL:
 
