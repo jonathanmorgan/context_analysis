@@ -63,8 +63,8 @@ result_status = ""
 my_analysis_instance = ReliabilityNamesAnalyzer()
 
 # database connection information:
-my_analysis_instance.db_username = "jonathanmorgan"
-my_analysis_instance.db_password = "mt75ebMHFCncuWBuA3uZqj"
+my_analysis_instance.db_username = ""
+my_analysis_instance.db_password = ""
 my_analysis_instance.db_host = "localhost"
 my_analysis_instance.db_name = "sourcenet"
 
