@@ -73,12 +73,12 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     LOGGER_NAME = "python_utilities.R.rserve_helper.RserveHelper"
 
     # column names in Reliability_Names table
-    COLUMN_NAME_LABEL = "label"
-    COLUMN_NAME_SUFFIX_CODER_ID = "_coder_id"
-    COLUMN_NAME_SUFFIX_DETECTED = "_detected"
-    COLUMN_NAME_SUFFIX_PERSON_ID = "_person_id"
-    COLUMN_NAME_SUFFIX_PERSON_TYPE_INT = "_person_type_int"
-    COLUMN_NAME_PREFIX_CODER = "coder"
+    COLUMN_NAME_LABEL = Reliability_Names.FIELD_NAME_LABEL
+    COLUMN_NAME_SUFFIX_CODER_ID = "_" + Reliability_Names.FIELD_NAME_SUFFIX_CODER_ID
+    COLUMN_NAME_SUFFIX_DETECTED = "_" + Reliability_Names.FIELD_NAME_SUFFIX_DETECTED
+    COLUMN_NAME_SUFFIX_PERSON_ID = "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_ID
+    COLUMN_NAME_SUFFIX_PERSON_TYPE_INT = "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE_INT
+    COLUMN_NAME_PREFIX_CODER = Reliability_Names.FIELD_NAME_PREFIX_CODER
     
     # column names in Reliability_Names_Results table
     RESULTS_COLUMN_NAME_DETECT = "detect"

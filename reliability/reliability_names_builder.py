@@ -12,11 +12,18 @@ sourcenet_analysis is distributed in the hope that it will be useful, but WITHOU
 You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
 '''
 
+# python built-in libraries
+import hashlib
+
 # python package imports
 import six
 
 # django imports
 from django.contrib.auth.models import User
+
+# python_utilities
+from python_utilities.exceptions.exception_helper import ExceptionHelper
+from python_utilities.logging.logging_helper import LoggingHelper
 
 # sourcenet imports
 from sourcenet.models import Article
@@ -40,6 +47,9 @@ class ReliabilityNamesBuilder( object ):
     #----------------------------------------------------------------------    
 
 
+    # Logger name
+    LOGGER_NAME = "sourcenet_analysis.reliability.reliability_names_builder"
+
     # article info dictionary field names
     ARTICLE_ID = "article_id"
     ARTICLE_DATA_ID_LIST = "article_data_id_list"
@@ -54,11 +64,14 @@ class ReliabilityNamesBuilder( object ):
     # PERSON_CODER_ID_LIST = "person_coder_id_list"
     
     # coder-specific person coding info map
-    PERSON_CODING_INFO_CODER_ID = "coder_id"
-    PERSON_CODING_INFO_PERSON_TYPE = "person_type"
-    PERSON_CODING_INFO_PERSON_TYPE_INT = "person_type_int"
-    PERSON_CODING_INFO_ARTICLE_PERSON_ID = "article_person_id"
-    PERSON_CODING_INFO_NAME_LIST = [ PERSON_CODING_INFO_CODER_ID, PERSON_CODING_INFO_PERSON_TYPE, PERSON_CODING_INFO_PERSON_TYPE_INT, PERSON_CODING_INFO_ARTICLE_PERSON_ID ]
+    PERSON_CODING_INFO_CODER_ID = Reliability_Names.FIELD_NAME_PREFIX_CODER_ID
+    PERSON_CODING_INFO_PERSON_TYPE = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
+    PERSON_CODING_INFO_PERSON_TYPE_INT = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE_INT
+    PERSON_CODING_INFO_ARTICLE_PERSON_ID = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID
+    PERSON_CODING_INFO_FIRST_QUOTE_GRAF = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
+    PERSON_CODING_INFO_FIRST_QUOTE_INDEX = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
+    PERSON_CODING_INFO_ORGANIZATION_HASH = Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH
+    PERSON_CODING_INFO_NAME_LIST = [ PERSON_CODING_INFO_CODER_ID, PERSON_CODING_INFO_PERSON_TYPE, PERSON_CODING_INFO_PERSON_TYPE_INT, PERSON_CODING_INFO_ARTICLE_PERSON_ID, PERSON_CODING_INFO_FIRST_QUOTE_GRAF, PERSON_CODING_INFO_FIRST_QUOTE_INDEX, PERSON_CODING_INFO_ORGANIZATION_HASH ]
     
     # person types
     PERSON_TYPE_AUTHOR = "author"
@@ -77,6 +90,9 @@ class ReliabilityNamesBuilder( object ):
     PERSON_TYPE_TO_INT_MAP[ SUBJECT_TYPE_MENTIONED ] = 2
     PERSON_TYPE_TO_INT_MAP[ SUBJECT_TYPE_QUOTED ] = 3
         
+    # Organizations ERROR value
+    ORG_HASH_ERROR_STRING = "ORG_HASH_ERROR"
+    
     # information about table.
     TABLE_MAX_CODERS = 10
 
@@ -100,9 +116,57 @@ class ReliabilityNamesBuilder( object ):
         # variable to hold desired automated coder type
         self.limit_to_automated_coder_type = ""
         
+        # exception helper
+        self.exception_helper = ExceptionHelper()
+        self.exception_helper.set_logger_name( self.LOGGER_NAME )
+        
     #-- END method __init__() --#
     
 
+    def build_reliability_names_data( self, tag_list_IN = None, label_IN = None ):
+    
+        '''
+        Accepts tag list, label to apply to resulting Reliability_Names rows.
+            Passes tag list to process_articles(), then passes the label to
+            output_reliability_data().
+        '''
+        
+        # return reference
+        status_OUT = ""
+    
+        # got tag list?
+        if ( ( tag_list_IN is not None ) and ( len( tag_list_IN ) > 0 ) ):
+        
+            # and got label?
+            if ( ( label_IN is not None ) and ( label_IN != "" ) ):
+            
+                # got what we need.  Process articles.
+                tag_list = [ "prelim_training_003", ]
+                my_reliability_instance.process_articles( tag_list )
+
+                # output to database.
+                label = "prelim_training_003"
+                my_reliability_instance.output_reliability_data( label )
+                
+            else:
+            
+                # no label - error.
+                status_OUT = "ERROR - must pass in a label."
+            
+            #-- END check to see if label --#
+            
+        else:
+        
+            # no tag list - error.
+            status_OUT = "ERROR - must pass in a list of tags for filtering article data."
+
+        #-- END check to see if tag list. --#
+        
+        return status_OUT
+        
+    #-- END method build_reliability_names_data() --#
+    
+        
     def filter_article_data( self, article_data_qs_IN ):
         
         '''
@@ -259,15 +323,15 @@ class ReliabilityNamesBuilder( object ):
                 # get article for article ID.
                 my_article = Article.objects.get( id = my_article_id )
                 
-                # for reliability table output, just run through author and source
-                #    info.
+                # for reliability table output, run through author and subject
+                #    info, creating a row for each author and subject.
     
                 # got author info?
                 if ( ( my_author_info_dict is not None ) and ( len ( my_author_info_dict ) > 0 ) ):
                 
                     # loop over the info in the dictionary, calling function to
-                    #    output a given person's row to the reliability table for
-                    #    each.
+                    #    output a given person's row to the reliability table
+                    #    for each.
                     for my_person_id, my_person_info_dict in six.iteritems( my_author_info_dict ):
                     
                         # call function to output reliability table row.
@@ -278,12 +342,12 @@ class ReliabilityNamesBuilder( object ):
                 
                 #-- END check to see if we have author info. --#
                 
-                # got source info?
+                # got subject info?
                 if ( ( my_subject_info_dict is not None ) and ( len ( my_subject_info_dict ) > 0 ) ):
                 
                     # loop over the info in the dictionary, calling function to
-                    #    output a given person's row to the reliability table for
-                    #    each.
+                    #    output a given person's row to the reliability table
+                    #    for each.
                     for my_person_id, my_person_info_dict in six.iteritems( my_subject_info_dict ):
                     
                         # call function to output reliability table row.
@@ -460,6 +524,8 @@ class ReliabilityNamesBuilder( object ):
                                 #    same name, different person IDs).
                                 field_name = "coder" + str( current_coder_index ) + "_person_id"
                                 setattr( reliability_instance, field_name, my_person_id )
+                                
+                                # ! loop over coding info
                                 
                                 # set fields from current_person_coding_info.
                                 #     Each name in dictionary corresponds to
@@ -806,6 +872,16 @@ class ReliabilityNamesBuilder( object ):
         person_coding_info = None
         current_person_type = None
         current_person_type_int = None
+        current_organization = ""
+        org_hash = ""
+
+        # declare variables - subject-specific processing.
+        is_subject = False
+        subject_quote_qs = None
+        subject_quote_count = -1
+        subject_first_quote = None
+        first_quote_graf = -1
+        first_quote_index = -1
         
         # make sure we have a coder
         if ( coder_IN is not None ):
@@ -836,6 +912,7 @@ class ReliabilityNamesBuilder( object ):
                         
                             # only one type of author, so use the type passed in.
                             current_person_type = article_person_type_IN
+                            is_subject = False
                         
                         # Article_Subject QuerySet?
                         elif ( ( article_person_type_IN == self.PERSON_TYPE_SUBJECT )
@@ -843,12 +920,13 @@ class ReliabilityNamesBuilder( object ):
                         
                             # this is an Article_Subject, so get subject_type.
                             current_person_type = current_article_person.subject_type
-                            
+                            is_subject = True
                         
                         else:
                         
                             # unknown Article_Person type.  set to empty string.
                             current_person_type = ""
+                            is_subject = False
                         
                         #-- END check to see how we get person type. --#
                         
@@ -869,6 +947,8 @@ class ReliabilityNamesBuilder( object ):
                             # create coding info. for this coder.
                             person_coding_info = {}
                             
+                            # ! Place data in person_coding_info
+                            
                             # coder ID
                             person_coding_info[ self.PERSON_CODING_INFO_CODER_ID ] = coder_id
                             
@@ -879,6 +959,72 @@ class ReliabilityNamesBuilder( object ):
                             # Article_Person child record ID.
                             person_coding_info[ self.PERSON_CODING_INFO_ARTICLE_PERSON_ID ] = current_article_person.id
                             
+                            # if subject, tack on information on first quote
+                            if ( is_subject == True ):
+                            
+                                # FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF = "first_quote_graf"
+                                # FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX = "first_quote_index"
+                                
+                                # check to see if person has any quotes.
+                                subject_quote_qs = current_article_person.article_subject_quotation_set.all()
+                                subject_quote_count = subject_quote_qs.count()
+                                if ( subject_quote_count > 0 ):
+                                
+                                    # we do.  Order by paragraph number, then
+                                    #    index.
+                                    subject_quote_qs = subject_quote_qs.order_by( "paragraph_number", "value_index" )
+                                    
+                                    # get the first record in the list.
+                                    subject_quote_qs = subject_quote_qs[ : 1 ]
+                                    subject_first_quote = subject_quote_qs.get()
+                                    
+                                    # retrieve and store the paragraph and index
+                                    #    values
+                                    first_quote_graf = subject_first_quote.paragraph_number
+                                    first_quote_index = subject_first_quote.value_index
+                                    
+                                    # and store them.
+                                    person_coding_info[ self.PERSON_CODING_INFO_FIRST_QUOTE_GRAF ] = first_quote_graf
+                                    person_coding_info[ self.PERSON_CODING_INFO_FIRST_QUOTE_INDEX ] = first_quote_index
+                                
+                                #-- END check to see if we have quotes --#
+                                
+                            #-- END check to see if is subject. --#
+
+                            # FIELD_NAME_SUFFIX_ORGANIZATION_HASH = "organization_hash"
+                            current_organization = current_article_person.organization_string
+                            
+                            # see if there is an organization
+                            if ( ( current_organization is not None ) and ( current_organization != "" ) ):
+                            
+                                # to start, wrap in try in case there are encoding
+                                #    problems.
+                                try:
+                                
+                                    # convert to sha256
+                                    org_hash_object = hashlib.sha256( current_organization )
+                                    org_hash = org_hash_object.hexdigest()
+                                    
+                                except Exception as e:
+                                
+                                    # exception
+                                    self.exception_helper.process_exception( exception_IN = e, message_IN = "Exception caught converting organization_string to sha256 hash." )
+                                
+                                    # On error, store self.ORG_HASH_ERROR_STRING
+                                    org_hash = self.ORG_HASH_ERROR_STRING
+    
+                                #-- END try/except --#
+                                
+                            else:
+                            
+                                # no organization, set to None.
+                                org_hash = None
+                                
+                            #-- END check to see if any organization value to hash --#
+                                
+                            # store org_hash in person_coding_info
+                            person_coding_info[ self.PERSON_CODING_INFO_ORGANIZATION_HASH ] = org_hash
+    
                             # look for person in person info dictionary.
                             if person_id in person_info_dict_OUT:
                             

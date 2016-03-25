@@ -22,6 +22,9 @@ along with http://github.com/jonathanmorgan/sourcenet_analysis.  If not, see
 <http://www.gnu.org/licenses/>.
 '''
 
+# taggit tagging APIs
+from taggit.managers import TaggableManager
+
 # django imports
 from django.contrib.auth.models import User
 from django.db import models
@@ -29,6 +32,9 @@ from django.db import models
 # django encoding imports (for supporting 2 and 3).
 import django.utils.encoding
 from django.utils.encoding import python_2_unicode_compatible
+
+# python utilities
+from python_utilities.analysis.statistics.stats_helper import StatsHelper
 
 # sourcenet imports
 from sourcenet.models import Article
@@ -61,28 +67,41 @@ class Reliability_Names( models.Model ):
     #----------------------------------------------------------------------    
 
 
+    # field names
+    FIELD_NAME_LABEL = "label"
+    FIELD_NAME_PREFIX_CODER = "coder"
+    FIELD_NAME_SUFFIX_CODER_ID = "coder_id"
+    FIELD_NAME_SUFFIX_DETECTED = "detected"
+    FIELD_NAME_SUFFIX_PERSON_ID = "person_id"
+    FIELD_NAME_SUFFIX_PERSON_TYPE = "person_type"
+    FIELD_NAME_SUFFIX_PERSON_TYPE_INT = "person_type_int"
+    FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID = "article_person_id"
+    FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF = "first_quote_graf"
+    FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX = "first_quote_index"
+    FIELD_NAME_SUFFIX_ORGANIZATION_HASH = "organization_hash"
+
+    # make lists of fields that are tested for agreement...
+    DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST = [ FIELD_NAME_SUFFIX_DETECTED, FIELD_NAME_SUFFIX_PERSON_ID, FIELD_NAME_SUFFIX_PERSON_TYPE, ]
+    OPTIONAL_AGREEMENT_FIELD_SUFFIX_LIST = [ FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF, FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX, FIELD_NAME_SUFFIX_ORGANIZATION_HASH ]
+
     # property names for building disagreement output (if ues this elsewhere,
     #     make Disagreement and DisagreementDetail objects).
     PROP_NAME_INDEX = "index"
     PROP_NAME_INSTANCE = "instance"
     PROP_NAME_ID = "id"
-    PROP_NAME_LABEL = "label"
+    PROP_NAME_LABEL = FIELD_NAME_LABEL
     PROP_NAME_ARTICLE_ID = "article_id"
     PROP_NAME_PERSON_NAME = "person_name"
-    PROP_NAME_PERSON_ID = "person_id"
-    PROP_NAME_PERSON_TYPE = "person_type"
+    PROP_NAME_PERSON_ID = FIELD_NAME_SUFFIX_PERSON_ID
+    PROP_NAME_PERSON_TYPE = FIELD_NAME_SUFFIX_PERSON_TYPE
     PROP_NAME_CODER_DETAILS_LIST = "coder_details_list"
-    PROP_NAME_CODER_ID = "coder_id"
-    PROP_NAME_CODER_DETECTED = "coder_detected"
-    PROP_NAME_CODER_PERSON_ID = "coder_person_id"
-    PROP_NAME_CODER_PERSON_TYPE = "coder_person_type"
+    PROP_NAME_CODER_ID = FIELD_NAME_SUFFIX_CODER_ID
+    PROP_NAME_CODER_DETECTED = "coder_" + FIELD_NAME_SUFFIX_DETECTED
+    PROP_NAME_CODER_PERSON_ID = "coder_" + FIELD_NAME_SUFFIX_PERSON_ID
+    PROP_NAME_CODER_PERSON_TYPE = "coder_" + FIELD_NAME_SUFFIX_PERSON_TYPE
+    PROP_NAME_CODER_FIRST_QUOTE_GRAF = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
+    PROP_NAME_CODER_FIRST_QUOTE_INDEX = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
     
-    # field names
-    FIELD_NAME_PREFIX_CODER = "coder"
-    FIELD_NAME_SUFFIX_DETECTED = "detected"
-    FIELD_NAME_SUFFIX_PERSON_ID = "person_id"
-    FIELD_NAME_SUFFIX_PERSON_TYPE = "person_type"
-    DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST = [ FIELD_NAME_SUFFIX_DETECTED, FIELD_NAME_SUFFIX_PERSON_ID, FIELD_NAME_SUFFIX_PERSON_TYPE, ]
 
     #----------------------------------------------------------------------
     # model fields
@@ -100,6 +119,9 @@ class Reliability_Names( models.Model ):
     coder1_person_type_int = models.IntegerField( blank = True, null = True )
     coder1_article_data_id = models.IntegerField( blank = True, null = True )
     coder1_article_person_id = models.IntegerField( blank = True, null = True )
+    coder1_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder1_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder1_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder2 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder2_set" )
     coder2_coder_id = models.IntegerField( blank = True, null = True )
     coder2_detected = models.IntegerField( blank = True, null = True )
@@ -108,6 +130,9 @@ class Reliability_Names( models.Model ):
     coder2_person_type_int = models.IntegerField( blank = True, null = True )
     coder2_article_data_id = models.IntegerField( blank = True, null = True )
     coder2_article_person_id = models.IntegerField( blank = True, null = True )
+    coder2_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder2_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder2_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder3 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder3_set" )
     coder3_coder_id = models.IntegerField( blank = True, null = True )
     coder3_detected = models.IntegerField( blank = True, null = True )
@@ -116,6 +141,9 @@ class Reliability_Names( models.Model ):
     coder3_person_type_int = models.IntegerField( blank = True, null = True )
     coder3_article_data_id = models.IntegerField( blank = True, null = True )
     coder3_article_person_id = models.IntegerField( blank = True, null = True )
+    coder3_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder3_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder3_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder4 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder4_set" )
     coder4_coder_id = models.IntegerField( blank = True, null = True )
     coder4_detected = models.IntegerField( blank = True, null = True )
@@ -124,6 +152,9 @@ class Reliability_Names( models.Model ):
     coder4_person_type_int = models.IntegerField( blank = True, null = True )
     coder4_article_data_id = models.IntegerField( blank = True, null = True )
     coder4_article_person_id = models.IntegerField( blank = True, null = True )
+    coder4_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder4_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder4_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder5 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder5_set" )
     coder5_coder_id = models.IntegerField( blank = True, null = True )
     coder5_detected = models.IntegerField( blank = True, null = True )
@@ -132,6 +163,9 @@ class Reliability_Names( models.Model ):
     coder5_person_type_int = models.IntegerField( blank = True, null = True )
     coder5_article_data_id = models.IntegerField( blank = True, null = True )
     coder5_article_person_id = models.IntegerField( blank = True, null = True )
+    coder5_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder5_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder5_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder6 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder6_set" )
     coder6_coder_id = models.IntegerField( blank = True, null = True )
     coder6_detected = models.IntegerField( blank = True, null = True )
@@ -140,6 +174,9 @@ class Reliability_Names( models.Model ):
     coder6_person_type_int = models.IntegerField( blank = True, null = True )
     coder6_article_data_id = models.IntegerField( blank = True, null = True )
     coder6_article_person_id = models.IntegerField( blank = True, null = True )
+    coder6_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder6_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder6_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder7 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder7_set" )
     coder7_coder_id = models.IntegerField( blank = True, null = True )
     coder7_detected = models.IntegerField( blank = True, null = True )
@@ -148,6 +185,9 @@ class Reliability_Names( models.Model ):
     coder7_person_type_int = models.IntegerField( blank = True, null = True )
     coder7_article_data_id = models.IntegerField( blank = True, null = True )
     coder7_article_person_id = models.IntegerField( blank = True, null = True )
+    coder7_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder7_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder7_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder8 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder8_set" )
     coder8_coder_id = models.IntegerField( blank = True, null = True )
     coder8_detected = models.IntegerField( blank = True, null = True )
@@ -156,6 +196,9 @@ class Reliability_Names( models.Model ):
     coder8_person_type_int = models.IntegerField( blank = True, null = True )
     coder8_article_data_id = models.IntegerField( blank = True, null = True )
     coder8_article_person_id = models.IntegerField( blank = True, null = True )
+    coder8_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder8_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder8_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder9 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder9_set" )
     coder9_coder_id = models.IntegerField( blank = True, null = True )
     coder9_detected = models.IntegerField( blank = True, null = True )
@@ -164,6 +207,9 @@ class Reliability_Names( models.Model ):
     coder9_person_type_int = models.IntegerField( blank = True, null = True )
     coder9_article_data_id = models.IntegerField( blank = True, null = True )
     coder9_article_person_id = models.IntegerField( blank = True, null = True )
+    coder9_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder9_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder9_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     coder10 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder10_set" )
     coder10_coder_id = models.IntegerField( blank = True, null = True )
     coder10_detected = models.IntegerField( blank = True, null = True )
@@ -172,6 +218,9 @@ class Reliability_Names( models.Model ):
     coder10_person_type_int = models.IntegerField( blank = True, null = True )
     coder10_article_data_id = models.IntegerField( blank = True, null = True )
     coder10_article_person_id = models.IntegerField( blank = True, null = True )
+    coder10_first_quote_graf = models.IntegerField( blank = True, null = True )
+    coder10_first_quote_index = models.IntegerField( blank = True, null = True )
+    coder10_organization_hash = models.CharField( max_length = 255, blank = True, null = True )
     label = models.CharField( max_length = 255, blank = True, null = True )
     notes = models.TextField( blank = True, null = True )
     create_date = models.DateTimeField( auto_now_add = True )
@@ -193,7 +242,7 @@ class Reliability_Names( models.Model ):
 
 
     @classmethod
-    def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1 ):
+    def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1, include_optional_IN = False ):
         
         # return reference
         qs_OUT = None
@@ -210,6 +259,9 @@ class Reliability_Names( models.Model ):
         sql_detected_list = []
         sql_person_id_list = []
         sql_person_type_list = []
+        sql_quote_graf_list = []
+        sql_quote_index_list = []
+        sql_org_hash_list = []
         sql_raw_params_list = []
         
         # do we have a label?
@@ -237,6 +289,9 @@ class Reliability_Names( models.Model ):
         sql_detected_list = []
         sql_person_id_list = []
         sql_person_type_list = []
+        sql_quote_graf_list = []
+        sql_quote_index_list = []
+        sql_org_hash_list = []
         for current_outer_index in range( 1, my_coder_count + 1 ):
         
             # loop over indices past the current one, adding SQL fragments to
@@ -244,19 +299,39 @@ class Reliability_Names( models.Model ):
             for current_inner_index in range( current_outer_index + 1, my_coder_count + 1 ):
 
                 # add inequality comparison for detected.
-                column_name_suffix = "_detected"
-                sql_temp_string = "( coder" + str( current_outer_index ) + column_name_suffix + " != coder" + str( current_inner_index ) + column_name_suffix + " )"
+                column_name_suffix = "_" + cls.FIELD_NAME_SUFFIX_DETECTED
+                sql_temp_string = "( " + cls.FIELD_NAME_PREFIX_CODER + str( current_outer_index ) + column_name_suffix + " != " + cls.FIELD_NAME_PREFIX_CODER + str( current_inner_index ) + column_name_suffix + " )"
                 sql_detected_list.append( sql_temp_string )
                 
                 # add inequality comparison for lookup.
-                column_name_suffix = "_person_id"
-                sql_temp_string = "( coder" + str( current_outer_index ) + column_name_suffix + " != coder" + str( current_inner_index ) + column_name_suffix + " )"
+                column_name_suffix = "_" + cls.FIELD_NAME_SUFFIX_PERSON_ID
+                sql_temp_string = "( " + cls.FIELD_NAME_PREFIX_CODER + str( current_outer_index ) + column_name_suffix + " != " + cls.FIELD_NAME_PREFIX_CODER + str( current_inner_index ) + column_name_suffix + " )"
                 sql_person_id_list.append( sql_temp_string )
                 
                 # add inequality comparison for type.
-                column_name_suffix = "_person_type"
-                sql_temp_string = "( coder" + str( current_outer_index ) + column_name_suffix + " != coder" + str( current_inner_index ) + column_name_suffix + " )"
+                column_name_suffix = "_" + cls.FIELD_NAME_SUFFIX_PERSON_TYPE
+                sql_temp_string = "( " + cls.FIELD_NAME_PREFIX_CODER + str( current_outer_index ) + column_name_suffix + " != " + cls.FIELD_NAME_PREFIX_CODER + str( current_inner_index ) + column_name_suffix + " )"
                 sql_person_type_list.append( sql_temp_string )
+                
+                # include optional?
+                if ( include_optional_IN == True ):
+                
+                    # add inequality comparison for first_quote_graf
+                    column_name_suffix = "_" + cls.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
+                    sql_temp_string = "( " + cls.FIELD_NAME_PREFIX_CODER + str( current_outer_index ) + column_name_suffix + " != " + cls.FIELD_NAME_PREFIX_CODER + str( current_inner_index ) + column_name_suffix + " )"
+                    sql_quote_graf_list.append( sql_temp_string )
+                
+                    # add inequality comparison for first_quote_index
+                    column_name_suffix = "_" + cls.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
+                    sql_temp_string = "( " + cls.FIELD_NAME_PREFIX_CODER + str( current_outer_index ) + column_name_suffix + " != " + cls.FIELD_NAME_PREFIX_CODER + str( current_inner_index ) + column_name_suffix + " )"
+                    sql_quote_index_list.append( sql_temp_string )
+                
+                    # add inequality comparison for organization_hash
+                    column_name_suffix = "_" + cls.FIELD_NAME_SUFFIX_ORGANIZATION_HASH
+                    sql_temp_string = "( " + cls.FIELD_NAME_PREFIX_CODER + str( current_outer_index ) + column_name_suffix + " != " + cls.FIELD_NAME_PREFIX_CODER + str( current_inner_index ) + column_name_suffix + " )"
+                    sql_org_hash_list.append( sql_temp_string )
+                                
+                #-- END check to see if include optional --#
 
             #-- END loop over rest of indices past current --#
         
@@ -288,6 +363,33 @@ class Reliability_Names( models.Model ):
         sql_temp_string = " OR ".join( sql_person_type_list )
         sql_string += " OR ( " + sql_temp_string + " )"
         
+        # got first_quote_graf?
+        if ( ( sql_quote_graf_list is not None ) and ( len( sql_quote_graf_list ) > 0 ) ):
+        
+            # append person type comparisons
+            sql_temp_string = " OR ".join( sql_person_type_list )
+            sql_string += " OR ( " + sql_temp_string + " )"
+            
+        #-- END check to see if first_quote_graf list --#
+            
+        # got first_quote_index?
+        if ( ( sql_quote_index_list is not None ) and ( len( sql_quote_index_list ) > 0 ) ):
+        
+            # append person type comparisons
+            sql_temp_string = " OR ".join( sql_quote_index_list )
+            sql_string += " OR ( " + sql_temp_string + " )"
+            
+        #-- END check to see if first_quote_graf list --#
+            
+        # got organization_hash?
+        if ( ( sql_org_hash_list is not None ) and ( len( sql_org_hash_list ) > 0 ) ):
+        
+            # append person type comparisons
+            sql_temp_string = " OR ".join( sql_org_hash_list )
+            sql_string += " OR ( " + sql_temp_string + " )"
+            
+        #-- END check to see if first_quote_graf list --#
+            
         # got a label?
         if ( ( my_label is not None ) and ( my_label != "" ) ):
 
@@ -398,7 +500,7 @@ class Reliability_Names( models.Model ):
     #-- END method __str__() --#
     
     
-    def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None ):
+    def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
         
         '''
         Accepts count of coders we want to  
@@ -420,6 +522,14 @@ class Reliability_Names( models.Model ):
         
         # init comparison suffix list
         comparison_suffix_list = self.DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST
+        
+        # include optional?
+        if ( include_optional_IN == True ):
+        
+            # Yes. add the optional list to our comparison suffix list.
+            comparison_suffix_list.extend( self.OPTIONAL_AGREEMENT_FIELD_SUFFIX_LIST )
+        
+        #-- END check to see if we include optional. --#
 
         # got coder_count_IN?
         if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( coder_count_IN > 2 ) ):
@@ -475,6 +585,305 @@ class Reliability_Names( models.Model ):
      
 
 #= END Reliability_Names model ===============================================#
+
+
+@python_2_unicode_compatible
+class Reliability_Names_Coder_Data( models.Model ):
+
+    '''
+    Class to hold information on name detection choices within a given article
+        for a given coder, for use in inter-coder reliability testing.  Making
+        this class now, but not using it - will eventually want to remove these
+        details from Reliability_Names, switch over to having a set of these
+        records per name if I continue to add fields to test.
+    '''
+
+    #----------------------------------------------------------------------
+    # constants-ish
+    #----------------------------------------------------------------------    
+
+
+    #----------------------------------------------------------------------
+    # model fields
+    #----------------------------------------------------------------------
+
+    # in Reliability_Names, so only one per person.
+    #article = models.ForeignKey( Article, blank = True, null = True )
+    #person = models.ForeignKey( Person, blank = True, null = True )
+    #person_name = models.CharField( max_length = 255, blank = True, null = True )
+    #person_type = models.CharField( max_length = 255, blank = True, null = True )
+    #label = models.CharField( max_length = 255, blank = True, null = True )
+
+    reliability_names = models.ForeignKey( Reliability_Names, blank = True, null = True )
+    coder = models.ForeignKey( User, blank = True, null = True )
+    coder_numeric_id = models.IntegerField( blank = True, null = True )
+    detected = models.IntegerField( blank = True, null = True )
+    person_id = models.IntegerField( blank = True, null = True )
+    person_type = models.CharField( max_length = 255, blank = True, null = True )
+    person_type_int = models.IntegerField( blank = True, null = True )
+    article_data_id = models.IntegerField( blank = True, null = True )
+    article_person_id = models.IntegerField( blank = True, null = True )
+    first_quote_graph = models.IntegerField( blank = True, null = True )
+    first_quote_index = models.IntegerField( blank = True, null = True )
+    organization_hash = models.CharField( max_length = 255, blank = True, null = True )
+    notes = models.TextField( blank = True, null = True )
+    create_date = models.DateTimeField( auto_now_add = True )
+    last_modified = models.DateTimeField( auto_now = True )
+
+
+    #----------------------------------------------------------------------------
+    # Meta class
+    #----------------------------------------------------------------------------
+
+    # Meta-data for this class.
+    class Meta:
+        ordering = [ 'reliability_names', 'coder', ]
+
+
+    #----------------------------------------------------------------------------
+    # class methods
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # instance methods
+    #----------------------------------------------------------------------------
+
+
+    def __str__( self ):
+
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        temp_string = ""
+        
+        # start with stuff we should always have.
+        if ( self.id ):
+        
+            string_OUT += str( self.id )
+            
+        #-- END check to see if ID. --#
+        
+        # got a label?
+        if ( self.reliability_names ):
+        
+            # got a label
+            string_OUT += " - Reliability_Names: " + str( self.reliability_names )
+            
+        #-- END check for label --#
+        
+        # got coder details?
+        if ( self.coder ):
+        
+            # yes.  Output a summary of coding.
+            string_OUT += " - coder: " + str( self.coder.id ) + "; " + str( self.detected ) + "; " + str( self.person_id )
+        
+        #-- END check to see if coder --#
+                
+        return string_OUT
+
+    #-- END method __str__() --#
+     
+
+#= END Reliability_Names_Coder_Data model =====================================#
+
+
+@python_2_unicode_compatible
+class Field_Spec( models.Model ):
+    
+    '''
+    Class to hold specification for a field, initially for the purposes of it
+        being compared for reliability.  Each field you compare will have:
+        - one or more tags (so you can group fields)
+        - a name
+        - data type (string, int, decimal, hex to start)
+        - a measurement level
+        - an optional number of values to choose from
+        - an optional set of potential/valid values.
+        
+    If this is used more broadly, will add columns as appropriate.
+    '''
+
+    #----------------------------------------------------------------------
+    # constants-ish
+    #----------------------------------------------------------------------    
+
+    # measurement levels
+    MEASUREMENT_LEVEL_NOMINAL = StatsHelper.MEASUREMENT_LEVEL_NOMINAL
+    MEASUREMENT_LEVEL_ORDINAL = StatsHelper.MEASUREMENT_LEVEL_ORDINAL
+    MEASUREMENT_LEVEL_INTERVAL = StatsHelper.MEASUREMENT_LEVEL_INTERVAL
+    MEASUREMENT_LEVEL_RATIO = StatsHelper.MEASUREMENT_LEVEL_RATIO
+
+    # data types
+    DATA_TYPE_DECIMAL = "decimal"
+    DATA_TYPE_HEX = "hex"         # hexadecimal integer
+    DATA_TYPE_INT = "int"
+    DATA_TYPE_STRING = "string"
+
+    #----------------------------------------------------------------------
+    # model fields
+    #----------------------------------------------------------------------
+
+    tags = TaggableManager( blank = True )
+    name = models.CharField( max_length = 255 )
+    data_type = models.CharField( max_length = 255, blank = True, null = True )
+    measurement_level = models.CharField( max_length = 255, blank = True, null = True )
+    value_count = models.IntegerField( blank = True, null = True )
+    notes = models.TextField( blank = True, null = True )
+    create_date = models.DateTimeField( auto_now_add = True )
+    last_modified = models.DateTimeField( auto_now = True )
+    
+    
+    #----------------------------------------------------------------------------
+    # Meta class
+    #----------------------------------------------------------------------------
+
+    # Meta-data for this class.
+    class Meta:
+        ordering = [ 'name', ]
+
+
+    #----------------------------------------------------------------------------
+    # class methods
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # instance methods
+    #----------------------------------------------------------------------------
+
+
+    def __str__( self ):
+
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        detail_list = []
+        temp_string = ""
+        
+        # start with stuff we should always have.
+        if ( self.id ):
+        
+            string_OUT += str( self.id )
+            
+        #-- END check to see if ID. --#
+        
+        # got a name?
+        if ( ( self.name is not None ) and ( self.name != "" ) ):
+        
+            # got a label
+            string_OUT += " - " + name
+            
+        #-- END check for name --#
+        
+        # got measurement_level?
+        if ( ( self.measurement_level is not None ) and ( self.measurement_level != "" ) ):
+        
+            # got one
+            detail_list.append( self.measurement_level )
+        
+        #-- END check for measurement level --#
+
+        # got data_type?
+        if ( ( self.data_type is not None ) and ( self.data_type != "" ) ):
+        
+            # got one
+            detail_list.append( self.data_type )
+        
+        #-- END check to see if coder --#
+        
+        # any details?
+        if ( len( detail_list ) > 0 ):
+        
+            # yes.  combine, separated by " ".
+            temp_string = " ".join( detail_list )
+            
+            # add to string.
+            string_OUT += " ( " + temp_string + " )"
+            
+        #-- END check to see if details --#
+                
+        return string_OUT
+
+    #-- END method __str__() --#
+
+    
+#= END Field_Spec model ================================================#
+
+
+@python_2_unicode_compatible
+class Field_Spec_Value( models.Model ):
+    
+    '''
+    Class to hold valid values for a given field.
+    '''
+
+    #----------------------------------------------------------------------
+    # constants-ish
+    #----------------------------------------------------------------------    
+
+    #----------------------------------------------------------------------
+    # model fields
+    #----------------------------------------------------------------------
+
+    field_spec = models.ForeignKey( Field_Spec )
+    value = models.CharField( max_length = 255 )
+    
+    #----------------------------------------------------------------------------
+    # Meta class
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # class methods
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # instance methods
+    #----------------------------------------------------------------------------
+
+
+    def __str__( self ):
+
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        detail_list = []
+        temp_string = ""
+        
+        # start with stuff we should always have.
+        if ( self.id ):
+        
+            string_OUT += str( self.id )
+            
+        #-- END check to see if ID. --#
+        
+        # got field_spec?
+        if ( self.field_spec ):
+        
+            # got one
+            string_OUT += " - Field Spec: " + str( self.field_spec )
+        
+        #-- END check for field_spec --#
+
+        # got a value?
+        if ( ( self.value is not None ) and ( self.value != "" ) ):
+        
+            # got a label
+            string_OUT += " - Value: " + name
+            
+        #-- END check for name --#
+        
+        return string_OUT
+
+    #-- END method __str__() --#
+
+
+#= END Field_Spec_Value model ================================================#
 
 
 @python_2_unicode_compatible
@@ -540,6 +949,18 @@ class Reliability_Names_Results( models.Model ):
     subject_type_non_zero_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
     subject_type_non_zero_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
     subject_type_non_zero_count = models.IntegerField( blank = True, null = True )
+    subject_first_quote_graf_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_first_quote_graf_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_first_quote_graf_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_first_quote_graf_count = models.IntegerField( blank = True, null = True )
+    subject_first_quote_index_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_first_quote_index_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_first_quote_index_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_first_quote_index_count = models.IntegerField( blank = True, null = True )
+    subject_organization_hash_percent = models.DecimalField( blank = True, null = True, max_digits=13, decimal_places=10 )
+    subject_organization_hash_alpha = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_organization_hash_pi = models.DecimalField( blank = True, null = True, max_digits=11, decimal_places=10 )
+    subject_organization_hash_count = models.IntegerField( blank = True, null = True )
     notes = models.TextField( blank = True, null = True )
     create_date = models.DateTimeField( auto_now_add = True )
     last_modified = models.DateTimeField( auto_now = True )
@@ -619,6 +1040,106 @@ class Reliability_Names_Results( models.Model ):
      
 
 #= END Reliability_Names_Results model ========================================#
+
+
+@python_2_unicode_compatible
+class Reliability_Result_Details( models.Model ):
+
+    '''
+    Class to hold agreement scores for comparisons between pairs of coders.
+        This model holds the results of one comparison.  For a given comparison,
+        you store the name of the comparison, the value calculated, and the
+        number of values compared.
+    '''
+
+    #----------------------------------------------------------------------
+    # constants-ish
+    #----------------------------------------------------------------------    
+
+
+    # comparison names
+    COMPARISON_NAME_PERCENT_AGREE = "percent_agree"
+    COMPARISON_NAME_KRIPP_ALPHA = "k_alpha"
+    COMPARISON_NAME_POTTER_PI = "p_pi"
+ 
+ 
+    #----------------------------------------------------------------------
+    # model fields
+    #----------------------------------------------------------------------
+
+
+    reliability_names_results = models.ForeignKey( Reliability_Names_Results )
+    field_spec = models.ForeignKey( Field_Spec )
+    comparison_name = models.CharField( max_length = 255, blank = True, null = True )
+    comparison_value = models.CharField( max_length = 255, blank = True, null = True )
+    case_count = models.IntegerField( blank = True, null = True )
+    notes = models.TextField( blank = True, null = True )
+    create_date = models.DateTimeField( auto_now_add = True )
+    last_modified = models.DateTimeField( auto_now = True )
+
+
+    #----------------------------------------------------------------------------
+    # Meta class
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # class methods
+    #----------------------------------------------------------------------------
+
+
+    #----------------------------------------------------------------------------
+    # instance methods
+    #----------------------------------------------------------------------------
+
+
+    def __str__( self ):
+
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        temp_string = ""
+        
+        # start with stuff we should always have.
+        if ( self.id ):
+        
+            string_OUT += str( self.id )
+            
+        #-- END check to see if ID. --#
+        
+        # got field_spec?
+        if ( self.field_spec ):
+        
+            # got one
+            string_OUT += " - Field Spec: " + str( self.field_spec )
+        
+        #-- END check for field_spec --#
+        
+        string_OUT += " - "
+
+        # got a comparison_name?
+        if ( ( self.comparison_name is not None ) and ( self.comparison_name != "" ) ):
+        
+            # got a label
+            string_OUT += self.comparison_name + " = "
+            
+        #-- END check for comparison_name --#
+        
+        # got a comparison_value?
+        if ( ( self.comparison_value is not None ) and ( self.comparison_value != "" ) ):
+        
+            # got a label
+            string_OUT += self.comparison_value
+            
+        #-- END check for comparison_value --#
+        
+        return string_OUT
+
+    #-- END method __str__() --#
+     
+
+#= END Reliability_Names_Result_Details model ========================================#
 
 
 @python_2_unicode_compatible

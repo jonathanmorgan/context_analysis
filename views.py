@@ -304,6 +304,14 @@ def reliability_names_disagreement_view( request_IN ):
                                 current_field_name = coder_string + "_person_type"
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_TYPE ] = getattr( reliability_names, current_field_name )
     
+                                # retrieve data - coder's first quote paragraph number
+                                current_field_name = coder_string + "_first_quote_graf"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_GRAF ] = getattr( reliability_names, current_field_name )
+    
+                                # retrieve data - coder's first quote index number
+                                current_field_name = coder_string + "_first_quote_index"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_INDEX ] = getattr( reliability_names, current_field_name )
+    
                                 # add to list.
                                 disagreement_details_list.append( disagreement_details_dict )
                             
