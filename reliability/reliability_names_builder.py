@@ -64,7 +64,7 @@ class ReliabilityNamesBuilder( object ):
     # PERSON_CODER_ID_LIST = "person_coder_id_list"
     
     # coder-specific person coding info map
-    PERSON_CODING_INFO_CODER_ID = Reliability_Names.FIELD_NAME_PREFIX_CODER_ID
+    PERSON_CODING_INFO_CODER_ID = Reliability_Names.FIELD_NAME_SUFFIX_CODER_ID
     PERSON_CODING_INFO_PERSON_TYPE = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
     PERSON_CODING_INFO_PERSON_TYPE_INT = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE_INT
     PERSON_CODING_INFO_ARTICLE_PERSON_ID = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID

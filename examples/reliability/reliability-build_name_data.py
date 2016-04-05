@@ -66,5 +66,5 @@ tag_list = [ "prelim_reliability_test", ]
 my_reliability_instance.process_articles( tag_list )
 
 # output to database.
-label = "prelim_reliability_test_001"
+label = "prelim_reliability_test"
 my_reliability_instance.output_reliability_data( label )

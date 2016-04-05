@@ -32,6 +32,6 @@ my_analysis_instance.db_host = "localhost"
 my_analysis_instance.db_name = "sourcenet"
 
 # run the analyze method, see what happens.
-label = "prelim_training_003"
+label = "prelim_reliability_test"
 indices_to_process = 3
 result_status = my_analysis_instance.analyze_reliability_names( label, indices_to_process )
