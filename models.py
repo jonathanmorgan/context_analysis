@@ -532,7 +532,7 @@ class Reliability_Names( models.Model ):
         #-- END check to see if we include optional. --#
 
         # got coder_count_IN?
-        if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( coder_count_IN > 2 ) ):
+        if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( int( coder_count_IN ) > 2 ) ):
         
             # yes, and is at least 2.  Use it.
             my_coder_count = int( coder_count_IN )
