@@ -101,6 +101,7 @@ class Reliability_Names( models.Model ):
     PROP_NAME_CODER_PERSON_TYPE = "coder_" + FIELD_NAME_SUFFIX_PERSON_TYPE
     PROP_NAME_CODER_FIRST_QUOTE_GRAF = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
     PROP_NAME_CODER_FIRST_QUOTE_INDEX = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
+    PROP_NAME_CODER_ORGANIZATION_HASH = "coder_" + FIELD_NAME_SUFFIX_ORGANIZATION_HASH
     
 
     #----------------------------------------------------------------------
@@ -273,7 +274,7 @@ class Reliability_Names( models.Model ):
         #-- END check to see if label --#
         
         # got coder_count_IN?
-        if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( coder_count_IN > 2 ) ):
+        if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( int( coder_count_IN ) > 2 ) ):
         
             # yes, and is at least 2.  Use it.
             my_coder_count = int( coder_count_IN )
@@ -500,14 +501,19 @@ class Reliability_Names( models.Model ):
     #-- END method __str__() --#
     
     
-    def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
+    def find_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
         
         '''
-        Accepts count of coders we want to  
+        Accepts count of coders we want to include in search for disagreements,
+            optional list of suffixes to examine, and if no list present,
+            another optional parameter that tells whether we want to include
+            non-essential fields (1st quote graf and index, and organization
+            hash).  Returns a list of suffixes where there was a disagreement.
+            If list is empty, no disagreement.
         '''
         
         # return reference
-        value_OUT = False
+        disagree_list_OUT = []
         
         # declare variables
         my_coder_count = -1
@@ -520,16 +526,28 @@ class Reliability_Names( models.Model ):
         field_value_1 = ""
         field_value_2 = ""
         
-        # init comparison suffix list
-        comparison_suffix_list = self.DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST
+        # got a suffix list passed in?
+        if ( comparison_suffix_list_IN is not None ):
         
-        # include optional?
-        if ( include_optional_IN == True ):
+            # yes - use it.
+            comparison_suffix_list = comparison_suffix_list_IN
+            
+        else:
         
-            # Yes. add the optional list to our comparison suffix list.
-            comparison_suffix_list.extend( self.OPTIONAL_AGREEMENT_FIELD_SUFFIX_LIST )
-        
-        #-- END check to see if we include optional. --#
+            # no.  Use default.
+            
+            # init comparison suffix list
+            comparison_suffix_list = self.DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST
+            
+            # include optional?
+            if ( include_optional_IN == True ):
+            
+                # Yes. add the optional list to our comparison suffix list.
+                comparison_suffix_list.extend( self.OPTIONAL_AGREEMENT_FIELD_SUFFIX_LIST )
+            
+            #-- END check to see if we include optional. --#
+            
+        #-- END check to see if suffix list passed in. --#
 
         # got coder_count_IN?
         if ( ( coder_count_IN is not None ) and ( coder_count_IN != "" ) and ( int( coder_count_IN ) > 2 ) ):
@@ -568,8 +586,14 @@ class Reliability_Names( models.Model ):
                     # check for disagreement.
                     if ( field_value_1 != field_value_2 ):
                     
-                        # not the same
-                        value_OUT = True
+                        # not the same - check to see if field_name_suffix is
+                        #     already in the list.
+                        if ( field_name_suffix not in disagree_list_OUT ):
+                        
+                            # add it to the list.
+                            disagree_list_OUT.append( field_name_suffix )
+                            
+                        #-- END check to see if suffix in list. --#
                     
                     #-- END check to see if values are the same --#
                 
@@ -578,6 +602,45 @@ class Reliability_Names( models.Model ):
             #-- END loop over rest of indices past current --#
         
         #-- END loop over coders to compare --#
+
+        return disagree_list_OUT
+        
+    #-- END method find_disagreement() --#
+     
+
+    def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
+        
+        '''
+        Accepts count of coders we want to include in search for disagreements,
+        
+        '''
+        
+        # return reference
+        value_OUT = False
+        
+        # declare variables
+        disagree_list = None
+        
+        # call find_disagreement to get list of suffixes where there is
+        #     disagreement.
+        disagree_list = self.find_disagreement( 
+                coder_count_IN = coder_count_IN,
+                comparison_suffix_list_IN = comparison_suffix_list_IN,
+                include_optional_IN = include_optional_IN
+            )
+            
+        # anything in list?  If so, disagreement.  If not, agree!
+        if ( ( disagree_list is not None ) and ( isinstance( disagree_list, list ) == True ) and ( len( disagree_list ) > 0 ) ):
+        
+            # list has something in it.  There is disagreement.  Return True.
+            value_OUT = True
+            
+        else:
+        
+            # nothing in disagreement list.  Return False.
+            value_OUT = False
+        
+        #-- END check to see if disagrement list has anything in it. --#
                 
         return value_OUT
         
@@ -716,10 +779,26 @@ class Field_Spec( models.Model ):
     MEASUREMENT_LEVEL_RATIO = StatsHelper.MEASUREMENT_LEVEL_RATIO
 
     # data types
+    DATA_TYPE_INTEGER = "integer"
     DATA_TYPE_DECIMAL = "decimal"
-    DATA_TYPE_HEX = "hex"         # hexadecimal integer
-    DATA_TYPE_INT = "int"
+    DATA_TYPE_HEX_HASH = "hex_hash"
     DATA_TYPE_STRING = "string"
+    DATA_TYPE_LIST = [ DATA_TYPE_INTEGER, DATA_TYPE_DECIMAL, DATA_TYPE_HEX_HASH, DATA_TYPE_STRING ]
+    DATA_TYPE_CHOICES = (
+        ( DATA_TYPE_INTEGER, "Integer" ),
+        ( DATA_TYPE_DECIMAL, "Decimal" ),
+        ( DATA_TYPE_HEX_HASH, "Hexadecimal Hash" ),
+        ( DATA_TYPE_STRING, "String" )
+    )
+    
+    # truncation directions:
+    TRUNCATE_FROM_LEFT = "left"
+    TRUNCATE_FROM_RIGHT = "right"
+    TRUNCATE_FROM_LIST = [ TRUNCATE_FROM_LEFT, TRUNCATE_FROM_RIGHT ]
+    TRUNCATE_FROM_CHOICES = (
+        ( TRUNCATE_FROM_LEFT, "Chop from left" ),
+        ( TRUNCATE_FROM_RIGHT, "Chop from right" )
+    )
 
     #----------------------------------------------------------------------
     # model fields
@@ -727,9 +806,12 @@ class Field_Spec( models.Model ):
 
     tags = TaggableManager( blank = True )
     name = models.CharField( max_length = 255 )
-    data_type = models.CharField( max_length = 255, blank = True, null = True )
+    data_type = models.CharField( max_length = 255, blank = True, null = True, choices = DATA_TYPE_CHOICES )
     measurement_level = models.CharField( max_length = 255, blank = True, null = True )
     value_count = models.IntegerField( blank = True, null = True )
+    integer_base = models.IntegerField( blank = True, null = True )
+    truncate_to_length = models.IntegerField( blank = True, null = True )
+    truncate_from = models.CharField( max_length = 255, blank = True, null = True, choices = TRUNCATE_FROM_CHOICES )
     notes = models.TextField( blank = True, null = True )
     create_date = models.DateTimeField( auto_now_add = True )
     last_modified = models.DateTimeField( auto_now = True )
@@ -906,6 +988,46 @@ class Reliability_Names_Results( models.Model ):
     #----------------------------------------------------------------------
     # constants-ish
     #----------------------------------------------------------------------    
+
+ 
+    # field name prefixes
+    PREFIX_AUTHOR = "author_"
+    PREFIX_SUBJECT = "subject_"
+    
+    # standard suffixes
+    SUFFIX_PERCENT = "_percent"
+    SUFFIX_ALPHA = "_alpha"
+    SUFFIX_PI = "_pi"
+    SUFFIX_COUNT = "_count"
+    
+    # field name suffixes
+    FIELD_DETECT_PERCENT = "detect_percent"
+    FIELD_DETECT_ALPHA = "detect_alpha"
+    FIELD_DETECT_PI = "detect_pi"
+    FIELD_LOOKUP_PERCENT = "lookup_percent"
+    FIELD_LOOKUP_ALPHA = "lookup_alpha"
+    FIELD_LOOKUP_NONZERO_PERCENT = "lookup_non_zero_percent"
+    FIELD_LOOKUP_NONZERO_ALPHA = "lookup_non_zero_alpha"
+    FIELD_LOOKUP_NONZERO_COUNT = "lookup_non_zero_count"
+    FIELD_TYPE_PERCENT = "type_percent"
+    FIELD_TYPE_PERCENT = "type_alpha"
+    FIELD_TYPE_PERCENT = "type_pi"
+    FIELD_TYPE_NONZERO_PERCENT = "type_non_zero_percent"
+    FIELD_TYPE_NONZERO_ALPHA = "type_non_zero_alpha"
+    FIELD_TYPE_NONZERO_PI = "type_non_zero_pi"
+    FIELD_TYPE_NONZERO_COUNT = "type_non_zero_count"
+    FIELD_FIRST_QUOTE_GRAF_PERCENT = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF + SUFFIX_PERCENT
+    FIELD_FIRST_QUOTE_GRAF_ALPHA = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF + SUFFIX_ALPHA
+    FIELD_FIRST_QUOTE_GRAF_PI = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF + SUFFIX_PI
+    FIELD_FIRST_QUOTE_GRAF_COUNT = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF + SUFFIX_COUNT
+    FIELD_FIRST_QUOTE_INDEX_PERCENT = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX + SUFFIX_PERCENT
+    FIELD_FIRST_QUOTE_INDEX_ALPHA = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX + SUFFIX_ALPHA
+    FIELD_FIRST_QUOTE_INDEX_PI = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX + SUFFIX_PI
+    FIELD_FIRST_QUOTE_INDEX_COUNT = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX + SUFFIX_COUNT
+    FIELD_ORGANIZATION_HASH_PERCENT = Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH + SUFFIX_PERCENT
+    FIELD_ORGANIZATION_HASH_ALPHA = Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH + SUFFIX_ALPHA
+    FIELD_ORGANIZATION_HASH_PI = Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH + SUFFIX_PI
+    FIELD_ORGANIZATION_HASH_COUNT = Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH + SUFFIX_COUNT
 
  
     #----------------------------------------------------------------------

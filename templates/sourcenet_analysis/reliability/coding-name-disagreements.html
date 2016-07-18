@@ -72,6 +72,7 @@
                                         <th>Person Type</th>
                                         <th>Quote Graf</th>
                                         <th>Quote Index</th>
+                                        <th>Org. Hash</th>
                                     </tr>
     
                                     {% for disagreement_details in names_instance.coder_details_list %}
@@ -83,6 +84,7 @@
                                             <td>{{ disagreement_details.coder_person_type }}</td>
                                             <td>{{ disagreement_details.coder_first_quote_graf }}</td>
                                             <td>{{ disagreement_details.coder_first_quote_index }}</td>
+                                            <td>{{ disagreement_details.coder_organization_hash }}</td>
                                         </tr>
     
                                     {% empty %}

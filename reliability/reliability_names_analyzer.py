@@ -38,9 +38,10 @@ import psycopg2.extensions
 import pyRserve
 
 # python_utilities
+from python_utilities.analysis.statistics.stats_helper import StatsHelper
+from python_utilities.exceptions.exception_helper import ExceptionHelper
 from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.R.rserve_helper import RserveHelper
-from python_utilities.analysis.statistics.stats_helper import StatsHelper
 
 # python package imports
 import six
@@ -78,6 +79,9 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     COLUMN_NAME_SUFFIX_DETECTED = "_" + Reliability_Names.FIELD_NAME_SUFFIX_DETECTED
     COLUMN_NAME_SUFFIX_PERSON_ID = "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_ID
     COLUMN_NAME_SUFFIX_PERSON_TYPE_INT = "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE_INT
+    COLUMN_NAME_SUFFIX_FIRST_QUOTE_GRAF = "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
+    COLUMN_NAME_SUFFIX_FIRST_QUOTE_INDEX = "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
+    COLUMN_NAME_SUFFIX_ORGANIZATION_HASH = "_" + Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH
     COLUMN_NAME_PREFIX_CODER = Reliability_Names.FIELD_NAME_PREFIX_CODER
     
     # column names in Reliability_Names_Results table
@@ -86,12 +90,15 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     RESULTS_COLUMN_NAME_LOOKUP_NON_ZERO = "lookup_non_zero"
     RESULTS_COLUMN_NAME_TYPE = "type"
     RESULTS_COLUMN_NAME_TYPE_NON_ZERO = "type_non_zero"
-    RESULTS_COLUMN_NAME_SUFFIX_PERCENT = "_percent"
-    RESULTS_COLUMN_NAME_SUFFIX_ALPHA = "_alpha"
-    RESULTS_COLUMN_NAME_SUFFIX_PI = "_pi"
-    RESULTS_COLUMN_NAME_SUFFIX_COUNT = "_count"
-    RESULTS_COLUMN_NAME_PREFIX_AUTHOR = "author_"
-    RESULTS_COLUMN_NAME_PREFIX_SUBJECT = "subject_"
+    RESULTS_COLUMN_NAME_FIRST_QUOTE_GRAF = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
+    RESULTS_COLUMN_NAME_FIRST_QUOTE_INDEX = Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
+    RESULTS_COLUMN_NAME_ORGANIZATION_HASH = Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH
+    RESULTS_COLUMN_NAME_SUFFIX_PERCENT = Reliability_Names_Results.SUFFIX_PERCENT  # "_percent"
+    RESULTS_COLUMN_NAME_SUFFIX_ALPHA = Reliability_Names_Results.SUFFIX_ALPHA  # "_alpha"
+    RESULTS_COLUMN_NAME_SUFFIX_PI = Reliability_Names_Results.SUFFIX_PI  # "_pi"
+    RESULTS_COLUMN_NAME_SUFFIX_COUNT = Reliability_Names_Results.SUFFIX_COUNT  # "_count"
+    RESULTS_COLUMN_NAME_PREFIX_AUTHOR = Reliability_Names_Results.PREFIX_AUTHOR  # "author_"
+    RESULTS_COLUMN_NAME_PREFIX_SUBJECT = Reliability_Names_Results.PREFIX_SUBJECT  # "subject_"
     RESULTS_COLUMN_NAME_PREFIX_LIST = [ RESULTS_COLUMN_NAME_PREFIX_AUTHOR, RESULTS_COLUMN_NAME_PREFIX_SUBJECT ]
     
     # names of things in self.columns_to_compare (column info).
@@ -99,6 +106,10 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     CTC_COLUMN_MEASUREMENT_LEVEL = "measurement_level"
     CTC_COLUMN_VALUE_COUNT = "value_count"
     CTC_RESULT_COLUMN_NAME = "result_column_name"
+    CTC_COLUMN_INTEGER_BASE = "integer_base"
+    CTC_COLUMN_DATA_TYPE = "data_type"
+    CTC_TRUNCATE_TO_LENGTH = "truncate_to_length"  # desired size of truncate result.
+    CTC_TRUNCATE_FROM = "truncate_from"  # truncate from right or left side of values.
     
     # person types
     PERSON_TYPE_AUTHOR = RESULTS_COLUMN_NAME_PREFIX_AUTHOR
@@ -110,6 +121,17 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     MEASUREMENT_LEVEL_ORDINAL = StatsHelper.MEASUREMENT_LEVEL_ORDINAL
     MEASUREMENT_LEVEL_INTERVAL = StatsHelper.MEASUREMENT_LEVEL_INTERVAL
     MEASUREMENT_LEVEL_RATIO = StatsHelper.MEASUREMENT_LEVEL_RATIO
+    
+    # data types
+    DATA_TYPE_INTEGER = "integer"
+    DATA_TYPE_DECIMAL = "decimal"
+    DATA_TYPE_HEX_HASH = "hex_hash"
+    DATA_TYPE_LIST = [ DATA_TYPE_INTEGER, DATA_TYPE_DECIMAL, DATA_TYPE_HEX_HASH ]
+    
+    # truncation directions:
+    TRUNCATE_FROM_LEFT = "left"
+    TRUNCATE_FROM_RIGHT = "right"
+    TRUNCATE_FROM_LIST = [ TRUNCATE_FROM_LEFT, TRUNCATE_FROM_RIGHT ]
 
     # pre-built column info
     
@@ -117,43 +139,85 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
     COLUMN_INFO_DETECTED = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_DETECTED,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
-        CTC_COLUMN_VALUE_COUNT : "2",
-        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_DETECT
+        CTC_COLUMN_VALUE_COUNT : 2,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_DETECT,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
     }    
 
     # Reliability_Names.coderX_person_id (0s included)
     COLUMN_INFO_PERSON_ID_LOOKUP = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_ID,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
-        CTC_COLUMN_VALUE_COUNT : "-1",
-        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_LOOKUP
+        CTC_COLUMN_VALUE_COUNT : -1,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_LOOKUP,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
     }
     
     # Reliability_Names.coderX_person_id (no 0s)
     COLUMN_INFO_PERSON_ID_LOOKUP_NON_ZERO = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_ID,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
-        CTC_COLUMN_VALUE_COUNT : "-1",
-        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_LOOKUP_NON_ZERO
+        CTC_COLUMN_VALUE_COUNT : -1,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_LOOKUP_NON_ZERO,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
     }
     
-    # Reliability_Names.coderx_person_type_int (0s included)
+    # Reliability_Names.coderX_person_type_int (0s included)
     COLUMN_INFO_PERSON_TYPE_INT = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_TYPE_INT,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
-        CTC_COLUMN_VALUE_COUNT : "4",
-        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_TYPE
+        CTC_COLUMN_VALUE_COUNT : 4,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_TYPE,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
     }
     
-    # Reliability_Names.coderx_person_type_int (no 0s)
+    # Reliability_Names.coderX_person_type_int (no 0s)
     COLUMN_INFO_PERSON_TYPE_INT_NON_ZERO = {
         CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_PERSON_TYPE_INT,
         CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
-        CTC_COLUMN_VALUE_COUNT : "3",
-        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_TYPE_NON_ZERO
+        CTC_COLUMN_VALUE_COUNT : 3,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_TYPE_NON_ZERO,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
     }
     
-    DEFAULT_COLUMN_INFO_LIST = [ COLUMN_INFO_DETECTED, COLUMN_INFO_PERSON_ID_LOOKUP, COLUMN_INFO_PERSON_TYPE_INT ]
+    # Reliability_Names.coderX_first_quote_graf
+    COLUMN_INFO_FIRST_QUOTE_GRAF = {
+        CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_FIRST_QUOTE_GRAF,
+        CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
+        CTC_COLUMN_VALUE_COUNT : -1,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_FIRST_QUOTE_GRAF,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
+    }
+    
+    # Reliability_Names.coder1_first_quote_index
+    COLUMN_INFO_FIRST_QUOTE_INDEX = {
+        CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_FIRST_QUOTE_INDEX,
+        CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
+        CTC_COLUMN_VALUE_COUNT : -1,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_FIRST_QUOTE_INDEX,
+        CTC_COLUMN_INTEGER_BASE : 10,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_INTEGER
+    }
+    
+    # Reliability_Names.coder1_organization_hash
+    COLUMN_INFO_ORGANIZATION_HASH = {
+        CTC_COLUMN_NAME_SUFFIX : COLUMN_NAME_SUFFIX_ORGANIZATION_HASH,
+        CTC_COLUMN_MEASUREMENT_LEVEL : MEASUREMENT_LEVEL_NOMINAL,
+        CTC_COLUMN_VALUE_COUNT : -1,
+        CTC_RESULT_COLUMN_NAME : RESULTS_COLUMN_NAME_ORGANIZATION_HASH,
+        CTC_COLUMN_INTEGER_BASE : 16,
+        CTC_COLUMN_DATA_TYPE : DATA_TYPE_HEX_HASH,
+        CTC_TRUNCATE_TO_LENGTH : 7, # R has a limit on integers - must be under ( 2 ^ 31 ) - 1
+        CTC_TRUNCATE_FROM : TRUNCATE_FROM_LEFT
+    }
+    
+    DEFAULT_COLUMN_INFO_LIST = [ COLUMN_INFO_DETECTED, COLUMN_INFO_PERSON_ID_LOOKUP, COLUMN_INFO_PERSON_TYPE_INT, COLUMN_INFO_FIRST_QUOTE_GRAF, COLUMN_INFO_FIRST_QUOTE_INDEX, COLUMN_INFO_ORGANIZATION_HASH ]
 
     
     #---------------------------------------------------------------------------
@@ -208,6 +272,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         # declare variables
         me = "ReliabilityNamesAnalyzer.analyze_column"
         my_logger = None
+        debug_message = ""
         current_index = -1
         comparison_index = -1
         person_df = None
@@ -217,6 +282,13 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         current_column_level = ""
         current_column_value_count = -1
         current_column_result_name = ""
+        current_column_integer_base = -1
+        current_column_data_type = ""
+        current_column_truncate_to_length = ""
+        current_column_truncate_from = ""
+        chop_from = ""
+        chop_result_size = -1
+        chop_lambda = None
         compare_column_name_1 = ""
         compare_column_name_2 = ""
         compare_values_1 = ""
@@ -276,12 +348,22 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                                 column_name_prefix = column_name_prefix_IN
                             
                                 # unpack column info
-                                current_column_name_suffix = current_column_info[ self.CTC_COLUMN_NAME_SUFFIX ]
-                                current_column_level = current_column_info[ self.CTC_COLUMN_MEASUREMENT_LEVEL ]
-                                current_column_value_count = current_column_info[ self.CTC_COLUMN_VALUE_COUNT ]
-                                current_column_result_name = current_column_info[ self.CTC_RESULT_COLUMN_NAME ]
-                                print( "======> current_column_name_suffix = " + str( current_column_name_suffix ) )
-                                print( "======> current_column_result_name = " + str( current_column_result_name ) )
+                                current_column_name_suffix = current_column_info.get( self.CTC_COLUMN_NAME_SUFFIX, None )
+                                current_column_level = current_column_info.get( self.CTC_COLUMN_MEASUREMENT_LEVEL, None )
+                                current_column_value_count = current_column_info.get( self.CTC_COLUMN_VALUE_COUNT, None )
+                                current_column_result_name = current_column_info.get( self.CTC_RESULT_COLUMN_NAME, None )
+                                current_column_integer_base = current_column_info.get( self.CTC_COLUMN_INTEGER_BASE, None )
+                                current_column_data_type = current_column_info.get( self.CTC_COLUMN_DATA_TYPE, None )
+                                current_column_truncate_to_length = current_column_info.get( self.CTC_TRUNCATE_TO_LENGTH, None )
+                                current_column_truncate_from = current_column_info.get( self.CTC_TRUNCATE_FROM, None )
+
+                                debug_message = "====> current_column_name_suffix = " + str( current_column_name_suffix )
+                                print( debug_message )
+                                self.output_debug_message( debug_message, method_IN = me )
+
+                                debug_message = "====> current_column_result_name = " + str( current_column_result_name )
+                                print( debug_message )
+                                self.output_debug_message( debug_message, method_IN = me )
 
                                 # build result column name prefix
                                 result_column_prefix = column_name_prefix_IN + current_column_result_name
@@ -291,31 +373,106 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                                 compare_column_name_1 = self.COLUMN_NAME_PREFIX_CODER + str( current_index ) + current_column_name_suffix
                                 compare_column_name_2 = self.COLUMN_NAME_PREFIX_CODER + str( comparison_index ) + current_column_name_suffix
                                 
-                                print( "======> compare_column_name_1 = " + str( compare_column_name_1 ) )
-                                print( "======> compare_column_name_2 = " + str( compare_column_name_2 ) )
+                                debug_message = "======> compare_column_name_1 = " + str( compare_column_name_1 )
+                                print( debug_message )
+                                self.output_debug_message( debug_message, method_IN = me )
+
+                                debug_message = "======> compare_column_name_2 = " + str( compare_column_name_2 )
+                                print( debug_message )
+                                self.output_debug_message( debug_message, method_IN = me )
                 
                                 # retrieve numpy arrays of column values.
                                 compare_values_1 = person_df[ compare_column_name_1 ]
                                 compare_values_2 = person_df[ compare_column_name_2 ]
                                 
-                                #print( "======> compare_values_1 = " + str( compare_values_1 ) )
-                                #print( "======> compare_values_2 = " + str( compare_values_2 ) )
-                
+                                debug_message = "========> compare_values_1 ( type = " + str( type ( compare_values_1 ) ) + " ) = " + str( compare_values_1 )
+                                self.output_debug_message( debug_message, method_IN = me )
+                                
+                                debug_message = "========> compare_values_2 ( type = " + str( type ( compare_values_2 ) ) + " ) = " + str( compare_values_2 )
+                                self.output_debug_message( debug_message, method_IN = me )
+                                
+                                # check if there is a column data type.
+                                if ( ( current_column_data_type is not None )
+                                    and ( current_column_data_type != "" )
+                                    and ( current_column_data_type in self.DATA_TYPE_LIST ) ):
+                                    
+                                    # got a hexadecimal hash value we need to
+                                    #     convert to base 10 integer?
+                                    if ( current_column_data_type == self.DATA_TYPE_HEX_HASH ):
+                                    
+                                        # convert any None to "-1".
+                                        #compare_values_1.fillna( "-1" )
+                                        compare_values_1[ compare_values_1.isnull() ] = "-1"
+                                        #compare_values_2.fillna( "-1" )
+                                        compare_values_2[ compare_values_2.isnull() ] = "-1"
+
+                                        # truncate?
+                                        if ( ( current_column_truncate_to_length is not None )
+                                            and ( int( current_column_truncate_to_length ) > 0 ) ):
+                                            
+                                            # chop from left or right?
+                                            if ( current_column_truncate_from == self.TRUNCATE_FROM_LEFT ):
+                                            
+                                                # chop from left side.
+                                                chop_from = self.TRUNCATE_FROM_LEFT
+                                                chop_result_size = -1 * current_column_truncate_to_length
+                                                chop_lambda = lambda x: x[ chop_result_size : ]
+
+                                            elif ( current_column_truncate_from == self.TRUNCATE_FROM_RIGHT ):
+                                            
+                                                # chop from the right.
+                                                chop_from = self.TRUNCATE_FROM_RIGHT
+                                                chop_result_size = current_column_truncate_to_length
+                                                chop_lambda = lambda x: x[ : chop_result_size ]
+                                            
+                                            else:
+                                            
+                                                # chop from left side.
+                                                chop_from = self.TRUNCATE_FROM_LEFT
+                                                chop_result_size = -1 * current_column_truncate_to_length
+                                                chop_lambda = lambda x: x[ chop_result_size : ]
+                                                
+                                            #-- END CHECK To see what end of string we truncate from. --#
+                                            
+                                            compare_values_1 = compare_values_1.apply( chop_lambda )
+                                            compare_values_2 = compare_values_2.apply( chop_lambda )
+
+                                        #-- END check to see if we truncate. --#
+                                        
+                                        # convert to base 10 integer.
+                                        compare_values_1 = compare_values_1.apply( int, args = ( 16, ) )
+                                        # compare_values_1 = compare_values_1.astype( numpy.uint64 ) # R doesn't know what data type uint64 corresponds to.
+                                        compare_values_1 = compare_values_1.astype( numpy.int64 )
+                                        compare_values_2 = compare_values_2.apply( int, args = ( 16, ) )
+                                        compare_values_2 = compare_values_2.astype( numpy.int64 )
+
+                                        debug_message = "========> (in hex hash type) compare_values_1 ( type = " + str( type ( compare_values_1 ) ) + " ) = " + str( compare_values_1 )
+                                        self.output_debug_message( debug_message, method_IN = me )
+
+                                        debug_message = "========> (in hex hash type) compare_values_2 ( type = " + str( type ( compare_values_2 ) ) + " ) = " + str( compare_values_2 )
+                                        self.output_debug_message( debug_message, method_IN = me )
+                                        
+                                    #-- END check to see if hex hash type. --#
+                                    
+                                #-- END check to see if data type. --#
+                                    
                                 # for each type, get columns/numpy arrays for fields we want to check, then:
                 
                                 # ==> Pearson correlation coefficient
                                 #correlation_result = scipy.stats.stats.pearsonr( compare_values_1, compare_values_2 )
                                 #print( "========> correlation = " + str( correlation_result ) )
                                 
-                                # ==> percent agreement
+                                # ! ==> percent agreement
                                 percentage_agreement = StatsHelper.percentage_agreement( compare_values_1, compare_values_2 )
-                                print( "========> percentage_agreement = " + str( percentage_agreement ) )
+                                debug_message = "========> percentage_agreement = " + str( percentage_agreement )
+                                print( debug_message )
+                                self.output_debug_message( debug_message, method_IN = me )
                                 
                                 # add to results
                                 result_column_name = result_column_prefix + self.RESULTS_COLUMN_NAME_SUFFIX_PERCENT
                                 setattr( instance_OUT, result_column_name, percentage_agreement )
                                 
-                                # ==> krippendorff's alpha at appropriate measurement level.
+                                # ! ==> krippendorff's alpha at appropriate measurement level.
                                 # - first, try in R.
                                 
                                 # combine values into a dataframe
@@ -339,13 +496,16 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                                 
                                 # get alpha value from result.
                                 R_kripp_alpha = kripp_alpha_result[ str( "value" ) ]
-                                print( "========> R irr::kripp.alpha = " + str( R_kripp_alpha ) )
+
+                                debug_message = "========> R irr::kripp.alpha = " + str( R_kripp_alpha )
+                                print( debug_message )
+                                self.output_debug_message( debug_message, method_IN = me )
                                 
                                 # add to results
                                 result_column_name = result_column_prefix + self.RESULTS_COLUMN_NAME_SUFFIX_ALPHA
                                 setattr( instance_OUT, result_column_name, R_kripp_alpha )
                                 
-                                # ==> if necessary, modified Scott's Pi.
+                                # ! ==> if necessary, modified Scott's Pi.
                                 # see if there is a count of values.
                                 if ( ( current_column_value_count is not None ) and ( current_column_value_count != "" ) and ( current_column_value_count > 0 ) ):
                                 
@@ -355,7 +515,10 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                                         # and we are nominal.  Potter's Pi!
                                         my_indices_to_compare = self.indices_to_compare
                                         potter_pi = StatsHelper.potter_pi( compare_values_1, compare_values_2, coder_count_IN = int( my_indices_to_compare ), option_count_IN = int( current_column_value_count ) )
-                                        print( "========> Potter's Pi = " + str( potter_pi ) )
+
+                                        debug_message = "========> Potter's Pi = " + str( potter_pi )
+                                        print( debug_message )
+                                        self.output_debug_message( debug_message, method_IN = me )
                                         
                                         # add to results
                                         result_column_name = result_column_prefix + self.RESULTS_COLUMN_NAME_SUFFIX_PI
@@ -368,7 +531,8 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                             else:
                             
                                 # no column name prefix passed in.
-                                self.output_debug_message( "No column name prefix passed in, won't be able to place results in correct columns in results table.", method_IN = me )
+                                debug_message = "No column name prefix passed in, won't be able to place results in correct columns in results table."
+                                self.output_debug_message( debug_message, method_IN = me )
                                 instance_OUT = None
                             
                             #-- END check to see if results instance passed in. --#
@@ -376,7 +540,8 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                         else:
                         
                             # no results instance passed in.
-                            self.output_debug_message( "No results instance passed in, no place to store results.", method_IN = me )
+                            debug_message = "No results instance passed in, no place to store results."
+                            self.output_debug_message( debug_message, method_IN = me )
                             instance_OUT = None
                         
                         #-- END check to see if results instance passed in. --#
@@ -384,7 +549,8 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                     else:
                     
                         # no column info passed in.
-                        self.output_debug_message( "No column info passed in, no idea what column we want to analyze.", method_IN = me )
+                        debug_message = "No column info passed in, no idea what column we want to analyze."
+                        self.output_debug_message( debug_message, method_IN = me )
                         instance_OUT = None
                             
                     #-- END check to see if column info passed in. --#
@@ -392,7 +558,8 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                 else:
                 
                     # no data frame passed in.
-                    self.output_debug_message( "No data frame passed in, no data to compare.", method_IN = me )
+                    debug_message = "No data frame passed in, no data to compare."
+                    self.output_debug_message( debug_message, method_IN = me )
                     instance_OUT = None
                         
                 #-- END check to see if column info passed in. --#
@@ -400,7 +567,8 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
             else:
             
                 # no index_2_IN.
-                self.output_debug_message( "No 2nd index value passed in, nothing to compare.", method_IN = me )
+                debug_message = "No 2nd index value passed in, nothing to compare."
+                self.output_debug_message( debug_message, method_IN = me )
                 instance_OUT = None
             
             #-- END check to see if results instance passed in. --#
@@ -408,7 +576,8 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         else:
         
             # no index_1_IN.
-            self.output_debug_message( "No 1st index value passed in, nothing to compare.", method_IN = me )
+            debug_message = "No 1st index value passed in, nothing to compare."
+            self.output_debug_message( debug_message, method_IN = me )
             instance_OUT = None
                 
         #-- END check to see if column info passed in. --#
@@ -546,7 +715,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                             person_type_no_zeros_df = person_df_IN[ ( person_df_IN[ column_name_person_id_1 ] > 0 ) & ( person_df_IN[ column_name_person_id_2 ] > 0 ) ]
     
                             # then, call analyze_column() with column_info for
-                            #     person lookup, rather than combined.
+                            #     person type, rather than combined.
                             instance_OUT = self.analyze_column( index_1_IN,
                                                                 index_2_IN,
                                                                 person_type_no_zeros_df,
@@ -678,85 +847,109 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
             
                 # yes - switch over to SQLAlchemy and pandas.
         
+                self.output_debug_message( "Selected label: " + selected_label, method_IN = me )
+                
                 # escape out any illegal characters (PostgreSQL-specific).
                 cleaned_label = psycopg2.extensions.adapt( selected_label ).getquoted()
+                
+                self.output_debug_message( "Cleaned label: " + str( cleaned_label ), method_IN = me )
+                
+                # Convert to unicode?
+                cleaned_label = cleaned_label.decode()
+                
+                self.output_debug_message( "Cleaned Unicode label: " + str( cleaned_label ), method_IN = me )
             
-                # yes - set up database credentials
-                db_username = self.db_username
-                db_password = self.db_password
-                db_host = self.db_host
-                db_name = self.db_name
-                
-                # Create SQLAlchemy database engine for pandas.
-                pandas_db = sqlalchemy.create_engine( "postgresql://%s:%s@%s/%s" % ( db_username, db_password, db_host, db_name ) )
-                
-                # create SQL to load data from database into pandas data frame.
-                reliability_names_sql = "SELECT * FROM sourcenet_analysis_reliability_names WHERE label = %s" % ( cleaned_label )
-                
-                # load the data
-                reliability_names_df = pandas.read_sql_query( reliability_names_sql, pandas_db, parse_dates = [ 'create_date', 'last_modified' ] )
-                
-                # store coder info
-                self.store_coder_info( reliability_names_df, indices_to_compare )
-                
-                # break out into author and subject.
-                author_df = reliability_names_df[ reliability_names_df[ "person_type" ] == ManualArticleCoder.PERSON_TYPE_AUTHOR ]
-                subject_df = reliability_names_df[ reliability_names_df[ "person_type" ] == ManualArticleCoder.PERSON_TYPE_SUBJECT ]
-                
-                # loop over indices to compare
-                for current_index in range( 1, indices_to_compare + 1 ):
-                
-                    print( "==> current index = " + str( current_index ) )
-                
-                    # now, get comparison index
-                    for comparison_index in range( current_index + 1, indices_to_compare + 1 ):
+                try:
+            
+                    # yes - set up database credentials
+                    db_username = self.db_username
+                    db_password = self.db_password
+                    db_host = self.db_host
+                    db_name = self.db_name
                     
-                        print( "====> comparison index = " + str( comparison_index ) )
-                
-                        # ! pair-wise comparison
-                        
-                        # create results instance to hold results.
-                        results_instance = Reliability_Names_Results()
-                        
-                        # populate general information
-                        results_instance.label = selected_label
-                        results_instance.coder1_coder_index = current_index
-                        results_instance.coder2_coder_index = comparison_index
-                        
-                        # user instances
-                        coder_1_user = self.get_coder_for_index( current_index )
-                        results_instance.coder1 = coder_1_user
-                        coder_2_user = self.get_coder_for_index( comparison_index )
-                        results_instance.coder2 = coder_2_user
-        
-                        # ! author
-                        current_person_type = self.PERSON_TYPE_AUTHOR
-                        
-                        # call analyze_person_coding()
-                        results_instance = self.analyze_person_coding( current_index,
-                                                                       comparison_index,
-                                                                       author_df,
-                                                                       current_person_type,
-                                                                       results_instance )
-        
-                        # ! subject
-                        current_person_type = self.PERSON_TYPE_SUBJECT
-                        
-                        # call analyze_person_coding()
-                        results_instance = self.analyze_person_coding( current_index,
-                                                                       comparison_index,
-                                                                       subject_df,
-                                                                       current_person_type,
-                                                                       results_instance )
-                                                                       
-                        # save the results.
-                        results_instance.save()
-
-                    #-- END loop over comparison indices --#
+                    # Create SQLAlchemy database engine for pandas.
+                    pandas_db = sqlalchemy.create_engine( "postgresql://%s:%s@%s/%s" % ( db_username, db_password, db_host, db_name ) )
                     
-                #-- END loop over indices --#
+                    # create SQL to load data from database into pandas data frame.
+                    reliability_names_sql = "SELECT * FROM sourcenet_analysis_reliability_names WHERE label = %s" % ( cleaned_label )
+    
+                    self.output_debug_message( "Reliability_Names SQL Query: " + reliability_names_sql, method_IN = me )
+                    
+                    # load the data
+                    reliability_names_df = pandas.read_sql_query( reliability_names_sql, pandas_db, parse_dates = [ 'create_date', 'last_modified' ] )
+                    
+                    # store coder info
+                    self.store_coder_info( reliability_names_df, indices_to_compare )
+                    
+                    # break out into author and subject.
+                    author_df = reliability_names_df[ reliability_names_df[ "person_type" ] == ManualArticleCoder.PERSON_TYPE_AUTHOR ]
+                    subject_df = reliability_names_df[ reliability_names_df[ "person_type" ] == ManualArticleCoder.PERSON_TYPE_SUBJECT ]
+                    
+                    # loop over indices to compare
+                    for current_index in range( 1, indices_to_compare + 1 ):
+                    
+                        print( "==> current index = " + str( current_index ) )
+                    
+                        # now, get comparison index
+                        for comparison_index in range( current_index + 1, indices_to_compare + 1 ):
+                        
+                            print( "====> comparison index = " + str( comparison_index ) )
+                    
+                            # ! pair-wise comparison
+                            
+                            # create results instance to hold results.
+                            results_instance = Reliability_Names_Results()
+                            
+                            # populate general information
+                            results_instance.label = selected_label
+                            results_instance.coder1_coder_index = current_index
+                            results_instance.coder2_coder_index = comparison_index
+                            
+                            # user instances
+                            coder_1_user = self.get_coder_for_index( current_index )
+                            results_instance.coder1 = coder_1_user
+                            coder_2_user = self.get_coder_for_index( comparison_index )
+                            results_instance.coder2 = coder_2_user
+            
+                            # ! author
+                            current_person_type = self.PERSON_TYPE_AUTHOR
+                            
+                            # call analyze_person_coding()
+                            results_instance = self.analyze_person_coding( current_index,
+                                                                           comparison_index,
+                                                                           author_df,
+                                                                           current_person_type,
+                                                                           results_instance )
+            
+                            # ! subject
+                            current_person_type = self.PERSON_TYPE_SUBJECT
+                            
+                            # call analyze_person_coding()
+                            results_instance = self.analyze_person_coding( current_index,
+                                                                           comparison_index,
+                                                                           subject_df,
+                                                                           current_person_type,
+                                                                           results_instance )
+                                                                           
+                            # save the results.
+                            results_instance.save()
+    
+                        #-- END loop over comparison indices --#
+                        
+                    #-- END loop over indices --#
+                    
+                    # ==> optionally, use pandas to output Excel.
+                    
+                except Exception as e:
                 
-                # ==> optionally, use pandas to output Excel.
+                    # use ExceptionHelper to process the exception.
+                    self.process_exception( e, message_IN = "Exception caught in " + me )
+                    
+                    status_OUT = "Exception caught: " + str( e )
+                    
+                    self.output_debug_message( "In " + me + "(): " + status_OUT )
+                
+                #-- END try-except around database and R access --#
         
             else:
             

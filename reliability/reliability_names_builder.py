@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from __future__ import division
 
 '''
 Copyright 2016 Jonathan Morgan
@@ -141,12 +142,10 @@ class ReliabilityNamesBuilder( object ):
             if ( ( label_IN is not None ) and ( label_IN != "" ) ):
             
                 # got what we need.  Process articles.
-                tag_list = [ "prelim_training_003", ]
-                my_reliability_instance.process_articles( tag_list )
+                my_reliability_instance.process_articles( tag_list_IN )
 
                 # output to database.
-                label = "prelim_training_003"
-                my_reliability_instance.output_reliability_data( label )
+                my_reliability_instance.output_reliability_data( label_IN )
                 
             else:
             

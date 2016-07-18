@@ -23,7 +23,11 @@
             {% csrf_token %}
                             
             {# output reliability names results form #}
-            {{ reliability_names_results_form.as_p }}
+            <p>
+                <table class="gridTable">
+                    {{ reliability_names_results_form.as_table }}
+                </table>
+            </p>
 
             <p>
                 <input type="submit" />
@@ -104,6 +108,41 @@
                     <tr>No Reliability_Names_Results found for label {{ reliability_names_results_label }}.</tr>
 
                 {% endfor %}
+                
+                {% if average_dictionary %}
+                                
+                    <tr>
+                        <td><strong>Averages:</strong></td>
+                        <td></td> <!-- results_instance.id -->
+                        <td></td> <!-- results_instance.coder1_coder_index -->
+                        <td></td> <!-- results_instance.coder2_coder_index -->
+                        <td></td> <!-- results_instance.coder1.id -->
+                        <td></td> <!-- results_instance.coder2.id -->
+                        <td>{{ average_dictionary.author_count }}</td>
+                        <td>{{ average_dictionary.author_detect_percent }}</td>
+                        <td>{{ average_dictionary.author_detect_alpha }}</td>
+                        <td>{{ average_dictionary.author_detect_pi }}</td>
+                        <!-- Lookup -->
+                        <td>{{ average_dictionary.author_lookup_percent }}</td>
+                        <td>{{ average_dictionary.author_lookup_alpha }}</td>
+                        <!-- Lookup Limited to Non-Zero (both detect) -->
+                        <td>{{ average_dictionary.author_lookup_non_zero_percent }}</td>
+                        <td>{{ average_dictionary.author_lookup_non_zero_alpha }}</td>
+                        <td>{{ average_dictionary.author_lookup_non_zero_count }}</td>
+                        <td>{{ average_dictionary.author_type_percent }}</td>
+                        <td>{{ average_dictionary.author_type_alpha }}</td>
+                        <td>{{ average_dictionary.author_type_pi }}</td>
+                        <td>{{ average_dictionary.author_type_non_zero_percent }}</td>
+                        <td>{{ average_dictionary.author_type_non_zero_alpha }}</td>
+                        <td>{{ average_dictionary.author_type_non_zero_pi }}</td>
+                        <td>{{ average_dictionary.author_type_non_zero_count }}</td>
+                    </tr>
+                
+                {% else %}
+
+                    <tr>No averages calculated for label {{ reliability_names_results_label }}.</tr>
+
+                {% endif %}
 
             </table>
             
@@ -135,6 +174,13 @@
                     <th>type-NZ A</th>
                     <th>type-NZ pi</th>
                     <th>type-NZ N</th>
+                    <th>1st graf %</th>
+                    <th>1st graf A</th>
+                    <th>1st index %</th>
+                    <th>1st index A</th>
+                    <th>org hash %</th>
+                    <th>org hash A</th>
+                    
                 </tr>
 
                 {% for results_instance in reliability_names_results_qs %}
@@ -164,6 +210,12 @@
                         <td>{{ results_instance.subject_type_non_zero_alpha }}</td>
                         <td>{{ results_instance.subject_type_non_zero_pi }}</td>
                         <td>{{ results_instance.subject_type_non_zero_count }}</td>
+                        <td>{{ results_instance.subject_first_quote_graf_percent }}</td>
+                        <td>{{ results_instance.subject_first_quote_graf_alpha }}</td>
+                        <td>{{ results_instance.subject_first_quote_index_percent }}</td>
+                        <td>{{ results_instance.subject_first_quote_index_alpha }}</td>
+                        <td>{{ results_instance.subject_organization_hash_percent }}</td>
+                        <td>{{ results_instance.subject_organization_hash_alpha }}</td>
                     </tr>
 
                 {% empty %}
@@ -171,6 +223,47 @@
                     <tr>No Reliability_Names_Results found for label {{ reliability_names_results_label }}.</tr>
 
                 {% endfor %}
+
+                {% if average_dictionary %}
+                                
+                    <tr>
+                        <td><strong>Averages:</strong></td>
+                        <td></td> <!-- results_instance.id -->
+                        <td></td> <!-- results_instance.coder1_coder_index -->
+                        <td></td> <!-- results_instance.coder2_coder_index -->
+                        <td></td> <!-- results_instance.coder1.id -->
+                        <td></td> <!-- results_instance.coder2.id -->
+                        <td>{{ average_dictionary.subject_count }}</td>
+                        <td>{{ average_dictionary.subject_detect_percent }}</td>
+                        <td>{{ average_dictionary.subject_detect_alpha }}</td>
+                        <td>{{ average_dictionary.subject_detect_pi }}</td>
+                        <!-- Lookup -->
+                        <td>{{ average_dictionary.subject_lookup_percent }}</td>
+                        <td>{{ average_dictionary.subject_lookup_alpha }}</td>
+                        <!-- Lookup Limited to Non-Zero (both detect) -->
+                        <td>{{ average_dictionary.subject_lookup_non_zero_percent }}</td>
+                        <td>{{ average_dictionary.subject_lookup_non_zero_alpha }}</td>
+                        <td>{{ average_dictionary.subject_lookup_non_zero_count }}</td>
+                        <td>{{ average_dictionary.subject_type_percent }}</td>
+                        <td>{{ average_dictionary.subject_type_alpha }}</td>
+                        <td>{{ average_dictionary.subject_type_pi }}</td>
+                        <td>{{ average_dictionary.subject_type_non_zero_percent }}</td>
+                        <td>{{ average_dictionary.subject_type_non_zero_alpha }}</td>
+                        <td>{{ average_dictionary.subject_type_non_zero_pi }}</td>
+                        <td>{{ average_dictionary.subject_type_non_zero_count }}</td>
+                        <td>{{ average_dictionary.subject_first_quote_graf_percent }}</td>
+                        <td>{{ average_dictionary.subject_first_quote_graf_alpha }}</td>
+                        <td>{{ average_dictionary.subject_first_quote_index_percent }}</td>
+                        <td>{{ average_dictionary.subject_first_quote_index_alpha }}</td>
+                        <td>{{ average_dictionary.subject_organization_hash_percent }}</td>
+                        <td>{{ average_dictionary.subject_organization_hash_alpha }}</td>
+                    </tr>
+                
+                {% else %}
+
+                    <tr>No averages calculated for label {{ reliability_names_results_label }}.</tr>
+
+                {% endif %}
 
             </table>
 

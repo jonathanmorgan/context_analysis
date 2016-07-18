@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from __future__ import division
 
 '''
 Copyright 2016 Jonathan Morgan
@@ -55,19 +56,12 @@ from django.shortcuts import render
 # import django code for csrf security stuff.
 from django.template.context_processors import csrf
 
-# python_utilities - django view helper
+# python_utilities
+from python_utilities.dictionaries.dict_helper import DictHelper
 from python_utilities.django_utils.django_view_helper import DjangoViewHelper
-
-# python_utilities - exceptions
 #from python_utilities.exceptions.exception_helper import ExceptionHelper
-
-# python_utilities - JSON
 #from python_utilities.json.json_helper import JSONHelper
-
-# python_utilities - logging
 #from python_utilities.logging.logging_helper import LoggingHelper
-
-# python_utilities - string helper
 #from python_utilities.strings.string_helper import StringHelper
 
 # Import form classes
@@ -79,7 +73,7 @@ from sourcenet_analysis.models import Reliability_Names
 from sourcenet_analysis.models import Reliability_Names_Results
 
 #================================================================================
-# Shared variables and functions
+# ! ==> Shared variables and functions
 #================================================================================
 
 
@@ -117,6 +111,21 @@ def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_I
                                    debug_flag_IN = DEBUG )
 
 #-- END method output_debug() --#
+
+
+# ! reliability names results constants-ish.
+PREFIX_AUTHOR = "author_"
+PREFIX_SUBJECT = "subject_"
+                # - detect %
+                # - detect A
+                # - detect pi
+                # - lookup %
+                # - lookup A
+                # - lookup NZ %
+                # - lookup NZ A
+                # - lookup N
+                # - type %
+                # - type A
 
 
 #===============================================================================
@@ -166,6 +175,7 @@ def reliability_names_disagreement_view( request_IN ):
     reliability_names_label = ""
     reliability_names_coder_count = -1
     reliability_names_only_disagree = False
+    reliability_names_include_optional_fields = False
     reliability_names_qs = None
     record_count = -1
     reliability_names_instance_list = None
@@ -208,6 +218,13 @@ def reliability_names_disagreement_view( request_IN ):
         
         #-- END check to see if checkbox "on" --#
 
+        reliability_names_include_optional_fields = request_inputs.get( "reliability_names_include_optional_fields", False )
+        if ( reliability_names_include_optional_fields == "on" ):
+        
+            reliability_names_include_optional_fields = True
+        
+        #-- END check to see if checkbox "on" --#
+
         # ...and the form is ready.
         is_form_ready = True
     
@@ -223,7 +240,11 @@ def reliability_names_disagreement_view( request_IN ):
 
                 # retrieve QuerySet of Reliability_Names that match label and
                 #    contain disagreements.
-                reliability_names_qs = Reliability_Names.lookup_disagreements( label_IN = reliability_names_label, coder_count_IN = reliability_names_coder_count )
+                reliability_names_qs = Reliability_Names.lookup_disagreements(
+                        label_IN = reliability_names_label,
+                        coder_count_IN = reliability_names_coder_count,
+                        include_optional_IN = reliability_names_include_optional_fields
+                    )
                 # response_dictionary[ 'output_string' ] = "ONLY DISAGREE ( " + str( reliability_names_only_disagree ) + " )"
                 
             else:
@@ -271,7 +292,7 @@ def reliability_names_disagreement_view( request_IN ):
                         reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_TYPE ] = reliability_names.person_type
                         
                         # got disagreement?
-                        has_disagreement = reliability_names.has_disagreement( reliability_names_coder_count )
+                        has_disagreement = reliability_names.has_disagreement( reliability_names_coder_count, include_optional_IN = reliability_names_include_optional_fields )
                         #disagreement_flag_list.append( has_disagreement )
                         if ( has_disagreement == True ):
 
@@ -289,28 +310,32 @@ def reliability_names_disagreement_view( request_IN ):
                                 coder_string = "coder" + str( coder_index )
     
                                 # retrieve data - coder ID
-                                current_field_name = coder_string + "_id"
+                                current_field_name = coder_string + "_id"  # grabbing foreign key value directly.
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ID ] = getattr( reliability_names, current_field_name )
                             
                                 # retrieve data - coder ID
-                                current_field_name = coder_string + "_detected"
+                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_DETECTED  # + "_detected"
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_DETECTED ] = getattr( reliability_names, current_field_name )
     
                                 # retrieve data - coder's selected person ID
-                                current_field_name = coder_string + "_person_id"
+                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_ID  # + "_person_id"
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_ID ] = getattr( reliability_names, current_field_name )
     
                                 # retrieve data - coder's selected person type
-                                current_field_name = coder_string + "_person_type"
+                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE  # + "_person_type"
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_TYPE ] = getattr( reliability_names, current_field_name )
     
                                 # retrieve data - coder's first quote paragraph number
-                                current_field_name = coder_string + "_first_quote_graf"
+                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF  # + "_first_quote_graf"
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_GRAF ] = getattr( reliability_names, current_field_name )
     
                                 # retrieve data - coder's first quote index number
-                                current_field_name = coder_string + "_first_quote_index"
+                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX  # + "_first_quote_index"
                                 disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_INDEX ] = getattr( reliability_names, current_field_name )
+    
+                                # retrieve data - organization string hash
+                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH  # + "_organization_hash"
+                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ORGANIZATION_HASH ] = getattr( reliability_names, current_field_name )
     
                                 # add to list.
                                 disagreement_details_list.append( disagreement_details_dict )
@@ -392,11 +417,17 @@ def reliability_names_results_view( request_IN ):
     reliability_names_results_instance_list = None
     
     # declare variables - pulling together reliability info for output.
-    results_info = None
-    author_results_list = None
-    subject_results_list = None
-    reliability_names_results_counter = -1
-    reliability_names_results = None
+    current_result = None
+    sum_dictionary = {}
+    sum_dict_helper = None
+    average_dictionary = {}
+    #average_dict_helper = None
+    column_name_list = None
+    current_column_name = ""
+    result_counter = -1
+    current_result_value = None
+    current_sum = -1
+    current_average = -1
     
     # initialize response dictionary
     response_dictionary = {}
@@ -448,8 +479,130 @@ def reliability_names_results_view( request_IN ):
                     #     it when outputting.
                     response_dictionary[ 'reliability_names_results_qs' ] = reliability_names_results_qs
                       
-                #-- END check to see if any matching results --#
+                    # ! use QuerySet to calculate some averages, for both author and subject:
+                    # - detect %
+                    # - detect A
+                    # - detect pi
+                    # - lookup %
+                    # - lookup A
+                    # - lookup NZ %
+                    # - lookup NZ A
+                    # - lookup N
+                    # - type %
+                    # - type A
+                    
+                    # initialize dictionary to store sums.
+                    sum_dictionary = {}
+                    sum_dict_helper = DictHelper()
+                    sum_dict_helper.set_dictionary( sum_dictionary )
+                    
+                    # ! make list of column names.
+                    column_name_list = []
+    
+                    # authors
+                    column_name_list.append( "author_count" )
+                    column_name_list.append( "author_detect_percent" )
+                    column_name_list.append( "author_detect_alpha" )
+                    column_name_list.append( "author_detect_pi" )
+                    column_name_list.append( "author_lookup_percent" )
+                    column_name_list.append( "author_lookup_alpha" )
+                    column_name_list.append( "author_lookup_non_zero_percent" )
+                    column_name_list.append( "author_lookup_non_zero_alpha" )
+                    column_name_list.append( "author_lookup_non_zero_count" )
+                    column_name_list.append( "author_type_percent" )
+                    column_name_list.append( "author_type_alpha" )
+                    column_name_list.append( "author_type_pi" )
+                    column_name_list.append( "author_type_non_zero_percent" )
+                    column_name_list.append( "author_type_non_zero_alpha" )
+                    column_name_list.append( "author_type_non_zero_pi" )
+                    column_name_list.append( "author_type_non_zero_count" )
+                    
+                    # subjects
+                    column_name_list.append( "subject_count" )
+                    column_name_list.append( "subject_detect_percent" )
+                    column_name_list.append( "subject_detect_alpha" )
+                    column_name_list.append( "subject_detect_pi" )
+                    column_name_list.append( "subject_lookup_percent" )
+                    column_name_list.append( "subject_lookup_alpha" )
+                    column_name_list.append( "subject_lookup_non_zero_percent" )
+                    column_name_list.append( "subject_lookup_non_zero_alpha" )
+                    column_name_list.append( "subject_lookup_non_zero_count" )
+                    column_name_list.append( "subject_type_percent" )
+                    column_name_list.append( "subject_type_alpha" )
+                    column_name_list.append( "subject_type_pi" )
+                    column_name_list.append( "subject_type_non_zero_percent" )
+                    column_name_list.append( "subject_type_non_zero_alpha" )
+                    column_name_list.append( "subject_type_non_zero_pi" )
+                    column_name_list.append( "subject_type_non_zero_count" )
+                    column_name_list.append( "subject_first_quote_graf_percent" )
+                    column_name_list.append( "subject_first_quote_graf_alpha" )
+                    column_name_list.append( "subject_first_quote_graf_pi" )
+                    column_name_list.append( "subject_first_quote_graf_count" )
+                    column_name_list.append( "subject_first_quote_index_percent" )
+                    column_name_list.append( "subject_first_quote_index_alpha" )
+                    column_name_list.append( "subject_first_quote_index_pi" )
+                    column_name_list.append( "subject_first_quote_index_count" )
+                    column_name_list.append( "subject_organization_hash_percent" )
+                    column_name_list.append( "subject_organization_hash_alpha" )
+                    column_name_list.append( "subject_organization_hash_pi" )
+                    column_name_list.append( "subject_organization_hash_count" )
+                    
+                    # ! initialize all to 0
+                    for current_column_name in column_name_list:
+                    
+                        # set value for column name to 0.
+                        sum_dict_helper.set_value( current_column_name, 0 )
+                        
+                    #-- END loop over column names to set to 0. --#
+    
+                    # loop over results to first get sums for each field.
+                    result_counter = 0
+                    for current_result in reliability_names_results_qs:
+                        
+                        # increment counter
+                        result_counter += 1
+                        
+                        # update all counters
+                        for current_column_name in column_name_list:
+                        
+                            # retrieve value from current_result.
+                            current_result_value = getattr( current_result, current_column_name )
+                            
+                            # if not None, add it to the column's sum in the
+                            #     average dictionary.
+                            if ( current_result_value is not None ):
 
+                                # non-None - add it.
+                                sum_dict_helper.increment_decimal_value( current_column_name, current_result_value )
+                                
+                            #-- END check to see if value is non-None --#
+                        
+                        #-- END loop over column names --#
+    
+                    #-- END loop over results. --#
+                    
+                    # finally, loop over sums to calculate and store the
+                    #     averages.
+                    average_dictionary = {}
+                    for current_column_name in column_name_list:
+    
+                        # get sum
+                        current_sum = sum_dict_helper.get_value_as_decimal( current_column_name, None )
+                        
+                        # divide by record count.
+                        current_average = current_sum / result_counter
+                        
+                        # place the average in average_dictionary.
+                        average_dictionary[ current_column_name ] = current_average
+    
+                    #-- END loop over column names to calculate average. --#
+                    
+                    # place sum and average dictionaries in response.
+                    response_dictionary[ "sum_dictionary" ] = sum_dictionary
+                    response_dictionary[ "average_dictionary" ] = average_dictionary
+    
+                #-- END check to see if any matching results --#
+                
                 # seed response dictionary.
                 response_dictionary[ 'results_count' ] = results_count
                 response_dictionary[ 'reliability_names_results_label' ] = reliability_names_results_label

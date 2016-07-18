@@ -25,6 +25,7 @@ class ReliabilityNamesFilterForm( forms.Form ):
     reliability_names_label = forms.CharField( required = True, label = "Label" )
     reliability_names_coder_count = forms.CharField( required = True, label = "Coders to compare (1 through ==>)" )
     reliability_names_only_disagree = forms.BooleanField( required = False, label = "Limit to disagreements?" )
+    reliability_names_include_optional_fields = forms.BooleanField( required = False, label = "Include optional fields?" )
     #reliability_names_coder_id_list = forms.CharField( required = True, label = "Coders to compare (separated by commas)" )
 
 #-- END ReliabilityNamesFilterForm --#

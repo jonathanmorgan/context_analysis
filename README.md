@@ -16,6 +16,13 @@ For instructions on installing and configuring sourcenet, see [https://github.co
 
 Likely, we'll end up using numpy and scipy, so might need to have OS packages installed to get them to compile.  We shall see.  Also planning on using pyRserve, might need OS libraries to get it to install, as well.
 
+## R packages
+
+You will need to use the `install.packages()` function to install the following in R on your server:
+
+- Rserve
+- irr
+
 ## virtualenv and virtualenvwrapper
 
 if you are on a shared or complicated server (and who isn't, really?), using virtualenv and virtualenvwrapper to create isolated python environments for specific applications can save lots of headaches.  this application isn't stand-alone, so for now I've reproduced the instructions you'll have followed when you installed sourcenet.  For more details, see the sourcenet README.md file ( [https://github.com/jonathanmorgan/sourcenet](https://github.com/jonathanmorgan/sourcenet) ).
