@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 
 # python_utilities
 from python_utilities.exceptions.exception_helper import ExceptionHelper
+from python_utilities.json.json_helper import JSONHelper
 from python_utilities.logging.logging_helper import LoggingHelper
 
 # sourcenet imports
@@ -61,6 +62,8 @@ class ReliabilityNamesBuilder( object ):
     # source and author info dicts will use same field names.
     PERSON_ID = "person_id"
     PERSON_NAME = "person_name"
+    PERSON_LAST_NAME = "person_last_name"
+    PERSON_FIRST_NAME = "person_first_name"
     PERSON_CODER_ID_TO_CODING_INFO_DICT = "person_coder_id_to_coding_info_dict"
     # PERSON_CODER_ID_LIST = "person_coder_id_list"
     
@@ -116,14 +119,78 @@ class ReliabilityNamesBuilder( object ):
         
         # variable to hold desired automated coder type
         self.limit_to_automated_coder_type = ""
+        self.automated_coder_type_include_list = []
         
         # exception helper
         self.exception_helper = ExceptionHelper()
         self.exception_helper.set_logger_name( self.LOGGER_NAME )
         
+        # debug variables
+        self.debug_output_json_file_path = ""
+        
     #-- END method __init__() --#
     
 
+    def add_coder_at_index( self, coder_id_IN, index_IN ):
+        
+        '''
+        Accepts a coder ID and an index.  Updates all the stuff in this instance
+            to make sure the coder is tied to the index passed in.
+        '''
+        
+        # return reference
+        status_OUT = ""
+        
+        # declare variables
+        coder_id_to_index_dict = {}
+        coder_id_to_instance_dict = {}
+        limit_to_user_id_list = []
+        coder_user_id = -1
+        coder_index = -1
+        coder_user = None
+        
+        # get maps from instance
+        coder_id_to_index_dict = self.coder_id_to_index_map
+        coder_id_to_instance_dict = self.coder_id_to_instance_map
+        limit_to_user_id_list = self.limit_to_user_ids
+        
+        # init from input parameters.
+        coder_user_id = coder_id_IN
+        coder_index = index_IN
+        
+        # got ID?
+        if ( ( coder_user_id is not None ) and ( int( coder_user_id ) > 0 ) ):
+        
+            # got index?
+            if ( ( coder_index is not None ) and ( int( coder_index ) > 0 ) ):
+            
+                # yes.  Lookup the user.
+                coder_user = User.objects.get( id = coder_user_id )
+                
+                # Set all the things up internally.
+                coder_id_to_index_dict[ coder_user_id ] = coder_index
+                coder_id_to_instance_dict[ coder_user_id ] = coder_user
+                limit_to_user_id_list.append( coder_user_id )
+                                
+            else:
+            
+                # no index - broken.
+                status_OUT = "No index - can't associate user with no index."
+            
+            #-- END check to see if index present. --#
+        
+        else:
+        
+            # no coder ID - broken.
+            status_OUT = "No coder ID - can't associate user if no user."
+        
+        #-- END check to see if valid ID. --#
+
+        return status_OUT        
+        
+    #-- END method add_coder_at_index() --#
+    
+        
     def build_reliability_names_data( self, tag_list_IN = None, label_IN = None ):
     
         '''
@@ -170,30 +237,76 @@ class ReliabilityNamesBuilder( object ):
         
         '''
         Accepts Article_Data QuerySet.  Filters it based on any nested variables
-           that relate to filtering (at this point, just
-           self.limit_to_automated_coder_type).  Returns filtered QuerySet.
+            that relate to filtering.  Returns filtered QuerySet.
+           
+        Filters on:
+            - self.limit_to_automated_coder_types - list of automated coder types we want included.
+            - ).  Returns filtered QuerySet.
         '''
         
         # return reference
         qs_OUT = None
         
         # declare variables
+        me = "filter_article_data"
+        logging_message = ""
+        my_logger = None
         automated_coder_type = None
-        coder_type_list = []
+        coder_type_list = None
+        coder_id_include_list = None
+        coder_id_exclude_list = None
+        
+        # init logger
+        my_logger = LoggingHelper.get_a_logger( self.LOGGER_NAME )        
         
         # start by just returning what is passed in.
         qs_OUT = article_data_qs_IN
         
-        # see if we have a coder type.
+        # see if we have a single coder type.
         automated_coder_type = self.limit_to_automated_coder_type
         if ( ( automated_coder_type is not None ) and ( automated_coder_type != "" ) ):
         
             # got one.  Filter the QuerySet.
             coder_type_list = [ automated_coder_type, ]
-            qs_OUT = Article_Data.filter_automated_by_coder_type( qs_OUT, coder_type_list )
+
+            logging_message = "- limit to single coder type: " + str( automated_coder_type ) + "; coder_type_list = " + str( coder_type_list )
+            print( logging_message )
+            my_logger.debug( "**** " + logging_message )            
+        
+        else:
+        
+            # no single value, check if there is a list.
+            coder_type_list = self.automated_coder_type_include_list
+        
+            logging_message = "- limit automated coding to coder types in list: coder_type_list = " + str( coder_type_list )
+            print( logging_message )
+            my_logger.debug( "**** " + logging_message )            
         
         #-- END check to see if automated coder type. --#
         
+        # anything in automated coder type include list?
+        if ( ( isinstance( coder_type_list, list ) == True ) and ( len( coder_type_list ) > 0 ) ):
+        
+            qs_OUT = Article_Data.filter_automated_by_coder_type( qs_OUT, coder_type_list )
+        
+        #-- END check to see if anything in coder_type_list.
+
+        # got a list of coder IDs to limit to?
+        coder_id_include_list = self.limit_to_user_ids
+        if ( ( isinstance( coder_id_include_list, list ) == True ) and ( len( coder_id_include_list ) > 0 ) ):
+        
+            qs_OUT = qs_OUT.filter( coder__in = coder_id_include_list )
+        
+        #-- END check to see if anything in coder_type_list.
+
+        # got a list of coder IDs to explicitly exclude?
+        coder_id_exclude_list = self.exclude_user_ids
+        if ( ( isinstance( coder_id_exclude_list, list ) == True ) and ( len( coder_id_exclude_list ) > 0 ) ):
+        
+            qs_OUT = qs_OUT.exclude( coder__in = coder_id_exclude_list )
+        
+        #-- END check to see if anything in coder_type_list.
+
         return qs_OUT
     
     #-- END method filter_article_data() --#
@@ -393,11 +506,15 @@ class ReliabilityNamesBuilder( object ):
         
         # declare variables
         me = "output_reliability_name_row"
+        my_logger = None
+        logging_message = ""
         coder_id_to_index_map_IN = None
         reliability_instance = None
         my_person_id = -1
         my_person = None
         my_person_name = ""
+        my_person_first_name = ""
+        my_person_last_name = ""
         my_coder_person_info_dict = None
         coder_count = -1
         current_coder_id = -1
@@ -415,6 +532,9 @@ class ReliabilityNamesBuilder( object ):
         coder_article_data_qs = None
         coder_article_data = None
         coder_article_data_id = -1
+        
+        # init logger
+        my_logger = LoggingHelper.get_a_logger( self.LOGGER_NAME )        
         
         # make sure we have everything we need.
         coder_id_to_index_map_IN = self.coder_id_to_index_map
@@ -449,12 +569,16 @@ class ReliabilityNamesBuilder( object ):
                         my_person_id = person_info_dict_IN.get( self.PERSON_ID, -1 )
                         my_person = Person.objects.get( id = my_person_id )
                         my_person_name = person_info_dict_IN.get( self.PERSON_NAME, None )
+                        my_person_first_name = person_info_dict_IN.get( self.PERSON_FIRST_NAME, None )
+                        my_person_last_name = person_info_dict_IN.get( self.PERSON_LAST_NAME, None )
                         my_coder_person_info_dict = person_info_dict_IN.get( self.PERSON_CODER_ID_TO_CODING_INFO_DICT, {} )
                         
                         # place info inside
                         reliability_instance.article = article_IN
                         reliability_instance.person = my_person
                         reliability_instance.person_name = my_person_name
+                        reliability_instance.person_first_name = my_person_first_name
+                        reliability_instance.person_last_name = my_person_last_name
                         reliability_instance.person_type = article_person_type_IN
                         
                         # check to see if more than TABLE_MAX_CODERS.
@@ -480,9 +604,19 @@ class ReliabilityNamesBuilder( object ):
                             coder_article_data_id = -1
                             coder_article_data_qs = article_data_qs.filter( coder = current_coder_user )
                             
-                            # !if automated, filter on coder_type
+                            # ! put before and after logging here.
+                            
+                            logging_message = "- in " + me + "(): before filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
+                            #print( logging_message )
+                            my_logger.debug( "**** " + logging_message )            
+                            
+                            # ! if automated, filter on coder_type
                             coder_article_data_qs = self.filter_article_data( coder_article_data_qs )
                             
+                            logging_message = "- in " + me + "(): after filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
+                            #print( logging_message )
+                            my_logger.debug( "**** " + logging_message )            
+
                             # how many?
                             if ( coder_article_data_qs.count() == 1 ):
                             
@@ -503,9 +637,12 @@ class ReliabilityNamesBuilder( object ):
                                     
                                 else:
                                 
+                                    # ! TODO - add logging.
                                     # already there?  Error.
-                                    print ( "====> In " + me + ": ERROR - index already used - multiple records for coder ID \"" + str( current_coder_id ) + "\"" )
-                                    
+                                    logging_message = "====> In " + me + ": ERROR - index already used - multiple records for coder ID \"" + str( current_coder_id ) + "\""
+                                    print( logging_message )
+                                    my_logger.debug( "**** " + logging_message )            
+
                                 #-- END check to see if index is in our "used" list --#
                             
                                 # place info in "coder<index>" fields.
@@ -647,6 +784,9 @@ class ReliabilityNamesBuilder( object ):
         '''
 
         # declare variables - retrieving reliability sample.
+        me = "process_articles"
+        my_logger = None
+        logging_message = ""
         article_qs = None
         current_article = None
         article_data_qs = None
@@ -671,7 +811,15 @@ class ReliabilityNamesBuilder( object ):
         person_type = ""
         author_info_dict = None
         subject_info_dict = None
+        
+        # declare variables - debug output.
+        debug_file_output_path = ""
+        json_string = ""
+        json_file_handle = None
 
+        # init logger
+        my_logger = LoggingHelper.get_a_logger( self.LOGGER_NAME )
+        
         #-------------------------------------------------------------------------------
         # process articles to build data
         #-------------------------------------------------------------------------------
@@ -714,14 +862,17 @@ class ReliabilityNamesBuilder( object ):
             # get article data for this article
             article_data_qs = current_article.article_data_set.all()
             
-            # !filter on automated coder_type
+            # ! filter on automated coder_type, IDs of coders to include or
+            #     exclude, if filters are specified.
             article_data_qs = self.filter_article_data( article_data_qs )
             
             # how many Article_Data?
             article_data_count = len( article_data_qs )
         
             # output summary row.
-            print( "- Article ID: " + str( current_article.id ) + "; Article_Data count: " + str( article_data_count ) )
+            logging_message = "- Article ID: " + str( current_article.id ) + "; Article_Data count: " + str( article_data_count )
+            print( logging_message )
+            my_logger.debug( "**** " + logging_message )
             
             # for each article, build a dictionary that maps article ID to article info.
             #    that includes:
@@ -755,6 +906,11 @@ class ReliabilityNamesBuilder( object ):
             # loop over related Article_Data instances.
             for current_article_data in article_data_qs:
             
+                # output summary row.
+                logging_message = "---- - Article Data Info: " + str( current_article_data )
+                print( logging_message )
+                my_logger.debug( "******** " + logging_message )
+    
                 # get coder and coder's User ID.
                 article_data_coder = current_article_data.coder
                 article_data_coder_id = article_data_coder.id
@@ -838,6 +994,23 @@ class ReliabilityNamesBuilder( object ):
             #    already in the master map of article IDs to article info.
         
         #-- END loop over articles. --#
+        
+        # ! output debug JSON to a file?
+        debug_file_output_path = self.debug_output_json_file_path
+        if ( ( debug_file_output_path is not None ) and ( debug_file_output_path != "" ) ):
+        
+            # user wants us to try to output JSON.
+            json_string = JSONHelper.pretty_print_json( self.article_id_to_info_map )
+
+            # open file and write json_string to it.
+            with open( debug_file_output_path, "w" ) as json_file_handle:
+            
+                # write out the json string.
+                json_file_handle.write( json_string )
+            
+            #-- END with json_file_handle --#
+        
+        #-- END check to see if we output debug JSON. --#
 
     #-- END method process_articles() --#
 
@@ -861,17 +1034,21 @@ class ReliabilityNamesBuilder( object ):
         
         # declare variables
         me = "process_person_qs"
+        my_logger = None
         current_article_person = None
         coder_id = -1
         person_instance = None
         person_id = -1
         person_name = ""
+        person_parsed_name = None
         person_info = None
         person_coding_info_dict = None
         person_coding_info = None
         current_person_type = None
         current_person_type_int = None
         current_organization = ""
+        encoded_organization = ""
+        org_hash_object = None
         org_hash = ""
 
         # declare variables - subject-specific processing.
@@ -882,6 +1059,9 @@ class ReliabilityNamesBuilder( object ):
         first_quote_graf = -1
         first_quote_index = -1
         
+        # init logger
+        my_logger = LoggingHelper.get_a_logger( self.LOGGER_NAME )
+        
         # make sure we have a coder
         if ( coder_IN is not None ):
         
@@ -891,6 +1071,9 @@ class ReliabilityNamesBuilder( object ):
                 # make sure we have a person type passed in.
                 if ( ( article_person_type_IN is not None ) and ( article_person_type_IN != "" ) ):
             
+                    # log the current person.
+                    my_logger.debug( "--------> In " + me + ": current person type = " + str( article_person_type_IN ) )
+                    
                     # got a dictionary passed in?
                     if ( person_info_dict_IN is not None ):
                     
@@ -901,6 +1084,9 @@ class ReliabilityNamesBuilder( object ):
                     # compile information on authors.
                     for current_article_person in article_person_qs_IN:
                     
+                        # log the current person.
+                        my_logger.debug( "====> In " + me + ": current person = " + str( current_article_person ) )
+                        
                         # get coder ID.
                         coder_id = coder_IN.id
                         
@@ -920,6 +1106,14 @@ class ReliabilityNamesBuilder( object ):
                             # this is an Article_Subject, so get subject_type.
                             current_person_type = current_article_person.subject_type
                             is_subject = True
+                            
+                            # might have None.  If so, default to mentioned.
+                            if ( current_person_type is None ):
+                            
+                                # it is None.  Sigh.  Default to mentioned.
+                                current_person_type = self.SUBJECT_TYPE_MENTIONED
+                            
+                            #-- END check to see if person type is None --#
                         
                         else:
                         
@@ -929,9 +1123,15 @@ class ReliabilityNamesBuilder( object ):
                         
                         #-- END check to see how we get person type. --#
                         
-                        # also get integer value
-                        current_person_type_int = self.PERSON_TYPE_TO_INT_MAP[ current_person_type ]
+                        # log the current type.
+                        my_logger.debug( "In " + me + ": current person type = " + str( current_person_type ) + " - to int map = " + str( self.PERSON_TYPE_TO_INT_MAP ) )
                         
+                        # also get integer value
+                        current_person_type_int = self.PERSON_TYPE_TO_INT_MAP.get( current_person_type, -1 )
+
+                        # log the current type.
+                        my_logger.debug( "In " + me + ": current person type as int = " + str( current_person_type_int ) )
+                                                
                         # get person instance.
                         person_instance = current_article_person.person
                     
@@ -939,9 +1139,10 @@ class ReliabilityNamesBuilder( object ):
                         #    record with no associated person, move on.
                         if ( person_instance is not None ):
                     
-                            # get person ID and name.
+                            # get person ID and name values.
                             person_id = person_instance.id
                             person_name = person_instance.get_name_string()
+                            person_parsed_name = person_instance.to_HumanName()
                             
                             # create coding info. for this coder.
                             person_coding_info = {}
@@ -1000,8 +1201,11 @@ class ReliabilityNamesBuilder( object ):
                                 #    problems.
                                 try:
                                 
+                                    # encode the string to "utf-8"
+                                    encoded_organization = current_organization.encode( "utf-8" )
+                                    
                                     # convert to sha256
-                                    org_hash_object = hashlib.sha256( current_organization )
+                                    org_hash_object = hashlib.sha256( encoded_organization )
                                     org_hash = org_hash_object.hexdigest()
                                     
                                 except Exception as e:
@@ -1045,6 +1249,8 @@ class ReliabilityNamesBuilder( object ):
                                 # add information.
                                 person_info[ self.PERSON_ID ] = person_id
                                 person_info[ self.PERSON_NAME ] = person_name
+                                person_info[ self.PERSON_FIRST_NAME ] = person_parsed_name.first
+                                person_info[ self.PERSON_LAST_NAME ] = person_parsed_name.last
                                 
                                 # add person coding info. for this coder.
                                 person_coding_info_dict = {}

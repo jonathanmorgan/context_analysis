@@ -247,14 +247,19 @@ def reliability_names_disagreement_view( request_IN ):
                     )
                 # response_dictionary[ 'output_string' ] = "ONLY DISAGREE ( " + str( reliability_names_only_disagree ) + " )"
                 
+                # lookup_disagreements() uses a raw SQL query, so it is ordered
+                #     in that SQL query, inside the method call.
+                #reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
+
             else:
             
                 # no.  Just filter on label.
                 reliability_names_qs = Reliability_Names.objects.filter( label = reliability_names_label )
                 # response_dictionary[ 'output_string' ] = "ALL ( " + str( reliability_names_only_disagree ) + " )"
                 
-                # order by:
-                reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person__id" )
+                # order by (only for call to filter() - lookup_disagreements()
+                #     uses a raw SQL query, so it can't be re-ordered.
+                reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
                 
             #-- END check to see if only disagreements? --#
             
@@ -289,6 +294,8 @@ def reliability_names_disagreement_view( request_IN ):
                         reliability_names_output_info[ Reliability_Names.PROP_NAME_LABEL ] = reliability_names.label
                         reliability_names_output_info[ Reliability_Names.PROP_NAME_ARTICLE_ID ] = str( reliability_names.article_id )
                         reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_NAME ] = reliability_names.person_name
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_FIRST_NAME ] = reliability_names.person_first_name
+                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_LAST_NAME ] = reliability_names.person_last_name
                         reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_TYPE ] = reliability_names.person_type
                         
                         # got disagreement?

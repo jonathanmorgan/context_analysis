@@ -92,6 +92,8 @@ class Reliability_Names( models.Model ):
     PROP_NAME_LABEL = FIELD_NAME_LABEL
     PROP_NAME_ARTICLE_ID = "article_id"
     PROP_NAME_PERSON_NAME = "person_name"
+    PROP_NAME_PERSON_FIRST_NAME = "person_first_name"
+    PROP_NAME_PERSON_LAST_NAME = "person_last_name"    
     PROP_NAME_PERSON_ID = FIELD_NAME_SUFFIX_PERSON_ID
     PROP_NAME_PERSON_TYPE = FIELD_NAME_SUFFIX_PERSON_TYPE
     PROP_NAME_CODER_DETAILS_LIST = "coder_details_list"
@@ -103,14 +105,21 @@ class Reliability_Names( models.Model ):
     PROP_NAME_CODER_FIRST_QUOTE_INDEX = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
     PROP_NAME_CODER_ORGANIZATION_HASH = "coder_" + FIELD_NAME_SUFFIX_ORGANIZATION_HASH
     
+    # DEFAULT ORDER
+    DEFAULT_ORDER_COLUMN_LIST = [ "article", "person_type", "person_last_name", "person_first_name", "person_name", "person" ]
+    DEFAULT_ORDER_BY = " ORDER BY article_id, person_type, person_last_name, person_first_name, person_name, person_id"
+    
 
     #----------------------------------------------------------------------
     # model fields
     #----------------------------------------------------------------------
 
+
     article = models.ForeignKey( Article, blank = True, null = True )
     person = models.ForeignKey( Person, blank = True, null = True )
     person_name = models.CharField( max_length = 255, blank = True, null = True )
+    person_first_name = models.CharField( max_length = 255, blank = True, null = True )
+    person_last_name = models.CharField( max_length = 255, blank = True, null = True )
     person_type = models.CharField( max_length = 255, blank = True, null = True )
     coder1 = models.ForeignKey( User, blank = True, null = True, related_name = "reliability_names_coder1_set" )
     coder1_coder_id = models.IntegerField( blank = True, null = True )
@@ -234,7 +243,10 @@ class Reliability_Names( models.Model ):
 
     # Meta-data for this class.
     class Meta:
-        ordering = [ 'article', 'person_type', 'person' ]
+
+        ordering = [ "article", "person_type", "person_last_name", "person_first_name", "person_name", "person" ]
+        
+    #-- END nested Meta class --#
 
 
     #----------------------------------------------------------------------------
@@ -243,7 +255,7 @@ class Reliability_Names( models.Model ):
 
 
     @classmethod
-    def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1, include_optional_IN = False ):
+    def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1, include_optional_IN = False, order_by_IN = None, *args, **kwargs ):
         
         # return reference
         qs_OUT = None
@@ -400,7 +412,17 @@ class Reliability_Names( models.Model ):
         #-- END check to see if label set --#
         
         # ORDER BY
-        sql_string += " ORDER BY article_id, person_type, person_id"
+        if ( ( order_by_IN is not None ) and ( order_by_IN != "" ) ):
+        
+            # custom order by passed in - use it.
+            sql_string += " " + order_by_IN
+        
+        else:
+
+            # no custom order by passed in.  go with default.
+            sql_string += cls.DEFAULT_ORDER_BY
+            
+        #-- END check to see if custom ORDER BY passed in. --#
         
         # execute raw query
         qs_OUT = cls.objects.raw( sql_string, sql_raw_params_list )

@@ -127,7 +127,7 @@ Once you've made the changes above, save the `settings.py` file, then go into th
 
 First, we'll just list out the pending migrations, so we make sure the `sourcenet_analysis` migrations are there and running migrate won't cause other changes we don't intend.
 
-    python manage.py migrate --list
+    python manage.py showmigrations
 
 Next, we run migrations for sourcenet_analysis using `python manage.py migrate.
 

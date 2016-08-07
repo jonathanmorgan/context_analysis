@@ -46,8 +46,8 @@
                     <th>ID</th>
                     <th>label</th>
                     <th>article ID</th>
-                    <th>name</th>
                     <th>person type</th>
+                    <th>name</th>
                     <th>details</th>
                 </tr>
 
@@ -58,8 +58,8 @@
                         <td>{{ names_instance.id }}</td>
                         <td>{{ names_instance.label }}</td>
                         <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
-                        <td>{{ names_instance.person_name }}</td>
                         <td>{{ names_instance.person_type }}</td>
+                        <td>{{ names_instance.person_last_name }}, {{ names_instance.person_first_name }} ( {{ names_instance.person_name }} )</td>
                         <td>
 
                             {% if names_instance.coder_details_list %}
