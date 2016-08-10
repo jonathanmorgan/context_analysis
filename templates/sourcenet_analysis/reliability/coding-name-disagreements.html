@@ -23,7 +23,11 @@
             {% csrf_token %}
                             
             {# output reliability names filter form #}
-            {{ reliability_names_filter_form.as_p }}
+            <p>
+                <table class="gridTable">
+                    {{ reliability_names_filter_form.as_table }}
+                </table>
+            </p>
 
             <p>
                 <input type="submit" />

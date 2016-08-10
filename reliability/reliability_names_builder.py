@@ -270,7 +270,7 @@ class ReliabilityNamesBuilder( object ):
             coder_type_list = [ automated_coder_type, ]
 
             logging_message = "- limit to single coder type: " + str( automated_coder_type ) + "; coder_type_list = " + str( coder_type_list )
-            print( logging_message )
+            # print( logging_message )
             my_logger.debug( "**** " + logging_message )            
         
         else:
@@ -279,7 +279,7 @@ class ReliabilityNamesBuilder( object ):
             coder_type_list = self.automated_coder_type_include_list
         
             logging_message = "- limit automated coding to coder types in list: coder_type_list = " + str( coder_type_list )
-            print( logging_message )
+            # print( logging_message )
             my_logger.debug( "**** " + logging_message )            
         
         #-- END check to see if automated coder type. --#

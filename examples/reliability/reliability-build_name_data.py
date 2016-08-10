@@ -30,10 +30,14 @@ my_reliability_instance = ReliabilityNamesBuilder()
 #===============================================================================
 
 # list of tags of articles we want to process.
-tag_list = [ "prelim_reliability_combined", ]
+#tag_list = [ "prelim_reliability_combined", ]
+tag_list = [ "prelim_reliability_test", ]
 
 # label to associate with results, for subsequent lookup.
-label = "prelim_reliability_combined_all"
+#label = "prelim_reliability_combined_human"
+#label = "prelim_reliability_combined_all"
+#label = "prelim_reliability_test_human"
+label = "prelim_reliability_test_all"
 
 '''
 # ====> old way
@@ -84,7 +88,6 @@ limit_to_user_ids.append( current_coder_id )
 my_reliability_instance.coder_id_to_instance_map = coder_id_to_instance_map
 my_reliability_instance.coder_id_to_index_map = coder_id_to_index_map
 my_reliability_instance.limit_to_user_ids = limit_to_user_ids
-
 '''
 
 # ====> new way
