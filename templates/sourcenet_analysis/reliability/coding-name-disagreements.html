@@ -6,118 +6,178 @@
 
     <h1>View reliability name information</h1>
     
-    {# got an output_string? #}
-    {% if output_string %}
+    {# include standard status message output #}
+    {% include "sourcenet/shared/output_status_message.html" %}
     
-        <div id="article_message" name="article_message" style="background-color: yellow; border: 1px solid black;">
-            <p>{{ output_string }}</p>
-        </div>
-    
-    {% endif %}
-    
-    <div id="reliability_names_filter_form" name="reliability_names_filter_form">
-        
-        <form action="" method="post">
-    
-            {# always include CSRF token #}
-            {% csrf_token %}
-                            
-            {# output reliability names filter form #}
-            <p>
-                <table class="gridTable">
-                    {{ reliability_names_filter_form.as_table }}
-                </table>
-            </p>
-
-            <p>
-                <input type="submit" />
-            </p>
-            
-        </form>
-        
-    </div>
-    
-    {% if reliability_names_output_list %}
-    
-        <hr />
-        
-        <div id="reliability_names_instance_view" name="reliability_names_instance_view">
-
-            <table class="gridtable">
+    <table>
+        <tr>
+            <td class="page_layout">
                 
-                <tr>
-                    <th>index</th>
-                    <th>ID</th>
-                    <th>label</th>
-                    <th>article ID</th>
-                    <th>person type</th>
-                    <th>name</th>
-                    <th>details</th>
-                </tr>
+                <div id="reliability_names_filter_form" name="reliability_names_filter_form">
+                    
+                    <form action="" method="post">
+                
+                        {# always include CSRF token #}
+                        {% csrf_token %}
+                                        
+                        {# output reliability names filter form #}
+                        <h2>Filter Reliability_Names</h2>
+                        <p>
+                            <table class="gridTable">
+                                {{ reliability_names_filter_form.as_table }}
+                            </table>
+                        </p>
+            
+                        <p>
+                            <input type="submit" />
+                        </p>
+                        
+                    </form>
+                    
+                </div>
+    
+            </td>
+            <td class="page_layout">
+                
+                {% if reliability_names_action %}
+        
+                    <p><strong>Reliability_Names Action = </strong> <em>{{ reliability_names_action }}</em></p>
+                    
+                    {% if action_summary %}
+                        <p><p><strong>Action Summary:</strong> {{ action_summary }}</p>
+                    {% endif %}
+                    
+                    {% if action_detail_list %}
+                        <p><strong>Action Details:</strong></p>
+                        <ul>
+                            {% for detail_item in action_detail_list %}
+                                <li>{{ detail_item }}</li>
+                            {% empty %}
+                                <li>No details returned...</li>
+                            {% endfor %}
+                        </ul>
+                        <hr />
+                    {% endif %}
+            
+                    {% if reliability_names_filter_summary %}
+                        <p><strong>Filter Summary:</strong> {{ reliability_names_filter_summary }}</p>
+                    {% endif %}
+                        
+                    {% if reliability_names_output_list %}
+                    
+                        <div id="reliability_names_instance_view" name="reliability_names_instance_view">
+                            
+                            <h3>Selected Reliability_Names records:</h3>
+                            <form action="" method="post">
+                                    
+                                {# always include CSRF token #}
+                                {% csrf_token %}
+                
+                                {# include inputs from person lookup forms #}
+                                {% if reliability_names_filter_form_hidden_inputs %}
+                                    {{ reliability_names_filter_form_hidden_inputs | safe }}
+                                {% endif %}
 
-                {% for names_instance in reliability_names_output_list %}
-
-                    <tr>
-                        <td>{{ names_instance.index }}</td>
-                        <td>{{ names_instance.id }}</td>
-                        <td>{{ names_instance.label }}</td>
-                        <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
-                        <td>{{ names_instance.person_type }}</td>
-                        <td>{{ names_instance.person_last_name }}, {{ names_instance.person_first_name }} ( {{ names_instance.person_name }} )</td>
-                        <td>
-
-                            {% if names_instance.coder_details_list %}
+                                {{ reliability_names_action_form.as_p }}
+                                <p>
+                                    <input type="submit" name="top_do_action" id="top_do_action" value="Do Action" />
+                                </p>
 
                                 <table class="gridtable">
+                                    
                                     <tr>
-                                        <th>Coder ID</th>
-                                        <th>Detected</th>
-                                        <th>Person ID</th>
-                                        <th>Person Type</th>
-                                        <th>Quote Graf</th>
-                                        <th>Quote Index</th>
-                                        <th>Org. Hash</th>
+                                        <th>select</th>
+                                        <th>merge INTO</th>
+                                        <th>index</th>
+                                        <th>ID</th>
+                                        <th>label</th>
+                                        <th>article ID</th>
+                                        <th>person type</th>
+                                        <th>name</th>
+                                        <th>full name</th>
+                                        <th>details</th>
                                     </tr>
-    
-                                    {% for disagreement_details in names_instance.coder_details_list %}
-    
+                    
+                                    {% for names_instance in reliability_names_output_list %}
+                    
                                         <tr>
-                                            <td>{{ disagreement_details.coder_id }}</td>
-                                            <td>{{ disagreement_details.coder_detected }}</td>
-                                            <td>{{ disagreement_details.coder_person_id }}</td>
-                                            <td>{{ disagreement_details.coder_person_type }}</td>
-                                            <td>{{ disagreement_details.coder_first_quote_graf }}</td>
-                                            <td>{{ disagreement_details.coder_first_quote_index }}</td>
-                                            <td>{{ disagreement_details.coder_organization_hash }}</td>
+                                            <td><input type="checkbox" name="{{ input_name_select_prefix }}{{ names_instance.id }}" /></td>
+                                            <td><input type="checkbox" name="{{ input_name_merge_into_prefix }}{{ names_instance.id }}" /></td>
+                                            <td>{{ names_instance.index }}</td>
+                                            <td>{{ names_instance.id }}</td>
+                                            <td>{{ names_instance.label }}</td>
+                                            <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
+                                            <td>{{ names_instance.person_type }}</td>
+                                            <td>{{ names_instance.person_last_name }}, {{ names_instance.person_first_name }}</td>
+                                            <td>{{ names_instance.person_name }}</td>
+                                            <td>
+                    
+                                                {% if names_instance.coder_details_list %}
+                    
+                                                    <table class="gridtable">
+                                                        <tr>
+                                                            <th>Coder ID</th>
+                                                            <th>Detected</th>
+                                                            <th>Person ID</th>
+                                                            <th>Person Type</th>
+                                                            <th>Quote Graf</th>
+                                                            <th>Quote Index</th>
+                                                            <th>Org. Hash</th>
+                                                        </tr>
+                        
+                                                        {% for disagreement_details in names_instance.coder_details_list %}
+                        
+                                                            <tr>
+                                                                <td>{{ disagreement_details.coder_id }}</td>
+                                                                <td>{{ disagreement_details.coder_detected }}</td>
+                                                                <td>{{ disagreement_details.coder_person_id }}</td>
+                                                                <td>{{ disagreement_details.coder_person_type }}</td>
+                                                                <td>{{ disagreement_details.coder_first_quote_graf }}</td>
+                                                                <td>{{ disagreement_details.coder_first_quote_index }}</td>
+                                                                <td>{{ disagreement_details.coder_organization_hash }}</td>
+                                                            </tr>
+                        
+                                                        {% empty %}
+                        
+                                                            <tr><td colspan="4">No Details returned...</td></tr>
+                        
+                                                        {% endfor %}
+                        
+                                                    </table>
+                                                    
+                                                {% else %}
+                                                
+                                                    <p>No disagreement</p>
+                                                
+                                                {% endif %}
+                                                
+                                            </td>
                                         </tr>
-    
+                    
                                     {% empty %}
-    
-                                        <tr><td colspan="4">No Details returned...</td></tr>
-    
+                    
+                                        <tr><td colspan="5">No Reliability_Names found for label {{ reliability_names_label }}.</td></tr>
+                    
                                     {% endfor %}
-    
+                    
                                 </table>
                                 
-                            {% else %}
-                            
-                                <p>No disagreement</p>
-                            
-                            {% endif %}
-                            
-                        </td>
-                    </tr>
+                                <p>
+                                    <input type="submit" name="bottom_do_action" id="bottom_do_action" value="Do Action" />
+                                </p>
 
-                {% empty %}
+                            </form>
+                
+                        </div>
+                
+                    {% endif %} {# -- END if reliability_names_output_list...endif -- #}
 
-                    <tr><td colspan="5">No Reliability_Names found for label {{ reliability_names_label }}.</td></tr>
+                {% endif %} {# -- END if rn_action...endif -- #}
 
-                {% endfor %}
+            </td>
 
-            </table>
+        </tr>
 
-        </div>
-
-    {% endif %}
-
+    </table>
+    
 {% endblock %}

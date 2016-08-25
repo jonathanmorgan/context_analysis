@@ -35,6 +35,7 @@ from django.utils.encoding import python_2_unicode_compatible
 
 # python utilities
 from python_utilities.analysis.statistics.stats_helper import StatsHelper
+from python_utilities.status.status_container import StatusContainer
 
 # sourcenet imports
 from sourcenet.models import Article
@@ -63,22 +64,62 @@ class Reliability_Names( models.Model ):
     '''
 
     #----------------------------------------------------------------------
-    # constants-ish
+    # ! ==> constants-ish
     #----------------------------------------------------------------------    
 
+
+    # maximum index value
+    MAX_INDEX = 10
+
+    # field types
+    FIELD_TYPE_FOREIGN_KEY = "foreign_key"
+    FIELD_TYPE_INTEGER = "integer"
+    FIELD_TYPE_STRING = "string"
+    FIELD_NAME_DEFAULT_SUFFIX = FIELD_TYPE_INTEGER
 
     # field names
     FIELD_NAME_LABEL = "label"
     FIELD_NAME_PREFIX_CODER = "coder"
+    FIELD_NAME_SUFFIX_CODER = ""
     FIELD_NAME_SUFFIX_CODER_ID = "coder_id"
     FIELD_NAME_SUFFIX_DETECTED = "detected"
     FIELD_NAME_SUFFIX_PERSON_ID = "person_id"
     FIELD_NAME_SUFFIX_PERSON_TYPE = "person_type"
     FIELD_NAME_SUFFIX_PERSON_TYPE_INT = "person_type_int"
+    FIELD_NAME_SUFFIX_ARTICLE_DATA_ID = "article_data_id"
     FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID = "article_person_id"
     FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF = "first_quote_graf"
     FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX = "first_quote_index"
     FIELD_NAME_SUFFIX_ORGANIZATION_HASH = "organization_hash"
+
+    # make list of all fields
+    ALL_FIELD_NAME_SUFFIX_LIST = [
+        FIELD_NAME_SUFFIX_CODER,
+        FIELD_NAME_SUFFIX_CODER_ID,
+        FIELD_NAME_SUFFIX_DETECTED,
+        FIELD_NAME_SUFFIX_PERSON_ID,
+        FIELD_NAME_SUFFIX_PERSON_TYPE,
+        FIELD_NAME_SUFFIX_PERSON_TYPE_INT,
+        FIELD_NAME_SUFFIX_ARTICLE_DATA_ID,
+        FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID,
+        FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF,
+        FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX,
+        FIELD_NAME_SUFFIX_ORGANIZATION_HASH,
+    ]
+
+    # make dictionary of field suffixes to field types.
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP = {}
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_CODER ] = FIELD_TYPE_FOREIGN_KEY
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_CODER_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_DETECTED ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_TYPE ] = FIELD_TYPE_STRING
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_TYPE_INT ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ARTICLE_DATA_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ORGANIZATION_HASH ] = FIELD_TYPE_STRING
 
     # make lists of fields that are tested for agreement...
     DEFAULT_AGREEMENT_FIELD_SUFFIX_LIST = [ FIELD_NAME_SUFFIX_DETECTED, FIELD_NAME_SUFFIX_PERSON_ID, FIELD_NAME_SUFFIX_PERSON_TYPE, ]
@@ -111,7 +152,7 @@ class Reliability_Names( models.Model ):
     
 
     #----------------------------------------------------------------------
-    # model fields
+    # ! ==> model fields
     #----------------------------------------------------------------------
 
 
@@ -238,7 +279,7 @@ class Reliability_Names( models.Model ):
 
 
     #----------------------------------------------------------------------------
-    # Meta class
+    # ! ==> Meta class
     #----------------------------------------------------------------------------
 
     # Meta-data for this class.
@@ -250,10 +291,44 @@ class Reliability_Names( models.Model ):
 
 
     #----------------------------------------------------------------------------
-    # class methods
+    # ! ==> class methods
     #----------------------------------------------------------------------------
 
 
+    @classmethod
+    def build_field_name( cls, index_IN, suffix_IN, *args, **kwargs ):
+        
+        '''
+        Accepts index and suffix, uses them to construct field name.
+        '''
+        
+        # return reference
+        value_OUT = ""
+        
+        # construct field name
+        value_OUT = cls.FIELD_NAME_PREFIX_CODER + str( index_IN )
+        
+        # is there a suffix?
+        if ( ( suffix_IN is not None ) and ( suffix_IN != "" ) ):
+        
+            # yes.  does it begin with an underscore?
+            if ( suffix_IN.startswith( "_" ) == False ):
+            
+                # no.  Add one.
+                value_OUT += "_"
+                
+            #-- END check to see if underscore --#
+            
+            # add the suffix.
+            value_OUT += suffix_IN
+        
+        #-- END check to see if suffix --#
+        
+        return value_OUT
+        
+    #-- END class method build_field_name() --#
+        
+    
     @classmethod
     def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1, include_optional_IN = False, order_by_IN = None, *args, **kwargs ):
         
@@ -432,8 +507,97 @@ class Reliability_Names( models.Model ):
     #-- END class method lookup_disagreements() --#
 
 
+    @classmethod
+    def merge_records( cls, merge_from_id_IN, merge_into_id_IN, *args, **kwargs ):
+        
+        '''
+        Accepts IDs of two Reliability_Names rows.  Loads each into an instance.
+            Then, loops over the indices.  For each index, checks to see if that
+            index is empty in the FROM record.  If yes, moves on.  If no, checks
+            to see if the index is empty in the TO record.  If yes, adds index
+            to list of indexes to copy values FROM INTO.  If ever an index has
+            data in both FROM and TO, does not change anything, returns an error
+            message.
+        '''
+        
+        # return reference
+        status_OUT = StatusContainer()
+
+        # declare variables
+        me = "merge_records"
+        status_message = ""
+        merge_from_instance = None
+        merge_into_instance = None
+        merge_index_list = []
+        error_index_list = []
+        is_from_index_empty = False
+        is_into_index_empty = False
+        error_count = -1
+        current_index = -1
+        
+        # load instances.
+        merge_from_instance = Reliability_Names.objects.get( pk = merge_from_id_IN )
+        merge_into_instance = Reliability_Names.objects.get( pk = merge_into_id_IN )
+        
+        # loop over indexes
+        merge_index_list = []
+        error_index_list = []
+        for current_index in range( 1, self.MAX_INDEX + 1 ):
+        
+            # check to see if FROM index is empty.
+            is_from_index_empty = merge_from_instance.is_index_empty( current_index )
+            if ( is_from_index_empty == False ):
+            
+                # not empty in FROM.  Empty in INTO?
+                is_into_index_empty = merge_into_instance.is_index_empty( current_index )
+                if ( is_into_index_empty == True ):
+                
+                    # Add index to merge list.
+                    merge_index_list.append( current_index )
+                    
+                else:
+                
+                    # Both are populated.  ERROR.
+                    error_index_list.append( current_index )
+                    
+                #-- END check to see if INTO is empty at current index. --#
+                
+            #-- END check to see if FROM is empty at current index. --#
+        
+        #-- END loop over indices --#
+        
+        # errors?
+        error_count = len( error_index_list )
+        if ( error_count == 0 ):
+
+            # no errors, for each index to merge, copy values from FROM into
+            #     INTO for all of a given index's fields.
+            for current_index in merge_index_list:
+            
+                # copy values from FROM into INTO.
+                merge_into_instance.copy_index_values( current_index, merge_from_instance )
+            
+            #-- END loop over indices. --#
+            
+            # set status to success
+            status_OUT.set_status_code( StatusContainer.STATUS_SUCCESS )
+        
+        else:
+
+            # there were errors.  Log status appropriately, then do nothing.
+            status_OUT.set_status_code( StatusContainer.STATUS_CODE_ERROR )
+            status_message = "There is data present in both records for the following indices: " + str( error_index_list ) + ", and so nothing was changed and you'll have to sort that out manually at this point."
+            status_OUT.add_message( status_message )
+        
+        #-- END check for errors. --#
+
+        return status_OUT
+        
+    #-- END classmethod merge_records() --#
+
+
     #----------------------------------------------------------------------------
-    # instance methods
+    # ! ==> instance methods
     #----------------------------------------------------------------------------
 
 
@@ -523,6 +687,51 @@ class Reliability_Names( models.Model ):
     #-- END method __str__() --#
     
     
+    def copy_index_values( self, index_IN, copy_from_instance_IN, *args, **kwargs ):
+        
+        '''
+        Accepts index whose contents we want to copy and the record instance
+            from which we want to copy.  Loops through all the suffixes, builds
+            field name for the requested index for each suffix, then reads the
+            values for each field from the FROM instance passed in and stores
+            those values in the same field in this instance.  Returns status in
+            a StatusContainer.
+        '''
+        
+        # return reference
+        status_OUT = StatusContainer()
+        
+        # declare variables
+        me = "copy_index_values"
+        suffix_list = []
+        field_name_suffix = ""
+        field_name = ""
+        field_value = ""
+        
+        # get list of all suffixes
+        suffix_list = self.ALL_FIELD_NAME_SUFFIX_LIST
+        
+        # loop over the suffixes
+        for field_name_suffix in suffix_list:
+        
+            # build field/column name.
+            field_name = self.build_field_name( index_IN, field_name_suffix_IN )
+            
+            # get field value from FROM instance.
+            field_value = getattr( copy_from_instance_IN, field_name )
+            
+            # set field value in self
+            setattr( self, field_name, field_value )
+            
+        #-- END loop over field name/column name suffixes --#
+        
+        status_OUT.set_status_code( StatusContainer.STATUS_SUCCESS )
+        
+        return status_OUT
+                
+    #-- END method copy_index_values() --#
+
+
     def find_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
         
         '''
@@ -598,8 +807,8 @@ class Reliability_Names( models.Model ):
                     # do inequality comparison for detected.
                     
                     # make field/column names.
-                    field_name_1 = "coder" + str( current_outer_index ) + "_" + field_name_suffix
-                    field_name_2 = "coder" + str( current_inner_index ) + "_" + field_name_suffix
+                    field_name_1 = self.build_field_name( current_outer_index, field_name_suffix )
+                    field_name_2 = self.build_field_name( current_inner_index, field_name_suffix )
 
                     # get field values
                     field_value_1 = getattr( self, field_name_1 )
@@ -667,6 +876,140 @@ class Reliability_Names( models.Model ):
         return value_OUT
         
     #-- END method has_disagreement() --#
+     
+
+    def is_field_empty( self, index_IN, field_name_suffix_IN, *args, **kwargs ):
+        
+        '''
+        Accepts an index and a field name suffix.  Builds field name, gets field
+            type, then check to see if field is empty based on type.  Returns
+            True if empty, False if not.  If unknown suffix, returns True...
+        '''
+        
+        # return reference
+        is_empty_OUT = True
+        
+        # declare variables
+        field_name = ""
+        field_value = None
+        field_type = ""
+        
+        # make field/column name.
+        field_name = self.build_field_name( index_IN, field_name_suffix_IN )
+        
+        # get field value
+        field_value = getattr( self, field_name )
+        
+        # get field type
+        field_type = self.FIELD_NAME_SUFFIX_TO_TYPE_MAP.get( field_name_suffix_IN, None )
+        
+        # do empty check based on type.
+        if ( field_type == self.FIELD_TYPE_FOREIGN_KEY ):
+        
+            # foreign key - None is empty
+            if ( field_value is not None ):
+            
+                # not empty
+                is_empty_OUT = False
+                
+            else:
+            
+                # empty
+                is_empty_OUT = True
+                
+            #-- END check to see if empty. --#
+            
+        elif ( field_type == self.FIELD_TYPE_INTEGER ):
+        
+            # integer - must be not None and type int
+            if ( ( field_value is not None ) and ( isinstance( field_value, int ) == True ) ):
+
+                # not empty
+                is_empty_OUT = False
+                
+            else:
+            
+                # empty
+                is_empty_OUT = True
+                
+            #-- END check to see if empty. --#
+        
+        elif ( field_type == self.FIELD_TYPE_STRING ):
+        
+            # integer - must be not None and not "".
+            if ( ( field_value is not None ) and ( field_value != "" ) ):
+
+                # not empty
+                is_empty_OUT = False
+                
+            else:
+            
+                # empty
+                is_empty_OUT = True
+                
+            #-- END check to see if empty. --#
+            
+        #-- END empty check based on type. --#
+        
+        return is_empty_OUT
+        
+    #-- END method is_field_empty() --#
+    
+    
+    def is_index_empty( self, index_IN, comparison_suffix_list_IN = None, *args, **kwargs ):
+        
+        '''
+        Accepts index whose contents we want to inspect.  Loops through all the
+            fields for a given index, checking to see if each is empty.  If all
+            are empty, returns True.  If any are not empty, returns False.
+        '''
+        
+        # return reference
+        is_empty_OUT = True
+        
+        # declare variables
+        comparison_suffix_list = []
+        my_coder_count = -1
+        field_name_suffix = ""
+        is_field_empty = False
+
+        # got a suffix list passed in?
+        if ( comparison_suffix_list_IN is not None ):
+        
+            # yes - use it.
+            comparison_suffix_list = comparison_suffix_list_IN
+            
+        else:
+        
+            # no.  Use default.
+            
+            # init comparison suffix list
+            comparison_suffix_list = self.ALL_FIELD_NAME_SUFFIX_LIST
+            
+        #-- END check to see if suffix list passed in. --#
+
+        # start with is_empty_OUT = True
+        is_empty_OUT = True
+
+        # loop over suffixes we've been asked to compare
+        for field_name_suffix in comparison_suffix_list:
+
+            # is field empty?
+            is_field_empty = self.is_field_empty( index_IN, field_name_suffix )
+            
+            # if not empty, change return value to False, also.
+            if ( is_field_empty == False ):
+
+                # not empty.
+                is_empty_OUT = False
+                
+            #-- END check if field is empty --#
+            
+        #-- END loop over field suffixes. --#
+        
+        return is_empty_OUT
+        
+    #-- END method is_index_empty() --#
      
 
 #= END Reliability_Names model ===============================================#

@@ -6,14 +6,8 @@
 
     <h1>View reliability name results</h1>
     
-    {# got an output_string? #}
-    {% if output_string %}
-    
-        <div id="article_message" name="article_message" style="background-color: yellow; border: 1px solid black;">
-            <p>{{ output_string }}</p>
-        </div>
-    
-    {% endif %}
+    {# include standard status message output #}
+    {% include "sourcenet/shared/output_status_message.html" %}
     
     <div id="reliability_names_results_form" name="reliability_names_results_form">
         

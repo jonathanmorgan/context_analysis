@@ -65,6 +65,7 @@ from python_utilities.django_utils.django_view_helper import DjangoViewHelper
 #from python_utilities.strings.string_helper import StringHelper
 
 # Import form classes
+from sourcenet_analysis.forms import ReliabilityNamesActionForm
 from sourcenet_analysis.forms import ReliabilityNamesFilterForm
 from sourcenet_analysis.forms import ReliabilityNamesResultsForm
 
@@ -171,7 +172,28 @@ def reliability_names_disagreement_view( request_IN ):
     response_dictionary = {}
     default_template = ''
     request_inputs = None
+    reliability_names_action_form = None
     reliability_names_filter_form = None
+    ready_to_act = False
+    is_filter_form_valid = False
+    is_action_form_valid = False
+    is_filter_form_empty = False
+    reliability_names_filter_form_hidden_inputs = ""
+    
+    # declare variables - processing control
+    rn_action_IN = None
+    cleaned_inputs = {}
+    select_id_list = []
+    merge_into_id_list = []
+    input_name = ""
+    input_value = ""
+    person_id_string = ""
+    person_id = -1
+    action_summary = ""
+    action_detail_list = []
+    
+    # declare variables - filtering/lookup
+    reliability_names_filter_summary = ""
     reliability_names_label = ""
     reliability_names_coder_count = -1
     reliability_names_only_disagree = False
@@ -191,6 +213,17 @@ def reliability_names_disagreement_view( request_IN ):
     coder_string = ""
     current_field_name = ""
     
+    # declare variables - delete
+    delete_count = -1
+    delete_counter = -1
+    reliability_names_id = -1
+    reliability_names_instance = None
+    
+    # declare variables - merge
+    from_id = -1
+    into_id = -1
+    merge_status = None
+    
     # initialize response dictionary
     response_dictionary = {}
     response_dictionary.update( csrf( request_IN ) )
@@ -198,199 +231,403 @@ def reliability_names_disagreement_view( request_IN ):
     # set my default rendering template
     default_template = 'sourcenet_analysis/reliability/coding-name-disagreements.html'
 
-    # get request inputs
+    # add a few CONSTANTS-ISH for rendering.
+    response_dictionary[ "input_name_select_prefix" ] = ReliabilityNamesActionForm.INPUT_NAME_SELECT_PREFIX
+    response_dictionary[ "input_name_merge_into_prefix" ] = ReliabilityNamesActionForm.INPUT_NAME_MERGE_INTO_PREFIX
+    
+    # do we have input parameters?
     request_inputs = DjangoViewHelper.get_request_data( request_IN )
     
-    # create ArticleLookupForm
-    reliability_names_filter_form = ReliabilityNamesFilterForm( request_inputs )
-    response_dictionary[ 'reliability_names_filter_form' ] = reliability_names_filter_form
-
     # got inputs?
     if ( request_inputs is not None ):
         
-        # get information we need from request...
-        reliability_names_label = request_inputs.get( "reliability_names_label", "" )
-        reliability_names_coder_count = request_inputs.get( "reliability_names_coder_count", -1 )
-        reliability_names_only_disagree = request_inputs.get( "reliability_names_only_disagree", False )
-        if ( reliability_names_only_disagree == "on" ):
+        # create forms
+        reliability_names_action_form = ReliabilityNamesActionForm( request_inputs )
+        reliability_names_filter_form = ReliabilityNamesFilterForm( request_inputs )
         
-            reliability_names_only_disagree = True
-        
-        #-- END check to see if checkbox "on" --#
+        # we can try an action
+        ready_to_act = True
 
-        reliability_names_include_optional_fields = request_inputs.get( "reliability_names_include_optional_fields", False )
-        if ( reliability_names_include_optional_fields == "on" ):
-        
-            reliability_names_include_optional_fields = True
-        
-        #-- END check to see if checkbox "on" --#
-
-        # ...and the form is ready.
-        is_form_ready = True
+    else:
     
+        # no inputs - create empty forms
+        reliability_names_action_form = ReliabilityNamesActionForm()
+        reliability_names_filter_form = ReliabilityNamesFilterForm()
+                
+        # no action without some inputs
+        ready_to_act = False
+
     #-- END check to see if inputs. --#
-    
-    # form ready?
-    if ( is_form_ready == True ):
 
-        if ( reliability_names_filter_form.is_valid() == True ):
+    # store forms in response
+    response_dictionary[ "reliability_names_action_form" ] = reliability_names_action_form
+    response_dictionary[ "reliability_names_filter_form" ] = reliability_names_filter_form
 
-            # only disagreements?
-            if ( reliability_names_only_disagree == True ):
+    # lookup forms ready?
+    if ( ready_to_act == True ):
 
-                # retrieve QuerySet of Reliability_Names that match label and
-                #    contain disagreements.
-                reliability_names_qs = Reliability_Names.lookup_disagreements(
-                        label_IN = reliability_names_label,
-                        coder_count_IN = reliability_names_coder_count,
-                        include_optional_IN = reliability_names_include_optional_fields
-                    )
-                # response_dictionary[ 'output_string' ] = "ONLY DISAGREE ( " + str( reliability_names_only_disagree ) + " )"
-                
-                # lookup_disagreements() uses a raw SQL query, so it is ordered
-                #     in that SQL query, inside the method call.
-                #reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
-
-            else:
-            
-                # no.  Just filter on label.
-                reliability_names_qs = Reliability_Names.objects.filter( label = reliability_names_label )
-                # response_dictionary[ 'output_string' ] = "ALL ( " + str( reliability_names_only_disagree ) + " )"
-                
-                # order by (only for call to filter() - lookup_disagreements()
-                #     uses a raw SQL query, so it can't be re-ordered.
-                reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
-                
-            #-- END check to see if only disagreements? --#
-            
-            # get count of queryset return items
-            if ( reliability_names_qs is not None ):
-
-                # get count of reliability rows.
-                #record_count = reliability_names_qs.count()
-                
-                # to start, just make a list and pass it to the template.
-                reliability_names_instance_list = list( reliability_names_qs )
-
-                # build list of dictionaries with disagreement information.
-                reliability_names_output_list = []
-                
-                # how many isntances we got?
-                output_count = len( reliability_names_instance_list )
-                if ( output_count > 0 ):
-                
-                    # at least one - loop.
-                    reliability_names_counter = 0
-                    for reliability_names in reliability_names_instance_list:
+        # validate forms
+        is_action_form_valid = reliability_names_action_form.is_valid()
+        is_filter_form_valid = reliability_names_filter_form.is_valid()
         
-                        # increment counter
-                        reliability_names_counter += 1
-        
-                        # store information per row in a dictionary, for access by the view.
-                        reliability_names_output_info = {}
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_INDEX ] = reliability_names_counter
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_INSTANCE ] = reliability_names
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_ID ] = str( reliability_names.id )
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_LABEL ] = reliability_names.label
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_ARTICLE_ID ] = str( reliability_names.article_id )
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_NAME ] = reliability_names.person_name
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_FIRST_NAME ] = reliability_names.person_first_name
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_LAST_NAME ] = reliability_names.person_last_name
-                        reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_TYPE ] = reliability_names.person_type
-                        
-                        # got disagreement?
-                        has_disagreement = reliability_names.has_disagreement( reliability_names_coder_count, include_optional_IN = reliability_names_include_optional_fields )
-                        #disagreement_flag_list.append( has_disagreement )
-                        if ( has_disagreement == True ):
+        # make and use cleaned_inputs from forms when possible.
+        cleaned_inputs = {}
+        cleaned_inputs.update( reliability_names_action_form.cleaned_data )
+        cleaned_inputs.update( reliability_names_filter_form.cleaned_data )
 
-                            # yes - create list of details.
-                            disagreement_details_list = []
+        # is action form valid?
+        if ( is_action_form_valid == True ):
+
+            # first, get the Reliability_Names (rn) action and add it to the
+            #     response_dictionary.
+            reliability_names_action_IN = request_inputs.get( "reliability_names_action", ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_LOOKUP )
+            response_dictionary[ "reliability_names_action" ] = reliability_names_action_IN
+            
+            # got an action?
+            if ( ( reliability_names_action_IN is not None ) and ( reliability_names_action_IN != "" ) ):
+
+                # Yes, we have an action.  But first...
+                
+                # populate merge...id lists.            
+                select_id_list = []
+                merge_into_id_list = []
+            
+                # loop over inputs, looking for field names that start with
+                #     either "select_person_id_<person_id>" or
+                #     "merge_into_person_id_<person_id>".
+                # Must loop over request_inputs, since these are dynamically
+                #     named, and so not in a Form.
+                for input_name, input_value in six.iteritems( request_inputs ):
+                
+                    # does input_name begin with "select_person_id_"?
+                    if ( input_name.startswith( ReliabilityNamesActionForm.INPUT_NAME_SELECT_PREFIX ) == True ):
+                    
+                        # it is a "select_person_id_" input - remove this
+                        #     prefix, convert to integer, then add the ID value
+                        #     to the select_id_list.
+                        person_id_string = input_name.replace( ReliabilityNamesActionForm.INPUT_NAME_SELECT_PREFIX, "" )
+                        person_id = int( person_id_string )
+                        select_id_list.append( person_id )
                         
-                            # create a record per coder we included when looking for
-                            #     disagreements.
-                            for coder_index in range( 1, int( reliability_names_coder_count ) + 1 ):
+                    # does input_name begin with "merge_into_person_id_"?
+                    elif ( input_name.startswith( ReliabilityNamesActionForm.INPUT_NAME_MERGE_INTO_PREFIX ) == True ):
+                    
+                        # it is a "merge_into_person_id_" input - remove this
+                        #     prefix, convert to integer, then add the ID value
+                        #     to the merge_into_id_list.
+                        person_id_string = input_name.replace( ReliabilityNamesActionForm.INPUT_NAME_MERGE_INTO_PREFIX, "" )
+                        person_id = int( person_id_string )
+                        merge_into_id_list.append( person_id )
+                        
+                    #-- END check for "*_person_id_<person_id>" prefixes --#
+                                        
+                #-- END loop over request_inputs --#
+            
+                # Got one.  what are we doing?  Lookup?
+                if ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_LOOKUP ):
+    
+                    # ! ---- lookup
+                    
+                    #-------------------------------------------------------------------
+                    # store the inputs for these forms as hidden input HTML, for use in
+                    #     sending the filter on to a processing page.
+                
+                    # reliability_names_filter_form
+                    reliability_names_filter_form_hidden_inputs = reliability_names_filter_form.to_html_as_hidden_inputs()
+                    response_dictionary[ "reliability_names_filter_form_hidden_inputs" ] = reliability_names_filter_form_hidden_inputs
+                
+                    # is filter form valid?
+                    if ( is_filter_form_valid == True ):
+                    
+                        # if valid, we at least have a label.
+                        reliability_names_filter_summary = "Filters:"
+                        
+                        # get information we need from request...
+                        
+                        # label
+                        reliability_names_label = cleaned_inputs.get( "reliability_names_label", "" )
+                        reliability_names_filter_summary += " label = " + str( reliability_names_label ) + ";"
+
+                        # coder count
+                        reliability_names_coder_count = cleaned_inputs.get( "reliability_names_coder_count", -1 )
+                        reliability_names_filter_summary += " coder count = " + str( reliability_names_coder_count ) + ";"
+                        
+                        # only disagree
+                        reliability_names_only_disagree = cleaned_inputs.get( "reliability_names_only_disagree", False )
+                        if ( reliability_names_only_disagree == "on" ):
+                        
+                            reliability_names_only_disagree = True
+                        
+                        #-- END check to see if checkbox "on" --#
+                        reliability_names_filter_summary += " only disagree? = " + str( reliability_names_only_disagree ) + ";"
+                
+                        # disagree - include optional fields
+                        reliability_names_include_optional_fields = cleaned_inputs.get( "reliability_names_include_optional_fields", False )
+                        if ( reliability_names_include_optional_fields == "on" ):
+                        
+                            reliability_names_include_optional_fields = True
+                        
+                        #-- END check to see if checkbox "on" --#
+                        reliability_names_filter_summary += " disagree - include optional? = " + str( reliability_names_include_optional_fields ) + ";"
+                
+                        # only disagreements?
+                        if ( reliability_names_only_disagree == True ):
+            
+                            # retrieve QuerySet of Reliability_Names that match label and
+                            #    contain disagreements.
+                            reliability_names_qs = Reliability_Names.lookup_disagreements(
+                                    label_IN = reliability_names_label,
+                                    coder_count_IN = reliability_names_coder_count,
+                                    include_optional_IN = reliability_names_include_optional_fields
+                                )
+                            # response_dictionary[ 'output_string' ] = "ONLY DISAGREE ( " + str( reliability_names_only_disagree ) + " )"
                             
-                                # create dictionary to hold details for this coder
-                                disagreement_details_dict = {}
-                                
-                                # build column names based on index.
-                                coder_string = "coder" + str( coder_index )
-    
-                                # retrieve data - coder ID
-                                current_field_name = coder_string + "_id"  # grabbing foreign key value directly.
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ID ] = getattr( reliability_names, current_field_name )
-                            
-                                # retrieve data - coder ID
-                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_DETECTED  # + "_detected"
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_DETECTED ] = getattr( reliability_names, current_field_name )
-    
-                                # retrieve data - coder's selected person ID
-                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_ID  # + "_person_id"
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_ID ] = getattr( reliability_names, current_field_name )
-    
-                                # retrieve data - coder's selected person type
-                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE  # + "_person_type"
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_TYPE ] = getattr( reliability_names, current_field_name )
-    
-                                # retrieve data - coder's first quote paragraph number
-                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF  # + "_first_quote_graf"
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_GRAF ] = getattr( reliability_names, current_field_name )
-    
-                                # retrieve data - coder's first quote index number
-                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX  # + "_first_quote_index"
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_INDEX ] = getattr( reliability_names, current_field_name )
-    
-                                # retrieve data - organization string hash
-                                current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH  # + "_organization_hash"
-                                disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ORGANIZATION_HASH ] = getattr( reliability_names, current_field_name )
-    
-                                # add to list.
-                                disagreement_details_list.append( disagreement_details_dict )
-                            
-                            #-- END loop over coder indices --#
-                            
-                            # add details to current dictionary.
-                            reliability_names_output_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = disagreement_details_list
-                            
+                            # lookup_disagreements() uses a raw SQL query, so it is ordered
+                            #     in that SQL query, inside the method call.
+                            #reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
+            
                         else:
                         
-                            # no disagreements - just set the list to None.
-                            reliability_names_output_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = None
+                            # no.  Just filter on label.
+                            reliability_names_qs = Reliability_Names.objects.filter( label = reliability_names_label )
+                            # response_dictionary[ 'output_string' ] = "ALL ( " + str( reliability_names_only_disagree ) + " )"
+                            
+                            # order by (only for call to filter() - lookup_disagreements()
+                            #     uses a raw SQL query, so it can't be re-ordered.
+                            reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
+                            
+                        #-- END check to see if only disagreements? --#
                         
-                        #-- END check to see if disagreement --#
-                        
-                        # add current dictionary to list.
-                        reliability_names_output_list.append( reliability_names_output_info )
-                        
-                    #-- END loop over reliability_names --#
+                        # get count of queryset return items
+                        if ( reliability_names_qs is not None ):
+            
+                            # get count of reliability rows.
+                            #record_count = reliability_names_qs.count()
+                            
+                            # to start, just make a list and pass it to the template.
+                            reliability_names_instance_list = list( reliability_names_qs )
+            
+                            # build list of dictionaries with disagreement information.
+                            reliability_names_output_list = []
+                            
+                            # how many isntances we got?
+                            output_count = len( reliability_names_instance_list )
+                            reliability_names_filter_summary = "Found " + str( output_count ) + " records that match " + reliability_names_filter_summary
+                            if ( output_count > 0 ):
+                            
+                                # at least one - loop.
+                                reliability_names_counter = 0
+                                for reliability_names in reliability_names_instance_list:
                     
-                #-- END check to see if anything in 
+                                    # increment counter
+                                    reliability_names_counter += 1
+                    
+                                    # store information per row in a dictionary, for access by the view.
+                                    reliability_names_output_info = {}
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_INDEX ] = reliability_names_counter
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_INSTANCE ] = reliability_names
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_ID ] = str( reliability_names.id )
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_LABEL ] = reliability_names.label
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_ARTICLE_ID ] = str( reliability_names.article_id )
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_NAME ] = reliability_names.person_name
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_FIRST_NAME ] = reliability_names.person_first_name
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_LAST_NAME ] = reliability_names.person_last_name
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_TYPE ] = reliability_names.person_type
+                                    
+                                    # got disagreement?
+                                    has_disagreement = reliability_names.has_disagreement( reliability_names_coder_count, include_optional_IN = reliability_names_include_optional_fields )
+                                    #disagreement_flag_list.append( has_disagreement )
+                                    if ( has_disagreement == True ):
+            
+                                        # yes - create list of details.
+                                        disagreement_details_list = []
+                                    
+                                        # create a record per coder we included when looking for
+                                        #     disagreements.
+                                        for coder_index in range( 1, int( reliability_names_coder_count ) + 1 ):
+                                        
+                                            # create dictionary to hold details for this coder
+                                            disagreement_details_dict = {}
+                                            
+                                            # build column names based on index.
+                                            coder_string = "coder" + str( coder_index )
+                
+                                            # retrieve data - coder ID
+                                            current_field_name = coder_string + "_id"  # grabbing foreign key value directly.
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ID ] = getattr( reliability_names, current_field_name )
+                                        
+                                            # retrieve data - coder ID
+                                            current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_DETECTED  # + "_detected"
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_DETECTED ] = getattr( reliability_names, current_field_name )
+                
+                                            # retrieve data - coder's selected person ID
+                                            current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_ID  # + "_person_id"
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_ID ] = getattr( reliability_names, current_field_name )
+                
+                                            # retrieve data - coder's selected person type
+                                            current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE  # + "_person_type"
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_PERSON_TYPE ] = getattr( reliability_names, current_field_name )
+                
+                                            # retrieve data - coder's first quote paragraph number
+                                            current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF  # + "_first_quote_graf"
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_GRAF ] = getattr( reliability_names, current_field_name )
+                
+                                            # retrieve data - coder's first quote index number
+                                            current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX  # + "_first_quote_index"
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_FIRST_QUOTE_INDEX ] = getattr( reliability_names, current_field_name )
+                
+                                            # retrieve data - organization string hash
+                                            current_field_name = coder_string + "_" + Reliability_Names.FIELD_NAME_SUFFIX_ORGANIZATION_HASH  # + "_organization_hash"
+                                            disagreement_details_dict[ Reliability_Names.PROP_NAME_CODER_ORGANIZATION_HASH ] = getattr( reliability_names, current_field_name )
+                
+                                            # add to list.
+                                            disagreement_details_list.append( disagreement_details_dict )
+                                        
+                                        #-- END loop over coder indices --#
+                                        
+                                        # add details to current dictionary.
+                                        reliability_names_output_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = disagreement_details_list
+                                        
+                                    else:
+                                    
+                                        # no disagreements - just set the list to None.
+                                        reliability_names_output_info[ Reliability_Names.PROP_NAME_CODER_DETAILS_LIST ] = None
+                                    
+                                    #-- END check to see if disagreement --#
+                                    
+                                    # add current dictionary to list.
+                                    reliability_names_output_list.append( reliability_names_output_info )
+                                    
+                                #-- END loop over reliability_names --#
+                                
+                            #-- END check to see if anything in 
+            
+                            # seed response dictionary.
+                            response_dictionary[ 'reliability_names_label' ] = reliability_names_label
+                            response_dictionary[ 'reliability_names_instance_list' ] = reliability_names_instance_list
+                            response_dictionary[ 'reliability_names_output_list' ] = reliability_names_output_list
+                            response_dictionary[ 'rn_class' ] = Reliability_Names
+                            #response_dictionary[ 'output_string' ] = str( disagreement_flag_list )
+            
+                        else:
+                        
+                            # ERROR - nothing returned from attempt to get queryset (would expect empty query set)
+                            response_dictionary[ 'output_string' ] = "ERROR - no QuerySet returned from call to filter().  This is odd."
+                        
+                        #-- END check to see if query set is None --#
+                        
+                        # add the reliability_names_filter_summary to the
+                        #     response_dictionary
+                        response_dictionary[ 'reliability_names_filter_summary' ] = reliability_names_filter_summary
 
-                # seed response dictionary.
-                response_dictionary[ 'reliability_names_label' ] = reliability_names_label
-                response_dictionary[ 'reliability_names_instance_list' ] = reliability_names_instance_list
-                response_dictionary[ 'reliability_names_output_list' ] = reliability_names_output_list
-                response_dictionary[ 'rn_class' ] = Reliability_Names
-                #response_dictionary[ 'output_string' ] = str( disagreement_flag_list )
+                    else:
 
+                        # not valid - render the form again
+                        response_dictionary[ 'output_string' ] = "Please enter a label to use to filter reliability names data."
+            
+                    #-- END check to see if ReliabilityNamesFilterForm is valid --#
+
+                # delete?
+                elif ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_DELETE ):
+                
+                    # ! ---- delete
+                    
+                    # ! TODO - add confirm
+                    
+                    # check to see if anything in select_id_list
+                    delete_count = len( select_id_list )
+                    if ( delete_count > 0 ):
+                        
+                        # loop over IDs, looking up record for each, then
+                        #     deleting it.
+                        delete_counter = 0
+                        for reliability_names_id in select_id_list:
+                        
+                            delete_counter += 1
+                            
+                            # lookup record for ID.
+                            reliability_names_instance = Reliability_Names.objects.get( pk = reliability_names_id )
+                            
+                            # delete it
+                            reliability_names_instance.delete()
+                            
+                        #-- END loop over selected IDs. --#
+                        
+                        # update the action details list.
+                        action_summary = "Deleted Reliability_Names records with IDs: " + str( select_id_list )
+                        action_detail_list.append( action_summary )
+                        
+                    else:
+                    
+                        # when merging coding, can only do one FROM and one INTO
+                        response_dictionary[ 'output_string' ] = "Delete requested, but no records selected.  Nothing deleted."        
+
+                    #-- END check to make sure one FROM and one INTO. --#
+                    
+                # merge?
+                elif ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_MERGE_CODING ):
+                
+                    # ! ---- merge_coding from...to
+                    
+                    # first, check to make sure just one FROM and one INTO.
+                    from_count = len( select_id_list )
+                    into_count = len( merge_into_id_list )
+                    
+                    if ( ( from_count == 1 ) and ( into_count == 1 ) ):
+                    
+                        # one of each.  For all non-empty indices in the FROM,
+                        #     copy the values for each index into the fields for
+                        #     that index in the INTO.
+                        
+                        # get the person IDs.
+                        from_id = select_id_list[ 0 ]
+                        into_id = merge_into_id_list[ 0 ]
+                        
+                        # call the merge method.
+                        merge_status = Reliability_Names.merge_records( from_id, into_id )
+                        
+                        # update the action details list.
+                        action_summary = "Status = \"" + str( merge_status.get_status_code() ) + "\": merging person data from Reliability_Names record " + str( from_person_id ) + " into Reliability_Names record " + str( into_id )
+                        action_detail_list.append( action_summary )
+                        
+                        # get message list from status container and append it to action summary.
+                        merge_status_message_list = merge_status.get_message_list()
+                        action_detail_list.extend( merge_status_message_list )
+                        
+                    else:
+                    
+                        # when merging coding, can only do one FROM and one INTO
+                        response_dictionary[ 'output_string' ] = "When merging coding, you can only merge coding that refers to a single person INTO the coding that refers to a single other person (FROM 1 INTO 1)."        
+
+                    #-- END check to make sure one FROM and one INTO. --#
+                    
+                #-- END check to see what merge action --#                
+
+
+                # add action_summary and action_detail_list to the response
+                #     dictionary.
+                response_dictionary[ "action_summary" ] = action_summary
+                response_dictionary[ "action_detail_list" ] = action_detail_list
+                
+                #-- END check to see if action_detail_list --#
+    
             else:
             
-                # ERROR - nothing returned from attempt to get queryset (would expect empty query set)
-                response_dictionary[ 'output_string' ] = "ERROR - no QuerySet returned from call to filter().  This is odd."
+                # no merge_action
+                response_dictionary[ 'output_string' ] = "No Reliability_Name action set.  Nothing to see here."        
+                
+            #-- END check to see if merge_action present. --#
             
-            #-- END check to see if query set is None --#
-
         else:
-
+        
             # not valid - render the form again
-            response_dictionary[ 'output_string' ] = "Please enter a label to use to filter reliability names data."
+            response_dictionary[ 'output_string' ] = "Reliability_Name action form is not valid."
 
         #-- END check to see whether or not form is valid. --#
 
     else:
     
-        # new request, make an empty instance of network output form.
-        #response_dictionary[ 'output_string' ] = "Please enter a label to use to filter reliability names data."
+        # new request, just use empty instance of form created and stored above.
         pass
 
     #-- END check to see if new request or POST --#

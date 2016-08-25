@@ -39,58 +39,7 @@ tag_list = [ "prelim_reliability_test", ]
 #label = "prelim_reliability_test_human"
 label = "prelim_reliability_test_all"
 
-'''
-# ====> old way
-
-# declare variables - user setup
-current_coder = None
-current_coder_id = -1
-current_index = -1
-coder_id_to_instance_map = {}
-coder_id_to_index_map = {}
-limit_to_user_ids = []
-
-# set it up so that...
-
-# ...8 is index 1...
-current_coder_id = 8
-current_index = 1
-current_coder = User.objects.get( id = current_coder_id )
-coder_id_to_instance_map[ current_coder_id ] = current_coder
-coder_id_to_index_map[ current_coder_id ] = current_index
-limit_to_user_ids.append( current_coder_id )
-
-# ...9 is index 2...
-current_coder_id = 9
-current_index = 2
-current_coder = User.objects.get( id = current_coder_id )
-coder_id_to_instance_map[ current_coder_id ] = current_coder
-coder_id_to_index_map[ current_coder_id ] = current_index
-limit_to_user_ids.append( current_coder_id )
-
-# ...and 10 is index 3
-current_coder_id = 10
-current_index = 3
-current_coder = User.objects.get( id = current_coder_id )
-coder_id_to_instance_map[ current_coder_id ] = current_coder
-coder_id_to_index_map[ current_coder_id ] = current_index
-limit_to_user_ids.append( current_coder_id )
-
-# ...and 2 is index 4
-current_coder_id = 2
-current_index = 4
-current_coder = User.objects.get( id = current_coder_id )
-coder_id_to_instance_map[ current_coder_id ] = current_coder
-coder_id_to_index_map[ current_coder_id ] = current_index
-limit_to_user_ids.append( current_coder_id )
-
-# store configuration in instance.
-my_reliability_instance.coder_id_to_instance_map = coder_id_to_instance_map
-my_reliability_instance.coder_id_to_index_map = coder_id_to_index_map
-my_reliability_instance.limit_to_user_ids = limit_to_user_ids
-'''
-
-# ====> new way
+# ! ====> map coder user IDs to indices within the reliability names table.
 
 # set it up so that...
 
