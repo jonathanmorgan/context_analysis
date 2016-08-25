@@ -35,14 +35,79 @@ from django.utils.encoding import python_2_unicode_compatible
 
 # python utilities
 from python_utilities.analysis.statistics.stats_helper import StatsHelper
+from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.status.status_container import StatusContainer
 
 # sourcenet imports
 from sourcenet.models import Article
 from sourcenet.models import Person
 
+# Debugging code, shared across all models.
+
+DEBUG = True
+
+def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_IN = "" ):
+    
+    '''
+    Accepts message string.  If debug is on, logs it.  If not,
+       does nothing for now.
+    '''
+    
+    # declare variables
+    my_message = ""
+    my_logger = None
+    my_logger_name = ""
+
+    # got a message?
+    if ( message_IN ):
+    
+        # only print if debug is on.
+        if ( DEBUG == True ):
+        
+            my_message = message_IN
+        
+            # got a method?
+            if ( method_IN ):
+            
+                # We do - append to front of message.
+                my_message = "In " + method_IN + ": " + my_message
+                
+            #-- END check to see if method passed in --#
+            
+            # indent?
+            if ( indent_with_IN ):
+                
+                my_message = indent_with_IN + my_message
+                
+            #-- END check to see if we indent. --#
+        
+            # debug is on.  Start logging rather than using print().
+            #print( my_message )
+            
+            # got a logger name?
+            my_logger_name = "sourcenet.models"
+            if ( ( logger_name_IN is not None ) and ( logger_name_IN != "" ) ):
+            
+                # use logger name passed in.
+                my_logger_name = logger_name_IN
+                
+            #-- END check to see if logger name --#
+                
+            # get logger
+            my_logger = LoggingHelper.get_a_logger( my_logger_name )
+            
+            # log debug.
+            my_logger.debug( my_message )
+        
+        #-- END check to see if debug is on --#
+    
+    #-- END check to see if message. --#
+
+#-- END method output_debug() --#
+
+
 #==============================================================================#
-# !Analysis models
+# ! Analysis models
 #==============================================================================#
 
 
@@ -68,6 +133,9 @@ class Reliability_Names( models.Model ):
     #----------------------------------------------------------------------    
 
 
+    # logging
+    LOGGER_NAME = "sourcenet_analysis.models.Reliability_Names"
+
     # maximum index value
     MAX_INDEX = 10
 
@@ -75,7 +143,8 @@ class Reliability_Names( models.Model ):
     FIELD_TYPE_FOREIGN_KEY = "foreign_key"
     FIELD_TYPE_INTEGER = "integer"
     FIELD_TYPE_STRING = "string"
-    FIELD_NAME_DEFAULT_SUFFIX = FIELD_TYPE_INTEGER
+    FIELD_TYPE_NON_ZERO_INTEGER = "non_zero_integer"
+    FIELD_NAME_DEFAULT_SUFFIX = FIELD_TYPE_STRING
 
     # field names
     FIELD_NAME_LABEL = "label"
@@ -110,13 +179,13 @@ class Reliability_Names( models.Model ):
     # make dictionary of field suffixes to field types.
     FIELD_NAME_SUFFIX_TO_TYPE_MAP = {}
     FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_CODER ] = FIELD_TYPE_FOREIGN_KEY
-    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_CODER_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_CODER_ID ] = FIELD_TYPE_NON_ZERO_INTEGER
     FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_DETECTED ] = FIELD_TYPE_INTEGER
-    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_ID ] = FIELD_TYPE_NON_ZERO_INTEGER
     FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_TYPE ] = FIELD_TYPE_STRING
-    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_TYPE_INT ] = FIELD_TYPE_INTEGER
-    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ARTICLE_DATA_ID ] = FIELD_TYPE_INTEGER
-    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID ] = FIELD_TYPE_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_PERSON_TYPE_INT ] = FIELD_TYPE_NON_ZERO_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ARTICLE_DATA_ID ] = FIELD_TYPE_NON_ZERO_INTEGER
+    FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID ] = FIELD_TYPE_NON_ZERO_INTEGER
     FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF ] = FIELD_TYPE_INTEGER
     FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX ] = FIELD_TYPE_INTEGER
     FIELD_NAME_SUFFIX_TO_TYPE_MAP[ FIELD_NAME_SUFFIX_ORGANIZATION_HASH ] = FIELD_TYPE_STRING
@@ -508,7 +577,7 @@ class Reliability_Names( models.Model ):
 
 
     @classmethod
-    def merge_records( cls, merge_from_id_IN, merge_into_id_IN, *args, **kwargs ):
+    def merge_records( cls, merge_from_id_IN, merge_into_id_IN, delete_from_record_IN = False, *args, **kwargs ):
         
         '''
         Accepts IDs of two Reliability_Names rows.  Loads each into an instance.
@@ -525,6 +594,7 @@ class Reliability_Names( models.Model ):
 
         # declare variables
         me = "merge_records"
+        debug_message = ""
         status_message = ""
         merge_from_instance = None
         merge_into_instance = None
@@ -542,11 +612,17 @@ class Reliability_Names( models.Model ):
         # loop over indexes
         merge_index_list = []
         error_index_list = []
-        for current_index in range( 1, self.MAX_INDEX + 1 ):
+        for current_index in range( 1, cls.MAX_INDEX + 1 ):
+        
+            debug_message = "In " + me + ": current index = " + str( current_index )
+            output_debug( debug_message, me, logger_name_IN = cls.LOGGER_NAME )
         
             # check to see if FROM index is empty.
             is_from_index_empty = merge_from_instance.is_index_empty( current_index )
             if ( is_from_index_empty == False ):
+            
+                debug_message = "In " + me + ": FROM not empty."
+                output_debug( debug_message, me, indent_with_IN = "----> ", logger_name_IN = cls.LOGGER_NAME )
             
                 # not empty in FROM.  Empty in INTO?
                 is_into_index_empty = merge_into_instance.is_index_empty( current_index )
@@ -555,13 +631,24 @@ class Reliability_Names( models.Model ):
                     # Add index to merge list.
                     merge_index_list.append( current_index )
                     
+                    debug_message = "In " + me + ": INTO is empty."
+                    output_debug( debug_message, me, indent_with_IN = "----> ", logger_name_IN = cls.LOGGER_NAME )
+                
                 else:
                 
                     # Both are populated.  ERROR.
                     error_index_list.append( current_index )
                     
+                    debug_message = "In " + me + ": INTO not empty."
+                    output_debug( debug_message, me, indent_with_IN = "----> ", logger_name_IN = cls.LOGGER_NAME )
+                
                 #-- END check to see if INTO is empty at current index. --#
                 
+            else:
+            
+                debug_message = "In " + me + ": FROM is empty."
+                output_debug( debug_message, me, indent_with_IN = "----> ", logger_name_IN = cls.LOGGER_NAME )
+            
             #-- END check to see if FROM is empty at current index. --#
         
         #-- END loop over indices --#
@@ -579,8 +666,36 @@ class Reliability_Names( models.Model ):
             
             #-- END loop over indices. --#
             
-            # set status to success
-            status_OUT.set_status_code( StatusContainer.STATUS_SUCCESS )
+            # add details of Person from FROM into notes for INTO.
+            status_message = "Reliability_Names." + str( me ) + "() merged data from indexes " + str( merge_index_list ) + " in Reliability_Names ID = " + str( merge_from_instance.id ) + " ( Person: " +  str( merge_from_instance.person ) + " ) into this record ( Reliability_Names ID = " + str( merge_into_instance.id ) + " )."
+            
+            if ( ( merge_into_instance.notes is not None ) and ( merge_into_instance.notes != "" ) ):
+            
+                # notes aren't empty - append a newline and a dash.
+                merge_into_instance.notes += "\n- "
+                merge_into_instance.notes += status_message
+                
+            else:
+            
+                # else empty, so set to empty string so we can append below one way or the othst
+                merge_into_instance.notes = status_message
+            
+            #-- END check to see if merge_into_instance.notes are empty. --#
+            
+            # save changes to INTO.
+            merge_into_instance.save()
+            
+            # delete FROM?
+            if ( delete_from_record_IN == True ):
+            
+                # delete the FROM record
+                merge_from_instance.delete()
+                
+            #-- END check to see if we delete. --#
+            
+            # set status to success and return message.
+            status_OUT.set_status_code( StatusContainer.STATUS_CODE_SUCCESS )
+            status_OUT.add_message( status_message )
         
         else:
 
@@ -715,17 +830,17 @@ class Reliability_Names( models.Model ):
         for field_name_suffix in suffix_list:
         
             # build field/column name.
-            field_name = self.build_field_name( index_IN, field_name_suffix_IN )
+            field_name = self.build_field_name( index_IN, field_name_suffix )
             
             # get field value from FROM instance.
-            field_value = getattr( copy_from_instance_IN, field_name )
+            field_value = copy_from_instance_IN.get_field_value( index_IN, field_name_suffix )
             
             # set field value in self
             setattr( self, field_name, field_value )
             
         #-- END loop over field name/column name suffixes --#
         
-        status_OUT.set_status_code( StatusContainer.STATUS_SUCCESS )
+        status_OUT.set_status_code( StatusContainer.STATUS_CODE_SUCCESS )
         
         return status_OUT
                 
@@ -839,6 +954,33 @@ class Reliability_Names( models.Model ):
     #-- END method find_disagreement() --#
      
 
+    def get_field_value( self, index_IN, field_name_suffix_IN, *args, **kwargs ):
+        
+        '''
+        Accepts index and suffix of field we want to get a value for.  Builds
+            field name for the requested index and suffix, then reads the
+            value for that field and returns it.
+        '''
+        
+        # return reference
+        value_OUT = None
+        
+        # declare variables
+        me = "get_field_value"
+        field_name = ""
+        field_value = ""
+        
+        # build field/column name.
+        field_name = self.build_field_name( index_IN, field_name_suffix_IN )
+        
+        # get field value from FROM instance.
+        value_OUT = getattr( self, field_name )
+                
+        return value_OUT
+                
+    #-- END method get_field_value() --#
+
+
     def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
         
         '''
@@ -890,6 +1032,8 @@ class Reliability_Names( models.Model ):
         is_empty_OUT = True
         
         # declare variables
+        me = "is_field_empty"
+        debug_message = ""
         field_name = ""
         field_value = None
         field_type = ""
@@ -903,6 +1047,9 @@ class Reliability_Names( models.Model ):
         # get field type
         field_type = self.FIELD_NAME_SUFFIX_TO_TYPE_MAP.get( field_name_suffix_IN, None )
         
+        debug_message = "In " + me + ": Current Request - field_name = " + str( field_name ) + "; field_value = " + str( field_value ) + "; field type = " + str( field_type )
+        output_debug( debug_message, me, indent_with_IN = "--------> ", logger_name_IN = self.LOGGER_NAME )
+    
         # do empty check based on type.
         if ( field_type == self.FIELD_TYPE_FOREIGN_KEY ):
         
@@ -919,6 +1066,23 @@ class Reliability_Names( models.Model ):
                 
             #-- END check to see if empty. --#
             
+        elif ( field_type == self.FIELD_TYPE_NON_ZERO_INTEGER ):
+        
+            # integer - must be not None and type int and greater than 0.
+            if ( ( field_value is not None )
+                and ( isinstance( field_value, int ) == True )
+                and ( field_value > 0 ) ):
+
+                # not empty
+                is_empty_OUT = False
+                
+            else:
+            
+                # empty
+                is_empty_OUT = True
+                
+            #-- END check to see if empty. --#
+        
         elif ( field_type == self.FIELD_TYPE_INTEGER ):
         
             # integer - must be not None and type int
@@ -949,6 +1113,21 @@ class Reliability_Names( models.Model ):
                 
             #-- END check to see if empty. --#
             
+        else:
+        
+            # default - not None and not "".
+            if ( ( field_value is not None ) and ( field_value != "" ) ):
+
+                # not empty
+                is_empty_OUT = False
+                
+            else:
+            
+                # empty
+                is_empty_OUT = True
+                
+            #-- END check to see if empty. --#
+                    
         #-- END empty check based on type. --#
         
         return is_empty_OUT
@@ -983,14 +1162,23 @@ class Reliability_Names( models.Model ):
         
             # no.  Use default.
             
-            # init comparison suffix list
-            comparison_suffix_list = self.ALL_FIELD_NAME_SUFFIX_LIST
+            # init comparison suffix list - just coder ID integer field (coder
+            #     reference is always set, for reference), IDs of other records,
+            #     and person type, string and int.
+            comparison_suffix_list = [
+                self.FIELD_NAME_SUFFIX_CODER_ID,
+                self.FIELD_NAME_SUFFIX_PERSON_ID,
+                self.FIELD_NAME_SUFFIX_PERSON_TYPE,
+                self.FIELD_NAME_SUFFIX_PERSON_TYPE_INT,
+                self.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID,
+                self.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID,
+            ]
             
         #-- END check to see if suffix list passed in. --#
 
         # start with is_empty_OUT = True
         is_empty_OUT = True
-
+        
         # loop over suffixes we've been asked to compare
         for field_name_suffix in comparison_suffix_list:
 

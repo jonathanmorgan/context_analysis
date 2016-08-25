@@ -44,7 +44,7 @@
                     <p><strong>Reliability_Names Action = </strong> <em>{{ reliability_names_action }}</em></p>
                     
                     {% if action_summary %}
-                        <p><p><strong>Action Summary:</strong> {{ action_summary }}</p>
+                        <p><strong>Action Summary:</strong> {{ action_summary }}</p>
                     {% endif %}
                     
                     {% if action_detail_list %}
@@ -59,10 +59,6 @@
                         <hr />
                     {% endif %}
             
-                    {% if reliability_names_filter_summary %}
-                        <p><strong>Filter Summary:</strong> {{ reliability_names_filter_summary }}</p>
-                    {% endif %}
-                        
                     {% if reliability_names_output_list %}
                     
                         <div id="reliability_names_instance_view" name="reliability_names_instance_view">

@@ -64,12 +64,23 @@ class ReliabilityNamesFilterForm( FormParent ):
     form to hold variables used in looking up Reliability_Names instances.
     '''
 
+    # filter_type choices
+    RELIABILITY_NAMES_FILTER_TYPE_LOOKUP = "lookup"
+    RELIABILITY_NAMES_FILTER_TYPE_ONLY_DISAGREE = "only_disagree"
+    
+    RELIABILITY_NAMES_FILTER_TYPE_CHOICES = (
+        ( RELIABILITY_NAMES_FILTER_TYPE_LOOKUP, "Lookup" ),
+        ( RELIABILITY_NAMES_FILTER_TYPE_ONLY_DISAGREE, "Disagree (only rows with disagreement across coders)" ),
+    )
+    
     # label
     reliability_names_label = forms.CharField( required = True, label = "Label" )
     reliability_names_coder_count = forms.CharField( required = True, label = "Coders to compare (1 through ==>)" )
-    reliability_names_only_disagree = forms.BooleanField( required = False, label = "Limit to disagreements?" )
-    reliability_names_include_optional_fields = forms.BooleanField( required = False, label = "Disagreements - Include optional fields?" )
-    #reliability_names_coder_id_list = forms.CharField( required = True, label = "Coders to compare (separated by commas)" )
+    reliability_names_filter_type = forms.ChoiceField( required = True, choices = RELIABILITY_NAMES_FILTER_TYPE_CHOICES )
+    reliability_names_id_in_list = forms.CharField( required = False, label = "[Lookup] - Reliability_Names IDs (comma-delimited)" )
+    reliability_names_article_id_in_list = forms.CharField( required = False, label = "[Lookup] - Associated Article IDs (comma-delimited)" )
+    reliability_names_only_first_name = forms.BooleanField( required = False, label = "[Lookup] - Person has first name, no other name parts." )
+    reliability_names_include_optional_fields = forms.BooleanField( required = False, label = "[Disagree] - Include optional fields?" )
 
 #-- END ReliabilityNamesFilterForm --#
 

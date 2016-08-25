@@ -40,6 +40,9 @@ from django.contrib.auth.decorators import login_required
 # django core imports
 from django.core.urlresolvers import reverse
 
+# Django query object for OR-ing selection criteria together.
+from django.db.models import Q
+
 # Import objects from the django.http library.
 #from django.http import Http404
 from django.http import HttpResponse
@@ -59,6 +62,7 @@ from django.template.context_processors import csrf
 # python_utilities
 from python_utilities.dictionaries.dict_helper import DictHelper
 from python_utilities.django_utils.django_view_helper import DjangoViewHelper
+from python_utilities.lists.list_helper import ListHelper
 #from python_utilities.exceptions.exception_helper import ExceptionHelper
 #from python_utilities.json.json_helper import JSONHelper
 #from python_utilities.logging.logging_helper import LoggingHelper
@@ -196,7 +200,14 @@ def reliability_names_disagreement_view( request_IN ):
     reliability_names_filter_summary = ""
     reliability_names_label = ""
     reliability_names_coder_count = -1
-    reliability_names_only_disagree = False
+    reliability_names_filter_type = ""
+    reliability_names_id_in_list_string = None
+    reliability_names_id_in_list = []
+    reliability_names_id_count = -1
+    reliability_names_article_id_in_list_string = None
+    reliability_names_article_id_in_list = []
+    article_id_count = -1
+    reliability_names_only_first_name = False
     reliability_names_include_optional_fields = False
     reliability_names_qs = None
     record_count = -1
@@ -340,26 +351,38 @@ def reliability_names_disagreement_view( request_IN ):
                     if ( is_filter_form_valid == True ):
                     
                         # if valid, we at least have a label.
-                        reliability_names_filter_summary = "Filters:"
+                        action_detail_list.append( "Filters:" )
                         
                         # get information we need from request...
                         
                         # label
                         reliability_names_label = cleaned_inputs.get( "reliability_names_label", "" )
-                        reliability_names_filter_summary += " label = " + str( reliability_names_label ) + ";"
+                        action_detail_list.append( "label = " + str( reliability_names_label ) )
 
                         # coder count
                         reliability_names_coder_count = cleaned_inputs.get( "reliability_names_coder_count", -1 )
-                        reliability_names_filter_summary += " coder count = " + str( reliability_names_coder_count ) + ";"
+                        action_detail_list.append( "coder count = " + str( reliability_names_coder_count ) )
                         
-                        # only disagree
-                        reliability_names_only_disagree = cleaned_inputs.get( "reliability_names_only_disagree", False )
-                        if ( reliability_names_only_disagree == "on" ):
+                        # filter type
+                        reliability_names_filter_type = cleaned_inputs.get( "reliability_names_filter_type", ReliabilityNamesFilterForm.RELIABILITY_NAMES_FILTER_TYPE_LOOKUP )
+                        action_detail_list.append( "filter type = " + str( reliability_names_filter_type ) )
                         
-                            reliability_names_only_disagree = True
+                        # Reliability_Names ID IN list
+                        reliability_names_id_in_list_string = cleaned_inputs.get( "reliability_names_id_in_list", None )
+                        action_detail_list.append( "<lookup> IDs IN = " + str( reliability_names_id_in_list_string ) )
+                        
+                        # Reliability_Names related Article ID IN list
+                        reliability_names_article_id_in_list_string = cleaned_inputs.get( "reliability_names_article_id_in_list", None )
+                        action_detail_list.append( "<lookup> Article IDs IN = " + str( reliability_names_article_id_in_list_string ) )
+
+                        # only first name present
+                        reliability_names_only_first_name = cleaned_inputs.get( "reliability_names_only_first_name", False )
+                        if ( reliability_names_only_first_name == "on" ):
+                        
+                            reliability_names_only_first_name = True
                         
                         #-- END check to see if checkbox "on" --#
-                        reliability_names_filter_summary += " only disagree? = " + str( reliability_names_only_disagree ) + ";"
+                        action_detail_list.append( "<lookup> only first name? = " + str( reliability_names_only_first_name ) )
                 
                         # disagree - include optional fields
                         reliability_names_include_optional_fields = cleaned_inputs.get( "reliability_names_include_optional_fields", False )
@@ -368,29 +391,69 @@ def reliability_names_disagreement_view( request_IN ):
                             reliability_names_include_optional_fields = True
                         
                         #-- END check to see if checkbox "on" --#
-                        reliability_names_filter_summary += " disagree - include optional? = " + str( reliability_names_include_optional_fields ) + ";"
+                        action_detail_list.append( "<disagree> include optional? = " + str( reliability_names_include_optional_fields ) )
                 
-                        # only disagreements?
-                        if ( reliability_names_only_disagree == True ):
+                        # filter type?
+                        
+                        # only_disagree?
+                        if ( reliability_names_filter_type == ReliabilityNamesFilterForm.RELIABILITY_NAMES_FILTER_TYPE_ONLY_DISAGREE ):
             
-                            # retrieve QuerySet of Reliability_Names that match label and
-                            #    contain disagreements.
+                            # retrieve QuerySet of Reliability_Names that match
+                            #    label and contain disagreements among specified
+                            #    coders.
                             reliability_names_qs = Reliability_Names.lookup_disagreements(
-                                    label_IN = reliability_names_label,
-                                    coder_count_IN = reliability_names_coder_count,
-                                    include_optional_IN = reliability_names_include_optional_fields
-                                )
-                            # response_dictionary[ 'output_string' ] = "ONLY DISAGREE ( " + str( reliability_names_only_disagree ) + " )"
-                            
-                            # lookup_disagreements() uses a raw SQL query, so it is ordered
-                            #     in that SQL query, inside the method call.
+                                label_IN = reliability_names_label,
+                                coder_count_IN = reliability_names_coder_count,
+                                include_optional_IN = reliability_names_include_optional_fields
+                            )
+
+                            # ORDER - lookup_disagreements() uses raw SQL, so it
+                            #     is ordered in that SQL query, inside the
+                            #     method call.
                             #reliability_names_qs = reliability_names_qs.order_by( "article__id", "person_type", "person_last_name", "person_first_name", "person_name", "person__id" )
             
-                        else:
+                        # lookup?
+                        elif ( reliability_names_filter_type == ReliabilityNamesFilterForm.RELIABILITY_NAMES_FILTER_TYPE_LOOKUP ):
                         
-                            # no.  Just filter on label.
+                            # lookup.  Filter on label.
                             reliability_names_qs = Reliability_Names.objects.filter( label = reliability_names_label )
                             # response_dictionary[ 'output_string' ] = "ALL ( " + str( reliability_names_only_disagree ) + " )"
+                            
+                            # got any IDs to filter on?
+                            reliability_names_id_in_list = ListHelper.get_value_as_list( reliability_names_id_in_list_string, delimiter_IN = "," )
+                            reliability_names_id_count = len( reliability_names_id_in_list )
+                            if ( reliability_names_id_count > 0 ):
+                            
+                                # there are IDs to filter on.
+                                reliability_names_qs = reliability_names_qs.filter( pk__in = reliability_names_id_in_list )
+                            
+                            #-- END check to see if IDs to filter on --#
+                            
+                            # got any article IDs to filter on?
+                            reliability_names_article_id_in_list = ListHelper.get_value_as_list( reliability_names_article_id_in_list_string, delimiter_IN = "," )
+                            article_id_count = len( reliability_names_article_id_in_list )
+                            if ( article_id_count > 0 ):
+                            
+                                # there are IDs to filter on.
+                                reliability_names_qs = reliability_names_qs.filter( article__pk__in = reliability_names_article_id_in_list )
+                            
+                            #-- END check to see if Article IDs to filter on --#
+                            
+                            # only records whose person has just first name?
+                            if ( reliability_names_only_first_name == True ):
+                            
+                                # to start, first name needs to not be null and
+                                #     not be empty.
+                                reliability_names_qs = reliability_names_qs.filter( 
+                                    Q( person__first_name__isnull = False ) & ~Q( person__first_name = "" ),
+                                    Q( person__middle_name__isnull = True ) | Q( person__middle_name = "" ),
+                                    Q( person__last_name__isnull = True ) | Q( person__last_name = "" ),
+                                    Q( person__name_prefix__isnull = True ) | Q( person__name_prefix = "" ),
+                                    Q( person__name_suffix__isnull = True ) | Q( person__name_suffix = "" ),
+                                    Q( person__nickname__isnull = True ) | Q( person__nickname = "" ),
+                                )
+                            
+                            #-- END only first name --#
                             
                             # order by (only for call to filter() - lookup_disagreements()
                             #     uses a raw SQL query, so it can't be re-ordered.
@@ -516,10 +579,8 @@ def reliability_names_disagreement_view( request_IN ):
                         
                         #-- END check to see if query set is None --#
                         
-                        # add the reliability_names_filter_summary to the
-                        #     response_dictionary
-                        response_dictionary[ 'reliability_names_filter_summary' ] = reliability_names_filter_summary
-
+                        action_summary = "Found " + str( reliability_names_counter ) + " Reliability_Names records that match criteria."
+                        
                     else:
 
                         # not valid - render the form again
@@ -584,10 +645,10 @@ def reliability_names_disagreement_view( request_IN ):
                         into_id = merge_into_id_list[ 0 ]
                         
                         # call the merge method.
-                        merge_status = Reliability_Names.merge_records( from_id, into_id )
+                        merge_status = Reliability_Names.merge_records( from_id, into_id, delete_from_record_IN = False )
                         
                         # update the action details list.
-                        action_summary = "Status = \"" + str( merge_status.get_status_code() ) + "\": merging person data from Reliability_Names record " + str( from_person_id ) + " into Reliability_Names record " + str( into_id )
+                        action_summary = "Status = \"" + str( merge_status.get_status_code() ) + "\": merging person data from Reliability_Names record " + str( from_id ) + " into Reliability_Names record " + str( into_id )
                         action_detail_list.append( action_summary )
                         
                         # get message list from status container and append it to action summary.
@@ -601,15 +662,13 @@ def reliability_names_disagreement_view( request_IN ):
 
                     #-- END check to make sure one FROM and one INTO. --#
                     
-                #-- END check to see what merge action --#                
+                #-- END check to see what action --#                
 
 
                 # add action_summary and action_detail_list to the response
                 #     dictionary.
                 response_dictionary[ "action_summary" ] = action_summary
                 response_dictionary[ "action_detail_list" ] = action_detail_list
-                
-                #-- END check to see if action_detail_list --#
     
             else:
             
