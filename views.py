@@ -584,7 +584,7 @@ def reliability_names_disagreement_view( request_IN ):
                     else:
 
                         # not valid - render the form again
-                        response_dictionary[ 'output_string' ] = "Please enter a label to use to filter reliability names data."
+                        response_dictionary[ 'output_string' ] = "Both a label and the number of coders to compare are required to properly filter reliability names data."
             
                     #-- END check to see if ReliabilityNamesFilterForm is valid --#
 
@@ -904,6 +904,11 @@ def reliability_names_results_view( request_IN ):
                     response_dictionary[ "sum_dictionary" ] = sum_dictionary
                     response_dictionary[ "average_dictionary" ] = average_dictionary
     
+                else:
+                    
+                    # no matches for label.
+                    response_dictionary[ 'output_string' ] = "ERROR - no QuerySet returned from call to filter() for label " + str( reliability_names_results_label )
+
                 #-- END check to see if any matching results --#
                 
                 # seed response dictionary.

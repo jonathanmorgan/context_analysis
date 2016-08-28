@@ -26,16 +26,35 @@ from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.exceptions import ObjectDoesNotExist
 
+# python package imports
+import six
+
 # stats and analysis
 import numpy
 import pandas
 import scipy.stats.stats
 
-# database - postgresql
+# database - postgresql and sqlalchemy for pandas database connection
+import sqlalchemy
 import psycopg2.extensions
 
 # integrate with R
 import pyRserve
+
+# import basic django configuration application.
+from django_config.models import Config_Property
+
+'''   
+Example of getting properties from django_config:
+
+# get settings from django_config.
+email_smtp_server_host = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_HOST )
+email_smtp_server_port = Config_Property.get_property_int_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_PORT, -1 )
+email_smtp_server_username = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_USERNAME, "" )
+email_smtp_server_password = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_PASSWORD, "" )
+use_SSL = Config_Property.get_property_boolean_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_USE_SSL, False )
+email_from_address = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_FROM_EMAIL )
+'''
 
 # python_utilities
 from python_utilities.analysis.statistics.stats_helper import StatsHelper
@@ -43,18 +62,13 @@ from python_utilities.exceptions.exception_helper import ExceptionHelper
 from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.R.rserve_helper import RserveHelper
 
-# python package imports
-import six
-
 # sourcenet imports
 from sourcenet.article_coding.manual_coding.manual_article_coder import ManualArticleCoder
+from sourcenet.shared.sourcenet_base import SourcenetBase
 
 # sourcenet_analysis imports
 from sourcenet_analysis.models import Reliability_Names
 from sourcenet_analysis.models import Reliability_Names_Results
-
-# import sqlalchemy for pandas database connection
-import sqlalchemy
 
 
 #-------------------------------------------------------------------------------
@@ -249,11 +263,34 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         self.indices_to_compare = -1
         self.columns_to_compare = {}
         
-        # database credentials
+        # database credentials - try reading from config.
         self.db_username = ""
         self.db_password = ""
         self.db_host = ""
         self.db_port = -1
+        self.db_name = ""
+        
+        # database credentials - try reading from config.
+        self.db_username = Config_Property.get_property_value(
+            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
+            SourcenetBase.DJANGO_CONFIG_PROP_DB_USERNAME,
+            None )
+        self.db_password = Config_Property.get_property_value(
+            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
+            SourcenetBase.DJANGO_CONFIG_PROP_DB_PASSWORD,
+            None )
+        self.db_host = Config_Property.get_property_value(
+            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
+            SourcenetBase.DJANGO_CONFIG_PROP_DB_HOST,
+            None )
+        self.db_port = Config_Property.get_property_int_value(
+            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
+            SourcenetBase.DJANGO_CONFIG_PROP_DB_PORT,
+            -1 )
+        self.db_name = Config_Property.get_property_value(
+            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
+            SourcenetBase.DJANGO_CONFIG_PROP_DB_NAME,
+            None )
         
     #-- END method __init__() --#
     
