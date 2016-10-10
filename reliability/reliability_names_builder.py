@@ -20,6 +20,7 @@ import hashlib
 import six
 
 # django imports
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 
 # python_utilities
@@ -101,6 +102,14 @@ class ReliabilityNamesBuilder( object ):
     
     # information about table.
     TABLE_MAX_CODERS = 10
+    
+    # INDEX_INFO_* variables
+    INDEX_INFO_INDEX = "index"
+    INDEX_INFO_PRIORITIZED_CODER_LIST = "prioritized_coder_list"
+    
+    # index-to-coder mappings
+    MAPPING_INDEX_TO_CODER = "index-to-coder"
+    MAPPING_CODER_TO_INDEX = "coder-to-index"
 
     
     #----------------------------------------------------------------------------
@@ -110,6 +119,9 @@ class ReliabilityNamesBuilder( object ):
 
     def __init__( self, *args, **kwargs ):
         
+        # ! ==> call parent's __init__()
+        super( ReliabilityNamesBuilder, self ).__init__()
+
         # ! ==> declare instance variables
         
         # tying coders to indexes in database.
@@ -143,9 +155,14 @@ class ReliabilityNamesBuilder( object ):
         # exception helper
         self.exception_helper = ExceptionHelper()
         self.exception_helper.set_logger_name( self.LOGGER_NAME )
+        self.exception_helper.logger_debug_flag = True
+        self.exception_helper.logger_also_print_flag = False
         
         # debug variables
         self.debug_output_json_file_path = ""
+        
+        # temporary index info map.
+        self.index_to_info_map = {}
         
     #-- END method __init__() --#
     
@@ -220,7 +237,62 @@ class ReliabilityNamesBuilder( object ):
         
     #-- END method add_coder_at_index() --#
     
+
+    def build_index_info( self, *args, **kwargs ):
         
+        '''
+        Loops over indices from 1 to self.TABLE_MAX_CODERS.  For each, creates
+            a dictionary that contains information on the index:
+            - "prioritized_coder_list" - list of coders who combined make up the coding for a given index, in the order of their priorities from highest first to lowest last.
+            
+        Postconditions: stores the info dictionary inside the instance, and
+            returns it.
+        '''
+        
+        # return reference
+        index_to_info_map_OUT = {}
+        
+        # declare variables
+        index_list = None
+        current_index = -1
+        index_info = None
+        coder_list = None
+        
+        
+        # create list of indices from 1 to self.TABLE_MAX_CODERS.
+        index_list = range( 1, self.TABLE_MAX_CODERS + 1 )
+        
+        # loop
+        for current_index in index_list:
+        
+            # create index_info
+            index_info = {}
+            
+            # ! ----> add index
+            index_info[ self.INDEX_INFO_INDEX ] = current_index
+            
+            # ! ----> retrieve coder list for index.
+            coder_list = self.get_coders_for_index( current_index )
+            
+            # add result to info.
+            index_info[ self.INDEX_INFO_PRIORITIZED_CODER_LIST ] = coder_list
+            
+            # add info to map
+            index_to_info_map_OUT[ current_index ] = index_info
+        
+        #-- END loop over indices --#
+        
+        # save internally
+        self.set_index_to_info_map( index_to_info_map_OUT )
+        
+        # return map
+        index_to_info_map_OUT = self.get_index_to_info_map()
+        
+        return index_to_info_map_OUT
+        
+    #-- END method build_index_to_coder_list_map() --#
+
+
     def build_reliability_names_data( self, tag_list_IN = None, label_IN = None ):
     
         '''
@@ -262,7 +334,7 @@ class ReliabilityNamesBuilder( object ):
         
     #-- END method build_reliability_names_data() --#
     
-        
+    
     def filter_article_data( self, article_data_qs_IN ):
         
         '''
@@ -342,11 +414,148 @@ class ReliabilityNamesBuilder( object ):
     #-- END method filter_article_data() --#
 
 
+    def get_coders_for_index( self, index_IN ):
+        
+        '''
+        Accepts a coder index.  Uses it to get list of User instances of coders
+            associated with that index, in priority order, highest first to
+            lowest last.  If none found, returns empty list.
+            
+        Postconditions: If there are two coders with the same priority, they
+            will be together in the list in the appropriate position for their
+            priority, but arbitrarily ordered from invocation to invocation (so
+            in no particular order).  You've been warned.  If you care, don't
+            assign two coders the same priority, and/or don't have multiple
+            coders assigned to a given index with no priorities.
+        '''
+        
+        # return reference
+        coder_list_OUT = []
+        
+        # declare variables
+        me = "get_coders_for_index"
+        debug_message = ""
+        coder_id_to_index_dict = {}
+        coder_id_to_instance_dict = {}
+        coder_user_id = -1
+        coder_index = -1
+        matching_user_id = -1
+        matching_user_priority = -1
+        user_id_list = []
+        priority_list = []
+        
+        # declare variables - organize users
+        coder_priority_to_user_list_map = {}
+        id_count = -1
+        coder_user_id = -1
+        coder_priority = -1
+        coder_user_instance = None
+        id_index = -1
+        priority_user_list = None
+        priority_key_list = None
+        priority_key = None
+        
+        # get maps from instance
+        coder_id_to_index_dict = self.coder_id_to_index_map
+        coder_id_to_instance_dict = self.coder_id_to_instance_map
+        
+        # first, loop over map of user ID to index to find all coders for the
+        #     index.
+        for coder_user_id, coder_index in six.iteritems( coder_id_to_index_dict ):
+        
+            # check to see if current index matches that passed in.
+            if ( index_IN == coder_index ):
+            
+                # yes - get the ID...
+                matching_user_id = coder_user_id
+                
+                # ...and get priority
+                matching_user_priority = self.get_coder_priority( matching_user_id, index_IN )
+                
+                # add to running lists.
+                user_id_list.append( matching_user_id )
+                priority_list.append( matching_user_priority )
+            
+            #-- END check to see if indices match --#
+            
+        #-- END loop over ID-to-index map. --#
+        
+        debug_message = "found IDs: " + str( user_id_list ) + " and priorities: " + str( priority_list )
+        self.output_debug_message( debug_message,
+                                   method_IN = me,
+                                   indent_with_IN = "++++ " )
+        
+        # got any IDs?
+        coder_priority_to_user_list_map = {}
+        id_count = len( user_id_list )
+        if ( id_count > 0 ):
+
+            # more than one.  loop.
+            id_index = -1
+            for coder_user_id in user_id_list:
+            
+                # increment id_index
+                id_index += 1
+                
+                # get priority at same index.
+                coder_priority = priority_list[ id_index ]
+                
+                # get instance for user.
+                coder_user_instance = coder_id_to_instance_dict.get( matching_user_id, None )
+                
+                # see if there is a user list for the current priority.
+                if ( coder_priority not in coder_priority_to_user_list_map ):
+                
+                    # not yet.  Add one.
+                    coder_priority_to_user_list_map[ coder_priority ] = []
+                    
+                #-- END check to see if list already in priority-to-user map --#
+                
+                # get list for current priority
+                priority_user_list = coder_priority_to_user_list_map.get( coder_priority, None )
+                
+                # and append user to list.
+                priority_user_list.append( coder_user_instance )
+            
+            #-- END loop over coder user IDs--#
+            
+            # get list of priorities (keys in the map)...
+            priority_key_list = list( six.viewkeys( coder_priority_to_user_list_map ) )
+            
+            # ...and sort them in reverse order (largest first, to smallest).
+            priority_key_list.sort( reverse = True )
+            
+            # for each priority, retrieve user list and combine it with the
+            #     output list.
+            coder_list_OUT = []
+            for priority_key in priority_key_list:
+            
+                # get priority_user_list
+                priority_user_list = coder_priority_to_user_list_map.get( priority_key, None )
+                
+                # got anything?
+                if ( ( priority_user_list is not None )
+                    and ( isinstance( priority_user_list, list ) == True )
+                    and ( len( priority_user_list ) > 0 ) ):
+                    
+                    # yes, got one.  Add its values to the right end of the
+                    #     list.
+                    coder_list_OUT.extend( priority_user_list )
+                
+                #-- END check to see if user list for this priority --#
+
+        #-- END check to see if we have User IDs. --#
+        
+        return coder_list_OUT        
+        
+    #-- END method get_coders_for_index() --#
+    
+        
     def get_coder_for_index( self, index_IN ):
         
         '''
         Accepts a coder index.  Uses it to get ID of coder associated with that
-           index, and returns instance of that User.  If none found, returns
+           index with the , and returns instance of that User.  If none found, returns
            None.
         '''
         
@@ -354,36 +563,20 @@ class ReliabilityNamesBuilder( object ):
         instance_OUT = None
         
         # declare variables
-        coder_id_to_index_dict = {}
-        coder_id_to_instance_dict = {}
-        coder_user_id = -1
-        coder_index = -1
-        matching_user_id = -1
+        coder_list = None
+        coder_count = -1
+
+        # get list of coders for current index
+        coder_list = self.get_coders_for_index( index_IN )
         
-        # get maps from instance
-        coder_id_to_index_dict = self.coder_id_to_index_map
-        coder_id_to_instance_dict = self.coder_id_to_instance_map
+        # got anything?
+        coder_count = len( coder_list )
         
-        # first, use index to get coder ID.
-        for coder_user_id, coder_index in six.iteritems( coder_id_to_index_dict ):
+        if ( coder_count > 0 ):
         
-            # check to see if current index matches that passed in.
-            if ( index_IN == coder_index ):
-            
-                # yes - store the ID.
-                matching_user_id = coder_user_id
-            
-            #-- END check to see if indices match --#
-            
-        #-- END loop over ID-to-index map. --#
-        
-        #print( "++++ found ID: " + str( matching_user_id ) )
-        
-        # if we have an ID, use it to get User instance.
-        if ( matching_user_id > 0 ):
-        
-            # we do.  Get instance from coder_id_to_instance_dict.
-            instance_OUT = coder_id_to_instance_dict.get( matching_user_id, None )
+            # yes.  Return first item in the list (it is in priority order, from
+            #     highest priority to lowest).
+            instance_OUT = coder_list[ 0 ]
             print( "++++ found User: " + str( instance_OUT ) )
         
         #-- END check to see if we have a User ID. --#
@@ -417,7 +610,7 @@ class ReliabilityNamesBuilder( object ):
     #-- END method get_coder_index() --#
     
         
-    def get_coder_priority( self, coder_ID_IN, index_IN = None, default_priority_IN = -1 ):
+    def get_coder_priority( self, coder_id_IN, index_IN = None, default_priority_IN = -1 ):
         
         '''
         Accepts a coder ID and an index.  Uses this information to get the
@@ -526,6 +719,209 @@ class ReliabilityNamesBuilder( object ):
     #-- END method get_index_priority_map() --#
     
         
+    def get_index_to_info_map( self, *args, **kwargs ):
+        
+        '''
+        Checks to see if we've already generated index_to_info_map.  If so,
+            returns it.  If not, builds it, stores it, then returns it.
+        '''
+        
+        # return reference
+        index_to_info_map_OUT = None
+        
+        # see if we have a map already populated.
+        index_to_info_map_OUT = self.index_to_info_map
+        
+        # got anything?
+        if ( ( index_to_info_map_OUT is None )
+            or ( isinstance( index_to_info_map_OUT, dict ) == False )
+            or ( len( index_to_info_map_OUT ) <= 0 ) ):
+        
+            # no.  Build it, then return it.
+            index_to_info_map_OUT = self.build_index_info()
+            
+        #-- END check to see if map already made --#
+            
+        return index_to_info_map_OUT        
+        
+    #-- END method get_index_to_info_map() --#
+    
+        
+    def map_index_to_coder_for_article( self, article_IN, mapping_type_IN = MAPPING_INDEX_TO_CODER, *args, **kwargs ):
+
+        '''
+        Accepts an article for which we want to pick a coder for each index
+            in our output.  Pulls in index-to-info map, uses it to choose from
+            among the coders configured for each index.  Returns dictionary that
+            maps each index that has been assigned one or more coders to the
+            coder to use for the current article.
+            
+        Preconditions: This object needs to have been configured with at least
+            one coder assigned to an index.
+            
+        Postconditions: returns map of indices to the coder who should be used
+            to provide data for that index for the provided article.
+        '''
+
+        # return reference
+        map_OUT = {}
+
+        # declare variables - coding processing.
+        me = "map_index_to_coder_for_article"
+        my_logger = None
+        article_data_qs = None
+        index_info_map = None
+        index = -1
+        index_info = None
+        current_index = -1
+        current_index_coder_list = None
+        current_coder = None
+        found_coder_for_index = False
+        coder_article_data_qs = None
+        article_data_count = -1
+        
+        # init logger
+        my_logger = self.exception_helper        
+        
+        # article
+        if ( article_IN is not None ):
+    
+            # retrieve the Article_Data QuerySet.    
+            article_data_qs = article_IN.article_data_set.all()
+            
+            # ! TODO - figure out coder for each index.
+            # Rather than use coder_id_to_index_map, for a given article, get
+            #     index info, and then for each index with coders, go through
+            #     the list of coders and use the first that has an Article_Data
+            #     in the current article.
+
+            # Build a map of indices to coder IDs, and then loop over that in
+            #     processing below (so no longer doing something with every
+            #     coder, just looping over indices that had at least one coder).
+            index_to_coder_map_OUT = {}
+            
+            # to start, get index map
+            index_info_map = self.get_index_to_info_map()
+
+            # loop.
+            for index, index_info in six.iteritems( index_info_map ):
+            
+                # get values from index_info
+                current_index = index_info.get( self.INDEX_INFO_INDEX, -1 )
+                current_index_coder_list = index_info.get( self.INDEX_INFO_PRIORITIZED_CODER_LIST, [] )
+                
+                # sanity check - make sure current_index = index.
+                if ( index == current_index ):
+                
+                    # sanity check passed.  Check if we have a coder list.
+                    if ( ( current_index_coder_list is not None )
+                        and ( isinstance( current_index_coder_list, list ) == True )
+                        and ( len( current_index_coder_list ) > 0 ) ):
+                    
+                        # we have a list.  Loop over coders to find first with
+                        #     Article_Data for this article.
+                        found_coder_for_index = False
+                        for current_coder in current_index_coder_list:
+                        
+                            # coder already found?
+                            if ( found_coder_for_index == False ):
+                
+                                # is there an article data by this coder for this
+                                #     article?
+                                try:
+                                
+                                    # do a get() where coder = current_coder
+                                    coder_article_data_qs = article_data_qs.filter( coder = current_coder )
+                                    
+                                    # how many?
+                                    article_data_count = coder_article_data_qs.count()
+                                    
+                                    # 1 or more?
+                                    if ( article_data_count > 0 ):
+    
+                                        # got at least one.  How do we map?
+                                        if ( mapping_type_IN == self.MAPPING_INDEX_TO_CODER ):
+                                        
+                                            # Place coder in map of index to coder...
+                                            map_OUT[ current_index ] = current_coder
+                                        
+                                        elif ( mapping_type_IN == self.MAPPING_CODER_TO_INDEX ):
+                                        
+                                            # sanity check - already in map?
+                                            if ( current_coder in map_OUT ):
+                                            
+                                                # Not the first time this coder was tied to an index.  A bad sign.  Log and move on?
+                                                logging_message = "ERROR - coder " + str( current_coder ) + " is already in map, mapped to index " + str( map_OUT.get( current_coder, None ) ) + ".  Configuration is wrong. Should only have a given coder mapped to one index."
+                                                my_logger.output_debug_message( self, logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                                    
+                                            #-- END check to see if already in map --# 
+                                        
+                                            # Place coder in map of index to coder...
+                                            map_OUT[ current_coder ] = current_index
+                                        
+                                        #-- END check to see mapping type --#
+
+                                        # ...and set found flag to True to avoid
+                                        #     more lookups.
+                                        found_coder_for_index = True
+                                        
+                                        # and, finally, call get(), so we can log
+                                        #     if there are weird errors.
+                                        article_data = coder_article_data_qs.get()
+                                        
+                                    #-- END check to see if anything returned. --#
+                                    
+                                except Article_Data.DoesNotExist as ad_dne:
+                                
+                                    # No match.  This is unexpected.  Log and move on?
+                                    logging_message = "In " + me + "(): Article_Data.DoesNotExist caught, but after finding 1 or more Article_Data for the coder in question.  Something serious ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
+                                    my_logger.process_exception( ad_dne, message_IN = logging_message )
+                                    
+                                except Article_Data.MultipleObjectsReturned ad_mor:
+                                
+                                    # multiple Article_Data.  Hmmm...  Output a log
+                                    #     message and move on.
+                                    logging_message = "In " + me + "(): Article_Data.MultipleObjectsReturned caught - coder should have updated coding, rather than creating multiple.  Something ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
+                                    my_logger.process_exception( ad_mor, message_IN = logging_message )
+                                
+                                except Exception as e:
+                                
+                                    # unexpected exception caught.  Log a message
+                                    #     and move on.
+                                    logging_message = "In " + me + "(): unexpected Exception caught.  Something definitely ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
+                                    my_logger.process_exception( e, message_IN = logging_message )
+                                
+                                #-- END try-except to see if we have a coder --#
+                                
+                            #-- END check to see if already found a coder for this index --#
+                
+                        #-- END loop over this index's coder list --#
+                        
+                    else:
+                    
+                        # no coder list.  Log a message, omit this index, and
+                        #     move on.
+                        logging_message = "No coders for index " + str( index ) + ".  Moving on."
+                        my_logger.output_debug_message( self, logging_message, method_IN = me  )
+                        
+                    #-- END check to see if there is a coder list. --#
+                
+                else:
+                
+                    logging_message = "ERROR - index ( \"" + str( index ) + "\" ) is not the same as the index stored in the info for " + str( index ) + " ( \"" + str( current_index ) + "\" )."
+                    my_logger.output_debug_message( self, logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                
+                #-- END sanity check --#
+
+            #-- END loop over index info --#
+            
+        #-- END check to see if article actually passed in. --#
+        
+        return map_OUT
+        
+    #-- END method create_index_to_coder_map_for_article() --#
+
+
     def output_reliability_data( self, label_IN = "" ):
     
         '''
@@ -679,25 +1075,17 @@ class ReliabilityNamesBuilder( object ):
         my_person_first_name = ""
         my_person_last_name = ""
         my_coder_person_info_dict = None
+
+        # declare variables - coding processing.
+        index_to_coder_map = None
         coder_count = -1
-        current_coder_id = -1
-        current_person_coding_info = None
         current_coder_index = -1
         current_coder_user = None
+        current_coder_id = -1
+        current_person_coding_info = None
         current_coding_info_name = None
         current_coding_info_value = None
-        
-        # declare variables - coding processing.
         index_used_list = []
-        index_used_to_coder_id_map = {}
-        is_coder_index_valid = False
-        is_int_valid = False
-        previous_coder_id = -1
-        previous_coder_priority = -1
-        current_coder_priority = -1
-        is_previous_priority_valid = True
-        is_current_priority_valid = True
-        do_process_coding = False
         current_number = -1
         current_index = -1
         
@@ -708,7 +1096,7 @@ class ReliabilityNamesBuilder( object ):
         coder_article_data_id = -1
         
         # init logger
-        my_logger = LoggingHelper.get_a_logger( self.LOGGER_NAME )        
+        my_logger = self.exception_helper        
         
         # make sure we have everything we need.
         coder_id_to_index_map_IN = self.coder_id_to_index_map
@@ -718,7 +1106,16 @@ class ReliabilityNamesBuilder( object ):
     
             # retrieve the Article_Data QuerySet.    
             article_data_qs = article_IN.article_data_set.all()
-        
+            
+            # For a given article, get index info, and then for each index with
+            #     coders, go through the prioritized list of coders and use the
+            #     first that has an Article_Data in the current article.  Use
+            #     this information to build a map of indices to coder IDs, and
+            #     then loop over that in processing below (so no longer doing
+            #     something with every coder, just looping over indices that had
+            #     at least one coder).
+            index_to_coder_map = self.map_index_to_coder_for_article( article_IN )
+                    
             # person_info
             if ( person_info_dict_IN is not None ):
             
@@ -760,155 +1157,54 @@ class ReliabilityNamesBuilder( object ):
                         if ( coder_count > self.TABLE_MAX_CODERS ):
                         
                             # bad news - print error.
-                            print ( "====> In " + me + ": ERROR - more coders ( " + str( coder_count ) + " ) than table allows ( " + str( self.TABLE_MAX_CODERS ) + " ).\"" )
+                            logging_message = "possible ERROR - more coders ( " + str( coder_count ) + " ) than table allows ( " + str( self.TABLE_MAX_CODERS ) + " ).\"" )
+                            my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                             
                         #-- END check to see if more coders than slots in table --#
                         
-                        # init loop variables
-                        index_used_list = []
-                        index_used_to_coder_id_map = {}
+                        # ! ----> loop over indexes in index_to_coder_map
+                        # new - no more complex logic to see whose priority wins
+                        #     for a given index.  Coders are put in priority
+                        #     order for each index, and then index_to_coder_map
+                        #     contains the coder with the highest priority who
+                        #     coded this article for each index.
 
-                        # loop over coders.
-                        for current_coder_id, current_person_coding_info in six.iteritems( my_coder_person_info_dict ):
+                        # loop over the indices in our index-to-coder map.  Only
+                        #     include coding by coders referenced in this map.
+                        for current_coder_index, current_coder_user in six.iteritems( index_to_coder_map ):
                         
-                            # look up index.
-                            current_coder_index = self.get_coder_index( current_coder_id )
+                            # get coder ID.
+                            current_coder_id = current_coder.id
                             
-                            # get User instance
-                            current_coder_user = User.objects.get( id = current_coder_id )
+                            # see if there is person information for that coder.
+                            current_person_coding_info = my_coder_person_info_dict.get( current_coder_id, None )
                             
-                            # retrieve coder's Article_Data.
-                            coder_article_data = None
-                            coder_article_data_id = -1
-                            coder_article_data_qs = article_data_qs.filter( coder = current_coder_user )
-                                                       
-                            logging_message = "- in " + me + "(): before filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
-                            #print( logging_message )
-                            my_logger.debug( "**** " + logging_message )            
+                            # got any person information?
+                            if ( current_person_coding_info is not None ):
                             
-                            # ! ----> if automated, filter on coder_type
-                            coder_article_data_qs = self.filter_article_data( coder_article_data_qs )
-                            
-                            logging_message = "- in " + me + "(): after filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
-                            #print( logging_message )
-                            my_logger.debug( "**** " + logging_message )            
-
-                            # how many?
-                            if ( coder_article_data_qs.count() == 1 ):
-                            
-                                # got one! store information.
-                                coder_article_data = coder_article_data_qs.get()
-                                coder_article_data_id = coder_article_data.id
-                            
-                            #-- END check to see if single matching Article_Data --#    
+                                # yes.  If automated, make sure we get the right
+                                #     record.
+                                coder_article_data = None
+                                coder_article_data_id = -1
+                                coder_article_data_qs = article_data_qs.filter( coder = current_coder_user )
+                                                           
+                                logging_message = "- in " + me + "(): before filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
+                                my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "**** ", do_print_IN = False )
                                 
-                            # use index to decide in which columns to place
-                            #    coder-specific information.  do_process_coding
-                            is_coder_index_valid = IntegerHelper.is_valid_integer( current_coder_index, must_be_greater_than_IN = 0 )
-                            if ( is_coder_index_valid == True ):
-                            
-                                # got index - have we already seen this index?
-                                if current_coder_index not in index_used_to_coder_id_map:
-
-                                    # and add to map of index to User/Coder ID.
-                                    index_used_to_coder_id_map[ current_coder_index ] = current_coder_id
-
-                                    # OK to continue processing.
-                                    do_process_coding = True
-                                    
-                                else:
+                                # ! --------> if "automated" user, filter on coder_type
+                                coder_article_data_qs = self.filter_article_data( coder_article_data_qs )
                                 
-                                    # ! ----> multiple coders for index.
-                                    # when multiple coders for index, decide
-                                    #     which to use by priority
-                                    
-                                    # index already used.  Get ID of coder whose
-                                    #     data is there now (previous coder).
-                                    previous_coder_id = index_used_to_coder_id_map.get( current_coder_index, None )
-                                    
-                                    # get priorities for previous and current
-                                    #     coders.
-                                    previous_coder_priority = self.get_coder_priority( previous_coder_id, current_coder_index )
-                                    current_coder_priority = self.get_coder_priority( current_coder_id, current_coder_index )
-                                    
-                                    logging_message = "====> In " + me + ": index " + str( current_coder_index ) + " already populated by previous coder ID = \"" + str( previous_coder_id ) + "\" ( priority " + str( previous_coder_priority ) + " ) - current coder ID = \"" + str( current_coder_id ) + "\" ( priority " + str( current_coder_priority ) + " )"
-                                    print( logging_message )
-                                    my_logger.debug( "**** " + logging_message )
-
-                                    # is there a previous priority?
-                                    is_previous_priority_valid = IntegerHelper.is_valid_integer( previous_coder_priority, must_be_greater_than_IN = -1 )
-                                    if ( is_previous_priority_valid == True ):
-                                        
-                                        # is there a current priority?
-                                        is_current_priority_valid = IntegerHelper.is_valid_integer( current_coder_priority, must_be_greater_than_IN = -1 )
-                                        if ( is_current_priority_valid == True ):
-                                            
-                                            # there is a previous and current
-                                            #     priority.  Current > previous?
-                                            if ( current_coder_priority > previous_coder_priority ):
-                                            
-                                                # current > previous.  Update
-                                                #     the coding.
-                                                do_process_coding = True
-                                                
-                                                # Update index_used_to_coder_id_map
-                                                index_used_to_coder_id_map[ current_coder_index ] = current_coder_id
-                                                
-                                                logging_message = "========> REPLACE - current priority ( " + str( current_coder_priority ) + " ) greater than previous priority ( " + str( previous_coder_priority ) + " ) - replacing previous coding with current coding."
-                                                print( logging_message )
-                                                my_logger.debug( "**** " + logging_message )
-                                            
-                                            else:
-                                            
-                                                # priorities -
-                                                # either tied or previous higher than current.
-                                                
-                                                # don't process this round.
-                                                do_process_coding = False
-                                            
-                                                logging_message = "========> NO CHANGE - current priority ( " + str( current_coder_priority ) + " ) less than or equal to previous priority ( " + str( previous_coder_priority ) + " ) - leaving previous coding in place."
-                                                print( logging_message )
-                                                my_logger.debug( "**** " + logging_message )
-
-                                            #-- END check to see if current coder's priority is larger than person 3. --#
-                                            
-                                        else:
-                                        
-                                            # no priority for current user, but
-                                            #     there was priority for
-                                            #     previous use.  Having a
-                                            #     priority trumps no priority.
-                                            #     Leave prvious in place.
-                                            do_process_coding = False
-                                        
-                                            logging_message = "========> NO CHANGE - no priority for current coder, previous coder had a priority ( " + str( previous_coder_priority ) + " ) - leaving previous coding in place."
-                                            print( logging_message )
-                                            my_logger.debug( "**** " + logging_message )
-
-                                        #-- END check to see if current priority value. --#
-                                            
-                                    else:
-                                    
-                                        # No previous priority?  Let current
-                                        #     user's coding overwrite the old
-                                        #     data one.
-                                        do_process_coding = True
-                                    
-                                        # Update index_used_to_coder_id_map
-                                        index_used_to_coder_id_map[ current_coder_index ] = current_coder_id
-                                        
-                                        logging_message = "========> REPLACE - no priority for previous coder ( current coder priority = " + str( current_coder_priority ) + " ) - replacing previous coding with current coding."
-                                        print( logging_message )
-                                        my_logger.debug( "**** " + logging_message )
-
-                                    #- END method to see if the previous coder had a priority.
-
-                                #-- END check to see if index is in our "used" list --#
-                            
-                                # ! ----> process coding
-                                if ( do_process_coding == True ):
-                            
-                                    # place info in "coder<index>" fields.
+                                logging_message = "after filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
+                                my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "**** ", do_print_IN = False )            
+    
+                                # how many?
+                                if ( coder_article_data_qs.count() == 1 ):
+                                
+                                    # got one! store information.
+                                    coder_article_data = coder_article_data_qs.get()
+                                    coder_article_data_id = coder_article_data.id
+                                
+                                    # ! --------> place info in "coder<index>" fields.
                                     
                                     # coder# - reference to User who coded.
                                     field_name = "coder" + str( current_coder_index )
@@ -924,7 +1220,7 @@ class ReliabilityNamesBuilder( object ):
                                     field_name = "coder" + str( current_coder_index ) + "_person_id"
                                     setattr( reliability_instance, field_name, my_person_id )
                                     
-                                    # ! --------> loop over standard coding info fields
+                                    # ! ------------> loop over standard coding info fields
                                     
                                     # set fields from current_person_coding_info.
                                     #     Each name in dictionary corresponds to
@@ -949,19 +1245,22 @@ class ReliabilityNamesBuilder( object ):
                                         setattr( reliability_instance, field_name, coder_article_data_id )
                                     
                                     #-- END check to see if Article_Data ID --#
+
+                                else:
+                                
+                                    # more than one matching Article_Data...
+                            logging_message = "possible ERROR - more coders ( " + str( coder_count ) + " ) than table allows ( " + str( self.TABLE_MAX_CODERS ) + " ).\"" )
+                            my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                                     
-                                #-- END check to see if do_process_coding is True --#
+                                
+                                #-- END check to see if single matching Article_Data --#    
+                                                                
+                            #-- END check to see if person info for coder. --#
                             
-                            else:
-                            
-                                print ( "====> In " + me + ": ERROR - no index found for coder ID \"" + str( current_coder_id ) + "\"" )
-    
-                            #-- END check to make sure coder index isn't -1 --#
-                        
-                        #-- END loop over coder IDs. --#
-                        
-                        # make list of indices from keys of index_used_to_coder_id_map.
-                        index_used_list = six.iterkeys( index_used_to_coder_id_map )
+                        #-- END loop over active indexes for this article. --# 
+                                                    
+                        # make list of indices from keys of index_to_coder_map.
+                        index_used_list = six.iterkeys( index_to_coder_map )
                         
                         # convert iterator to a list.
                         index_used_list = list( index_used_list )
@@ -969,9 +1268,10 @@ class ReliabilityNamesBuilder( object ):
                         # sort.
                         index_used_list.sort()
                         
-                        print( "----> In " + me + ": len( index_used_list ) = " + str( len( index_used_list ) ) )
+                        logging_message = "len( index_used_list ) = " + str( len( index_used_list ) )
+                        my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "----> ", do_print_IN = True )
                         
-                        # ! ----> default values in unused indices.
+                        # ! --------> default values in unused indices.
                         
                         # check to make sure that all indexes were used.
                         if ( len( index_used_list ) < self.TABLE_MAX_CODERS ):
@@ -1649,6 +1949,29 @@ class ReliabilityNamesBuilder( object ):
         return status_OUT
     
     #-- END method set_coder_priority() --#
+
+
+    def set_index_to_info_map( self, map_IN, *args, **kwargs ):
+        
+        '''
+        Accepts index_to_info_map, stores it internally.
+        '''
+        
+        # return reference
+        status_OUT = StatusContainer()
+        
+        # declare variables
+        me = "set_index_to_info_map"
+        
+        # init status
+        status_OUT.set_status_code( StatusContainer.STATUS_CODE_SUCCESS )
+        
+        # store whatever is passed in.
+        self.index_to_info_map = map_IN
+        
+        return status_OUT
+
+    #-- END function set_index_to_info_map() --#
 
 
 #-- END class ReliabilityNamesBuilder --#
