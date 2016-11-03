@@ -481,9 +481,9 @@ class ReliabilityNamesBuilder( object ):
         #-- END loop over ID-to-index map. --#
         
         debug_message = "found IDs: " + str( user_id_list ) + " and priorities: " + str( priority_list )
-        self.output_debug_message( debug_message,
-                                   method_IN = me,
-                                   indent_with_IN = "++++ " )
+        LoggingHelper.output_debug( debug_message,
+                                    method_IN = me,
+                                    indent_with_IN = "++++ " )
         
         # got any IDs?
         coder_priority_to_user_list_map = {}
@@ -852,7 +852,7 @@ class ReliabilityNamesBuilder( object ):
                                             
                                                 # Not the first time this coder was tied to an index.  A bad sign.  Log and move on?
                                                 logging_message = "ERROR - coder " + str( current_coder ) + " is already in map, mapped to index " + str( map_OUT.get( current_coder, None ) ) + ".  Configuration is wrong. Should only have a given coder mapped to one index."
-                                                my_logger.output_debug_message( self, logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                                                my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                                     
                                             #-- END check to see if already in map --# 
                                         
@@ -877,7 +877,7 @@ class ReliabilityNamesBuilder( object ):
                                     logging_message = "In " + me + "(): Article_Data.DoesNotExist caught, but after finding 1 or more Article_Data for the coder in question.  Something serious ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
                                     my_logger.process_exception( ad_dne, message_IN = logging_message )
                                     
-                                except Article_Data.MultipleObjectsReturned ad_mor:
+                                except Article_Data.MultipleObjectsReturned as ad_mor:
                                 
                                     # multiple Article_Data.  Hmmm...  Output a log
                                     #     message and move on.
@@ -902,14 +902,14 @@ class ReliabilityNamesBuilder( object ):
                         # no coder list.  Log a message, omit this index, and
                         #     move on.
                         logging_message = "No coders for index " + str( index ) + ".  Moving on."
-                        my_logger.output_debug_message( self, logging_message, method_IN = me  )
+                        my_logger.output_debug_message( logging_message, method_IN = me  )
                         
                     #-- END check to see if there is a coder list. --#
                 
                 else:
                 
                     logging_message = "ERROR - index ( \"" + str( index ) + "\" ) is not the same as the index stored in the info for " + str( index ) + " ( \"" + str( current_index ) + "\" )."
-                    my_logger.output_debug_message( self, logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                    my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                 
                 #-- END sanity check --#
 
@@ -1092,6 +1092,7 @@ class ReliabilityNamesBuilder( object ):
         # declare variables - getting appropriate Article_Data for automated
         article_data_qs = None
         coder_article_data_qs = None
+        coder_article_data_count = -1
         coder_article_data = None
         coder_article_data_id = -1
         
@@ -1157,7 +1158,7 @@ class ReliabilityNamesBuilder( object ):
                         if ( coder_count > self.TABLE_MAX_CODERS ):
                         
                             # bad news - print error.
-                            logging_message = "possible ERROR - more coders ( " + str( coder_count ) + " ) than table allows ( " + str( self.TABLE_MAX_CODERS ) + " ).\"" )
+                            logging_message = "possible ERROR - more coders ( " + str( coder_count ) + " ) than table allows ( " + str( self.TABLE_MAX_CODERS ) + " ).\""
                             my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                             
                         #-- END check to see if more coders than slots in table --#
@@ -1174,7 +1175,7 @@ class ReliabilityNamesBuilder( object ):
                         for current_coder_index, current_coder_user in six.iteritems( index_to_coder_map ):
                         
                             # get coder ID.
-                            current_coder_id = current_coder.id
+                            current_coder_id = current_coder_user.id
                             
                             # see if there is person information for that coder.
                             current_person_coding_info = my_coder_person_info_dict.get( current_coder_id, None )
@@ -1193,12 +1194,13 @@ class ReliabilityNamesBuilder( object ):
                                 
                                 # ! --------> if "automated" user, filter on coder_type
                                 coder_article_data_qs = self.filter_article_data( coder_article_data_qs )
+                                coder_article_data_count = coder_article_data_qs.count()
                                 
                                 logging_message = "after filtering, coder_article_data_qs.count() = " + str( coder_article_data_qs.count() )
                                 my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "**** ", do_print_IN = False )            
     
                                 # how many?
-                                if ( coder_article_data_qs.count() == 1 ):
+                                if ( coder_article_data_count == 1 ):
                                 
                                     # got one! store information.
                                     coder_article_data = coder_article_data_qs.get()
@@ -1249,9 +1251,8 @@ class ReliabilityNamesBuilder( object ):
                                 else:
                                 
                                     # more than one matching Article_Data...
-                            logging_message = "possible ERROR - more coders ( " + str( coder_count ) + " ) than table allows ( " + str( self.TABLE_MAX_CODERS ) + " ).\"" )
-                            my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
-                                    
+                                    logging_message = "ERROR - Either 0 or more than 1 Article_Data instances ( count = " + str( coder_article_data_count ) + " ) for coder " + str( current_coder_user ) + ".  Should only be 1."
+                                    my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                                 
                                 #-- END check to see if single matching Article_Data --#    
                                                                 

@@ -23,6 +23,19 @@ You will need to use the `install.packages()` function to install the following 
 - Rserve
 - irr
 
+Then, you'll need to load those packages and start an rserve daemon.  The commands:
+
+    # install and load Rserve
+    install.packages( "Rserve" )
+    library( Rserve )
+    
+    # install and load irr
+    install.packages( "irr" )
+    library( irr )
+    
+    # start up the Rserve daemon listener.
+    Rserve( args="--no-save" )
+
 ## virtualenv and virtualenvwrapper
 
 if you are on a shared or complicated server (and who isn't, really?), using virtualenv and virtualenvwrapper to create isolated python environments for specific applications can save lots of headaches.  this application isn't stand-alone, so for now I've reproduced the instructions you'll have followed when you installed sourcenet.  For more details, see the sourcenet README.md file ( [https://github.com/jonathanmorgan/sourcenet](https://github.com/jonathanmorgan/sourcenet) ).
