@@ -874,21 +874,21 @@ class ReliabilityNamesBuilder( object ):
                                 except Article_Data.DoesNotExist as ad_dne:
                                 
                                     # No match.  This is unexpected.  Log and move on?
-                                    logging_message = "In " + me + "(): Article_Data.DoesNotExist caught, but after finding 1 or more Article_Data for the coder in question.  Something serious ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
+                                    logging_message = "In " + me + "(): Article_Data.DoesNotExist caught, but after finding 1 or more Article_Data for the coder in question.  Something serious ain't right here.  Index = " + str( index ) + "; current_coder = " + str( current_coder ) + "."
                                     my_logger.process_exception( ad_dne, message_IN = logging_message )
                                     
                                 except Article_Data.MultipleObjectsReturned as ad_mor:
                                 
                                     # multiple Article_Data.  Hmmm...  Output a log
                                     #     message and move on.
-                                    logging_message = "In " + me + "(): Article_Data.MultipleObjectsReturned caught - coder should have updated coding, rather than creating multiple.  Something ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
+                                    logging_message = "In " + me + "(): Article_Data.MultipleObjectsReturned caught - coder should have updated coding, rather than creating multiple.  Something ain't right here.  Index = " + str( index ) + "; current_coder = " + str( current_coder ) + "."
                                     my_logger.process_exception( ad_mor, message_IN = logging_message )
                                 
                                 except Exception as e:
                                 
                                     # unexpected exception caught.  Log a message
                                     #     and move on.
-                                    logging_message = "In " + me + "(): unexpected Exception caught.  Something definitely ain't right here.  Index = " + str( index ) + "; coder = " + str( coder ) + "."
+                                    logging_message = "In " + me + "(): unexpected Exception caught.  Something definitely ain't right here.  Index = " + str( index ) + "; current_coder = " + str( current_coder ) + "."
                                     my_logger.process_exception( e, message_IN = logging_message )
                                 
                                 #-- END try-except to see if we have a coder --#
@@ -1206,6 +1206,9 @@ class ReliabilityNamesBuilder( object ):
                                     coder_article_data = coder_article_data_qs.get()
                                     coder_article_data_id = coder_article_data.id
                                 
+                                    # add current index to index_used_list.
+                                    index_used_list.append( current_coder_index )
+                                
                                     # ! --------> place info in "coder<index>" fields.
                                     
                                     # coder# - reference to User who coded.
@@ -1260,16 +1263,11 @@ class ReliabilityNamesBuilder( object ):
                             
                         #-- END loop over active indexes for this article. --# 
                                                     
-                        # make list of indices from keys of index_to_coder_map.
-                        index_used_list = six.iterkeys( index_to_coder_map )
-                        
-                        # convert iterator to a list.
-                        index_used_list = list( index_used_list )
-                        
-                        # sort.
+                        # sort list of indexes that had an Article_Data record
+                        #     for the current person.
                         index_used_list.sort()
                         
-                        logging_message = "len( index_used_list ) = " + str( len( index_used_list ) )
+                        logging_message = "len( index_used_list ) = " + str( len( index_used_list ) ) + "; list = " + str( index_used_list )
                         my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "----> ", do_print_IN = True )
                         
                         # ! --------> default values in unused indices.

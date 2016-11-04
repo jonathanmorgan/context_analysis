@@ -209,6 +209,7 @@ def reliability_names_disagreement_view( request_IN ):
     article_id_count = -1
     reliability_names_only_first_name = False
     reliability_names_include_optional_fields = False
+    reliability_names_counter = -1
     reliability_names_qs = None
     record_count = -1
     reliability_names_instance_list = None
@@ -462,6 +463,7 @@ def reliability_names_disagreement_view( request_IN ):
                         #-- END check to see if only disagreements? --#
                         
                         # get count of queryset return items
+                        reliability_names_counter = 0
                         if ( reliability_names_qs is not None ):
             
                             # get count of reliability rows.
