@@ -256,6 +256,14 @@ First, follow the instructions to set up sourcenet test data in the sourcenet re
         python manage.py loaddata sourcenet_analysis_reliability_names.json
         python manage.py loaddata sourcenet_analysis_reliability_ties.json
 
+# Troubleshooting
+
+## Troubleshooting Rserve
+
+### RConnectionRefused: Connection denied, server not reachable or not accepting connections
+
+If you get the message "RConnectionRefused: Connection denied, server not reachable or not accepting connections", This means you did not start Rserv from inside R.  Follow the instructions above to start Rserv.  If you already did this, then... maybe email the R email list?  Or email me, and I'll try to help.
+
 # License
 
 Copyright 2010-present (2016) Jonathan Morgan

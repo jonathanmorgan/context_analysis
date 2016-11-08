@@ -1295,8 +1295,16 @@ class ReliabilityNamesBuilder( object ):
                                     # If you don't set it here, column will get
                                     #     default value, usually NULL in SQL.
 
-                                    # coder# - reference to User who coded.
-                                    current_coder_user = self.get_coder_for_index( current_index )
+                                    # coder# - reference to User who should have coded.
+                                    
+                                    # first, check for user in index_to_coder_map.
+                                    current_coder_user = index_to_coder_map.get( current_index, None )
+                                    if ( current_coder_user is None ):
+                                        
+                                        # no - get coder with highest priority
+                                        current_coder_user = self.get_coder_for_index( current_index )
+                                        
+                                    #-- END check to see current index has coder in index-to-coder map. --#
                                     field_name = "coder" + str( current_index )
                                     setattr( reliability_instance, field_name, current_coder_user )
                                     
