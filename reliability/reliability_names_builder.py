@@ -480,7 +480,7 @@ class ReliabilityNamesBuilder( object ):
             
         #-- END loop over ID-to-index map. --#
         
-        debug_message = "found IDs: " + str( user_id_list ) + " and priorities: " + str( priority_list )
+        debug_message = "for index " + str( index_IN ) + " - found IDs: " + str( user_id_list ) + " and priorities: " + str( priority_list )
         LoggingHelper.output_debug( debug_message,
                                     method_IN = me,
                                     indent_with_IN = "++++ " )
@@ -501,7 +501,7 @@ class ReliabilityNamesBuilder( object ):
                 coder_priority = priority_list[ id_index ]
                 
                 # get instance for user.
-                coder_user_instance = coder_id_to_instance_dict.get( matching_user_id, None )
+                coder_user_instance = coder_id_to_instance_dict.get( coder_user_id, None )
                 
                 # see if there is a user list for the current priority.
                 if ( coder_priority not in coder_priority_to_user_list_map ):
