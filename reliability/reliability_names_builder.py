@@ -922,7 +922,9 @@ class ReliabilityNamesBuilder( object ):
     #-- END method create_index_to_coder_map_for_article() --#
 
 
-    def output_reliability_data( self, label_IN = "" ):
+    def output_reliability_data( self,
+                                 label_IN = "",
+                                 include_undetected_IN = False ):
     
         '''
         Accepts article_info_dict_IN, dictionary that maps article IDs to the
@@ -1006,7 +1008,11 @@ class ReliabilityNamesBuilder( object ):
                     for my_person_id, my_person_info_dict in six.iteritems( my_author_info_dict ):
                     
                         # call function to output reliability table row.
-                        reliability_row = self.output_reliability_name_row( my_article, my_person_info_dict, self.PERSON_TYPE_AUTHOR, label_IN = label_IN )
+                        reliability_row = self.output_reliability_name_row( my_article,
+                                                                            my_person_info_dict,
+                                                                            self.PERSON_TYPE_AUTHOR,
+                                                                            label_IN = label_IN,
+                                                                            include_undetected_IN = include_undetected_IN )
                         print ( "- author: " + str( reliability_row ) )
                     
                     #-- END loop over author info ---#
@@ -1022,7 +1028,11 @@ class ReliabilityNamesBuilder( object ):
                     for my_person_id, my_person_info_dict in six.iteritems( my_subject_info_dict ):
                     
                         # call function to output reliability table row.
-                        reliability_row = self.output_reliability_name_row( my_article, my_person_info_dict, self.PERSON_TYPE_SUBJECT, label_IN = label_IN )
+                        reliability_row = self.output_reliability_name_row( my_article,
+                                                                            my_person_info_dict,
+                                                                            self.PERSON_TYPE_SUBJECT,
+                                                                            label_IN = label_IN,
+                                                                            include_undetected_IN = include_undetected_IN )
                         print ( "- source: " + str( reliability_row ) )
                     
                     #-- END loop over author info ---#
@@ -1036,7 +1046,12 @@ class ReliabilityNamesBuilder( object ):
     #-- END method output_reliability_data --##
     
     
-    def output_reliability_name_row( self, article_IN, person_info_dict_IN, article_person_type_IN, label_IN = "" ):
+    def output_reliability_name_row( self,
+                                     article_IN,
+                                     person_info_dict_IN,
+                                     article_person_type_IN,
+                                     label_IN = "",
+                                     include_undetected_IN = False ):
         
         '''
         Accepts:
@@ -1053,6 +1068,9 @@ class ReliabilityNamesBuilder( object ):
         - article_person_type_IN, the type of the Article_Person children we are
             processing ("author" or "subject").
         - label_IN - label to assign to this set of data in the database.
+        - include_undetected_IN - boolean flag - if True, include rows for
+            Authors or Subjects detected by someone, but not by any coders
+            included in the current specifications.  Defaults to False.
          
         Creates an instance of Reliability_Names, stores values from
             the dictionary in the appropriate columns, then saves it.
@@ -1086,6 +1104,7 @@ class ReliabilityNamesBuilder( object ):
         current_coding_info_name = None
         current_coding_info_value = None
         index_used_list = []
+        index_used_count = -1
         current_number = -1
         current_index = -1
         
@@ -1202,7 +1221,7 @@ class ReliabilityNamesBuilder( object ):
                                 # how many?
                                 if ( coder_article_data_count == 1 ):
                                 
-                                    # got one! store information.
+                                    # ...and store information.
                                     coder_article_data = coder_article_data_qs.get()
                                     coder_article_data_id = coder_article_data.id
                                 
@@ -1253,7 +1272,7 @@ class ReliabilityNamesBuilder( object ):
 
                                 else:
                                 
-                                    # more than one matching Article_Data...
+                                    # zero or more than one matching Article_Data...
                                     logging_message = "ERROR - Either 0 or more than 1 Article_Data instances ( count = " + str( coder_article_data_count ) + " ) for coder " + str( current_coder_user ) + ".  Should only be 1."
                                     my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
                                 
@@ -1263,75 +1282,93 @@ class ReliabilityNamesBuilder( object ):
                             
                         #-- END loop over active indexes for this article. --# 
                                                     
-                        # sort list of indexes that had an Article_Data record
-                        #     for the current person.
-                        index_used_list.sort()
+                        # get count of indexes used.
+                        index_used_count = len( index_used_list )
                         
-                        logging_message = "len( index_used_list ) = " + str( len( index_used_list ) ) + "; list = " + str( index_used_list )
-                        my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "----> ", do_print_IN = True )
+                        # Check to see if we actually save() - Is either:
+                        # - the count of indexes used greater than 0 (at least one selected coder detected the person)
+                        # - OR include_undetected_IN == True? (we don't care if selected coders detected the person)
+                        if ( ( index_used_count > 0 ) or ( include_undetected_IN == True ) ):
                         
-                        # ! --------> default values in unused indices.
-                        
-                        # check to make sure that all indexes were used.
-                        if ( len( index_used_list ) < self.TABLE_MAX_CODERS ):
-                        
-                            # not all used.  put zeroes in fields for indices
-                            #    not in the list.
-                            for current_number in range( self.TABLE_MAX_CODERS ):
+                            # We are saving - either at least one coder detected
+                            #     this person, or we are cool with empty rows.
                             
-                                # increment value by 1.
-                                current_index = current_number + 1
-                                
-                                # is it in the list?
-                                if ( current_index not in index_used_list ):
-                                
-                                    # no - add values.
-                                    
-                                    # If you are going to be calculating
-                                    #     reliability on a numeric column, you
-                                    #     need to set it to 0 here for coders
-                                    #     who did not detect the current person,
-                                    #     else you'll have NaN problems in R.
-                                    # If you don't set it here, column will get
-                                    #     default value, usually NULL in SQL.
-
-                                    # coder# - reference to User who should have coded.
-                                    
-                                    # first, check for user in index_to_coder_map.
-                                    current_coder_user = index_to_coder_map.get( current_index, None )
-                                    if ( current_coder_user is None ):
-                                        
-                                        # no - get coder with highest priority
-                                        current_coder_user = self.get_coder_for_index( current_index )
-                                        
-                                    #-- END check to see current index has coder in index-to-coder map. --#
-                                    field_name = "coder" + str( current_index )
-                                    setattr( reliability_instance, field_name, current_coder_user )
-                                    
-                                    # coder#_detected - 0, since coder did not
-                                    #    detect this person.
-                                    field_name = "coder" + str( current_index ) + "_detected"
-                                    setattr( reliability_instance, field_name, 0 )
-        
-                                    # coder#_person_id - id of person (0, since
-                                    #    coder didn't detect this person).
-                                    field_name = "coder" + str( current_index ) + "_person_id"
-                                    setattr( reliability_instance, field_name, 0 )
-                                                                    
-                                    # coder#_person_type_int - person type of 
-                                    #    person (0, since coder didn't detect
-                                    #    this person).
-                                    field_name = "coder" + str( current_index ) + "_person_type_int"
-                                    setattr( reliability_instance, field_name, 0 )
-                                    
-                                #-- END check to make sure current index not already processed --#                                
-                                
-                            #-- END loop over numbers 1 through TABLE_MAX_CODERS --#
+                            # sort list of indexes with an Article_Data record
+                            #     for the current person.
+                            index_used_list.sort()
                             
-                        #-- END check to see if all indices used. --#
+                            logging_message = "len( index_used_list ) = " + str( index_used_count ) + "; list = " + str( index_used_list )
+                            my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "----> ", do_print_IN = True )
+                            
+                            # ! --------> default values in unused indices.
+                            
+                            # check to make sure that all indexes were used.
+                            if ( index_used_count < self.TABLE_MAX_CODERS ):
+                            
+                                # not all used.  put zeroes in fields for indices
+                                #    not in the list.
+                                for current_number in range( self.TABLE_MAX_CODERS ):
+                                
+                                    # increment value by 1.
+                                    current_index = current_number + 1
+                                    
+                                    # is it in the list?
+                                    if ( current_index not in index_used_list ):
+                                    
+                                        # no - add values.
+                                        
+                                        # If you are going to be calculating
+                                        #     reliability on a numeric column, you
+                                        #     need to set it to 0 here for coders
+                                        #     who did not detect the current person,
+                                        #     else you'll have NaN problems in R.
+                                        # If you don't set it here, column will get
+                                        #     default value, usually NULL in SQL.
+    
+                                        # coder# - reference to User who should have coded.
+                                        
+                                        # first, check for user in index_to_coder_map.
+                                        current_coder_user = index_to_coder_map.get( current_index, None )
+                                        if ( current_coder_user is None ):
+                                            
+                                            # no - get coder with highest priority
+                                            current_coder_user = self.get_coder_for_index( current_index )
+                                            
+                                        #-- END check to see current index has coder in index-to-coder map. --#
+                                        field_name = "coder" + str( current_index )
+                                        setattr( reliability_instance, field_name, current_coder_user )
+                                        
+                                        # coder#_detected - 0, since coder did not
+                                        #    detect this person.
+                                        field_name = "coder" + str( current_index ) + "_detected"
+                                        setattr( reliability_instance, field_name, 0 )
+            
+                                        # coder#_person_id - id of person (0, since
+                                        #    coder didn't detect this person).
+                                        field_name = "coder" + str( current_index ) + "_person_id"
+                                        setattr( reliability_instance, field_name, 0 )
+                                                                        
+                                        # coder#_person_type_int - person type of 
+                                        #    person (0, since coder didn't detect
+                                        #    this person).
+                                        field_name = "coder" + str( current_index ) + "_person_type_int"
+                                        setattr( reliability_instance, field_name, 0 )
+                                        
+                                    #-- END check to make sure current index not already processed --#                                
+                                    
+                                #-- END loop over numbers 1 through TABLE_MAX_CODERS --#
+                                
+                            #-- END check to see if all indices used. --#
+                            
+                            # save
+                            reliability_instance.save()
+                            
+                        else:
                         
-                        # save
-                        reliability_instance.save()
+                            # No selected coder detected this person, and we do
+                            #     not want to include undetected people.  Return
+                            #     None, do not fill in or save row.
+                            reliability_instance = None
                         
                         # return
                         instance_OUT = reliability_instance
@@ -1349,7 +1386,7 @@ class ReliabilityNamesBuilder( object ):
     #-- END method output_reliability_name_row() --#
 
 
-    def process_articles( self, tag_list_IN = [], limit_to_sources_IN = False ):
+    def process_articles( self, tag_list_IN = [], limit_to_sources_IN = False, article_id_in_list_IN = [] ):
 
         '''
         Grabs articles with a tag in tag_list_IN.  For each, loops through their
@@ -1408,13 +1445,21 @@ class ReliabilityNamesBuilder( object ):
         # process articles to build data
         #-------------------------------------------------------------------------------
         
-        # got a tag list?
+        # got a tag IN list?
         if ( ( tag_list_IN is not None ) and ( len( tag_list_IN ) > 0 ) ):
 
             # get articles with tags in list passed in.
             article_qs = Article.objects.filter( tags__name__in = tag_list_IN )
             
         #-- END check to see if tag list --#
+            
+        # got an article id IN list?
+        if ( ( article_id_in_list_IN is not None ) and ( len( article_id_in_list_IN ) > 0 ) ):
+
+            # get articles with IDs in list passed in.
+            article_qs = Article.objects.filter( id__in = article_id_in_list_IN )
+            
+        #-- END check to see if article ID IN list --#
             
         article_qs = article_qs.order_by( "id" )
         
