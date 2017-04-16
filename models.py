@@ -41,6 +41,8 @@ from python_utilities.status.status_container import StatusContainer
 # sourcenet imports
 from sourcenet.models import Article
 from sourcenet.models import Person
+from sourcenet.shared.person_details import PersonDetails
+
 
 # Debugging code, shared across all models.
 
@@ -219,6 +221,15 @@ class Reliability_Names( models.Model ):
     DEFAULT_ORDER_COLUMN_LIST = [ "article", "person_type", "person_last_name", "person_first_name", "person_name", "person" ]
     DEFAULT_ORDER_BY = " ORDER BY article_id, person_type, person_last_name, person_first_name, person_name, person_id"
     
+    # person type values
+    PERSON_TYPE_SUBJECT = PersonDetails.PERSON_TYPE_SUBJECT
+    PERSON_TYPE_SOURCE = PersonDetails.PERSON_TYPE_SOURCE
+    PERSON_TYPE_AUTHOR = PersonDetails.PERSON_TYPE_AUTHOR
+    
+    # subjet types
+    SUBJECT_TYPE_MENTIONED = PersonDetails.SUBJECT_TYPE_MENTIONED
+    SUBJECT_TYPE_QUOTED = PersonDetails.SUBJECT_TYPE_QUOTED
+
 
     #----------------------------------------------------------------------
     # ! ==> model fields
@@ -399,7 +410,81 @@ class Reliability_Names( models.Model ):
         
     
     @classmethod
-    def lookup_disagreements( cls, label_IN = "", coder_count_IN = -1, include_optional_IN = False, order_by_IN = None, *args, **kwargs ):
+    def delete_reliabilty_names_for_article( cls, article_id_IN, label_IN = None, do_delete_IN = True ):
+        
+        '''
+        Accepts article ID and optional label.  Finds all Reliability_Names
+            records in that reference article ID and have label (if requested).
+            Removes all matches.  Returns list of str() of each record removed.
+        '''
+        
+        # return reference
+        record_list_OUT = []
+        
+        # declare variables
+        article_id = -1
+        label = ""
+        matching_names_qs = None
+        current_record = None
+        current_record_string = None
+        do_delete = True
+        
+        # first, get existing Reliability_Names rows for article and label.
+        article_id = article_id_IN
+        label = label_IN
+        do_delete = do_delete_IN
+        
+        # get matching Reliability_Names rows
+        matching_names_qs = Reliability_Names.objects.all()
+        matching_names_qs = matching_names_qs.filter( article__id = article_id )
+        
+        # got a label?
+        if ( ( label is not None ) and ( label != "" ) ):
+            
+            # yes - filter.
+            matching_names_qs = matching_names_qs.filter( label = label )
+            
+        #-- END check to see if label. --#
+        
+        print( "Found " + str( matching_names_qs.count() ) + " records." )
+        
+        # delete these records.
+        for current_record in matching_names_qs:
+        
+            # add the str() of the row to the list.
+            current_record_string = str( current_record )
+            
+            # DELETE?
+            if ( do_delete == True ):
+                
+                # yes.  delete()
+                current_record_string = "- delete()-ing: " + current_record_string
+                current_record.delete()
+                
+            else:
+                
+                # print info on record.
+                current_record_string = "- match: " + current_record_string
+                
+            #-- END check to see if we delete. --#
+            
+            record_list_OUT.append( current_record_string )
+            
+        #-- END loop over matching Reliability_Names --#
+        
+        return record_list_OUT
+        
+    #-- END class method delete_reliabilty_names_for_article() --#
+
+
+    @classmethod
+    def lookup_disagreements( cls,
+                              label_IN = "",
+                              coder_count_IN = -1,
+                              include_optional_IN = False,
+                              order_by_IN = None,
+                              *args,
+                              **kwargs ):
         
         # return reference
         qs_OUT = None
@@ -577,7 +662,12 @@ class Reliability_Names( models.Model ):
 
 
     @classmethod
-    def merge_records( cls, merge_from_id_IN, merge_into_id_IN, delete_from_record_IN = False, *args, **kwargs ):
+    def merge_records( cls,
+                       merge_from_id_IN,
+                       merge_into_id_IN,
+                       delete_from_record_IN = False,
+                       *args,
+                       **kwargs ):
         
         '''
         Accepts IDs of two Reliability_Names rows.  Loads each into an instance.
@@ -954,7 +1044,7 @@ class Reliability_Names( models.Model ):
     #-- END method find_disagreement() --#
      
 
-    def get_field_value( self, index_IN, field_name_suffix_IN, *args, **kwargs ):
+    def get_field_value( self, index_IN, field_name_suffix_IN, default_IN = None, *args, **kwargs ):
         
         '''
         Accepts index and suffix of field we want to get a value for.  Builds
@@ -974,7 +1064,7 @@ class Reliability_Names( models.Model ):
         field_name = self.build_field_name( index_IN, field_name_suffix_IN )
         
         # get field value from FROM instance.
-        value_OUT = getattr( self, field_name )
+        value_OUT = getattr( self, field_name, default_IN )
                 
         return value_OUT
                 
