@@ -38,11 +38,15 @@ class ReliabilityNamesActionForm( FormParent ):
     RELIABILITY_NAMES_ACTION_LOOKUP = "lookup"
     RELIABILITY_NAMES_ACTION_DELETE = "delete"
     RELIABILITY_NAMES_ACTION_MERGE_CODING = "merge_coding"
+    RELIABILITY_NAMES_ACTION_ADD_TAG = "add_tag"
+    RELIABILITY_NAMES_ACTION_REMOVE_TAG = "remove_tag"    
     
     RELIABILITY_NAMES_ACTION_CHOICES = (
         ( RELIABILITY_NAMES_ACTION_LOOKUP, "Lookup (no changes)" ),
         ( RELIABILITY_NAMES_ACTION_DELETE, "Delete Selected" ),
-        ( RELIABILITY_NAMES_ACTION_MERGE_CODING, "Merge Coding --> FROM 1 SELECTED / INTO 1" ),
+        ( RELIABILITY_NAMES_ACTION_MERGE_CODING, "Merge Coding --> FROM 'select' TO 'merge INTO'" ),
+        ( RELIABILITY_NAMES_ACTION_ADD_TAG, "Add tag(s) to selected" ),
+        ( RELIABILITY_NAMES_ACTION_REMOVE_TAG, "Remove tag(s) from selected" ),
     )
     
     # other constants
@@ -54,6 +58,7 @@ class ReliabilityNamesActionForm( FormParent ):
     #===========================================================================
 
     reliability_names_action = forms.ChoiceField( required = False, choices = RELIABILITY_NAMES_ACTION_CHOICES )
+    reliability_names_action_tag_list = forms.CharField( required = False, label = "Tag(s) - (comma-delimited)" )
 
 #-- END Form class ReliabilityNamesActionForm --#
 
@@ -70,7 +75,7 @@ class ReliabilityNamesFilterForm( FormParent ):
     
     RELIABILITY_NAMES_FILTER_TYPE_CHOICES = (
         ( RELIABILITY_NAMES_FILTER_TYPE_LOOKUP, "Lookup" ),
-        ( RELIABILITY_NAMES_FILTER_TYPE_ONLY_DISAGREE, "Disagree (only rows with disagreement across coders)" ),
+        ( RELIABILITY_NAMES_FILTER_TYPE_ONLY_DISAGREE, "Disagree (only rows with disagreement between coders)" ),
     )
     
     # label
@@ -78,6 +83,7 @@ class ReliabilityNamesFilterForm( FormParent ):
     reliability_names_coder_count = forms.CharField( required = True, label = "Coders to compare (1 through ==>)" )
     reliability_names_filter_type = forms.ChoiceField( required = True, choices = RELIABILITY_NAMES_FILTER_TYPE_CHOICES )
     reliability_names_id_in_list = forms.CharField( required = False, label = "[Lookup] - Reliability_Names IDs (comma-delimited)" )
+    reliability_names_tag_in_list = forms.CharField( required = False, label = "[Lookup] - Reliability_Names tags (comma-delimited)" )    
     reliability_names_article_id_in_list = forms.CharField( required = False, label = "[Lookup] - Associated Article IDs (comma-delimited)" )
     reliability_names_only_first_name = forms.BooleanField( required = False, label = "[Lookup] - Person has first name, no other name parts." )
     reliability_names_include_optional_fields = forms.BooleanField( required = False, label = "[Disagree] - Include optional fields?" )

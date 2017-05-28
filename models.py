@@ -162,6 +162,7 @@ class Reliability_Names( models.Model ):
     FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF = "first_quote_graf"
     FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX = "first_quote_index"
     FIELD_NAME_SUFFIX_ORGANIZATION_HASH = "organization_hash"
+    FIELD_NAME_TAGS = "tags"
 
     # make list of all fields
     ALL_FIELD_NAME_SUFFIX_LIST = [
@@ -216,6 +217,7 @@ class Reliability_Names( models.Model ):
     PROP_NAME_CODER_FIRST_QUOTE_GRAF = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_GRAF
     PROP_NAME_CODER_FIRST_QUOTE_INDEX = "coder_" + FIELD_NAME_SUFFIX_FIRST_QUOTE_INDEX
     PROP_NAME_CODER_ORGANIZATION_HASH = "coder_" + FIELD_NAME_SUFFIX_ORGANIZATION_HASH
+    PROP_NAME_TAGS = FIELD_NAME_TAGS
     
     # DEFAULT ORDER
     DEFAULT_ORDER_COLUMN_LIST = [ "article", "person_type", "person_last_name", "person_first_name", "person_name", "person" ]
@@ -356,6 +358,9 @@ class Reliability_Names( models.Model ):
     notes = models.TextField( blank = True, null = True )
     create_date = models.DateTimeField( auto_now_add = True )
     last_modified = models.DateTimeField( auto_now = True )
+
+    # tags!
+    tags = TaggableManager( blank = True )
 
 
     #----------------------------------------------------------------------------

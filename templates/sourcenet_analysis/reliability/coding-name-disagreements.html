@@ -2,6 +2,18 @@
 
 {% block title %}View reliability name information{% endblock %}
 
+{% block inside-head %}
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script type="text/javascript">
+    // JavaScript code here
+    function select_all()
+    {
+        // alert( "test" )
+        $( "input[ name ^= '{{ input_name_select_prefix }}' ]" ).prop( 'checked', true );
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 
     <h1>View reliability name information</h1>
@@ -82,11 +94,12 @@
                                 <table class="gridtable">
                                     
                                     <tr>
-                                        <th>select</th>
+                                        <th name="select_th" id="select_th">select <a href="#" onclick="select_all(); return false;">(all)</a></th>
                                         <th>merge INTO</th>
                                         <th>index</th>
                                         <th>ID</th>
                                         <th>label</th>
+                                        <th>tags</th>
                                         <th>article ID</th>
                                         <th>person type</th>
                                         <th>name</th>
@@ -102,6 +115,15 @@
                                             <td>{{ names_instance.index }}</td>
                                             <td>{{ names_instance.id }}</td>
                                             <td>{{ names_instance.label }}</td>
+                                            <td>
+                                                {% if names_instance.tags.names %}
+                                                    {% for tag_name in names_instance.tags.names %}
+                                                        <p>-&nbsp;{{tag_name}}</p>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    None
+                                                {% endif %}
+                                            </td>
                                             <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
                                             <td>{{ names_instance.person_type }}</td>
                                             <td>{{ names_instance.person_last_name }}, {{ names_instance.person_first_name }}</td>

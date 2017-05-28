@@ -139,7 +139,11 @@ PREFIX_SUBJECT = "subject_"
 
 
 
-def build_reliability_name_detail_string( reliability_names_id_IN, delimiter_IN = "|", prefix_IN = "| ", suffix_IN = " |" ):
+def build_reliability_name_detail_string( reliability_names_id_IN,
+                                          delimiter_IN = "|",
+                                          prefix_IN = "| ",
+                                          suffix_IN = " |",
+                                          default_status_IN = "CORRECT" ):
     
     '''
     Accepts Reliability_Names instance, and optional delimiter, prefix, and
@@ -282,6 +286,9 @@ def build_reliability_name_detail_string( reliability_names_id_IN, delimiter_IN 
                 if ( ( person_organization is not None ) and ( person_organization != "" ) ):
                     detail_string += " ==> organization: " + person_organization
                 #-- END check to see if name captured. --#
+                
+                # add status
+                detail_string += " " + delimiter_IN + " " + default_status_IN
 
                 detail_string += suffix_IN
                 
@@ -359,7 +366,9 @@ def reliability_names_disagreement_view( request_IN ):
     reliability_names_filter_form_hidden_inputs = ""
     
     # declare variables - processing control
-    rn_action_IN = None
+    reliability_names_action_IN = None
+    reliability_names_action_tag_list_string = None
+    reliability_names_action_tag_list = []
     cleaned_inputs = {}
     select_id_list = []
     merge_into_id_list = []
@@ -377,6 +386,8 @@ def reliability_names_disagreement_view( request_IN ):
     reliability_names_filter_type = ""
     reliability_names_id_in_list_string = None
     reliability_names_id_in_list = []
+    reliability_names_tag_in_list_string = None
+    reliability_names_tag_in_list = []
     reliability_names_id_count = -1
     reliability_names_article_id_in_list_string = None
     reliability_names_article_id_in_list = []
@@ -411,6 +422,13 @@ def reliability_names_disagreement_view( request_IN ):
     from_id = -1
     into_id = -1
     merge_status = None
+    
+    # declare variables - add and remove tags
+    tag_list_count = -1
+    select_count = -1
+    add_tag_counter = -1
+    remove_tag_counter = -1
+    tag_value = None
     
     # initialize response dictionary
     response_dictionary = {}
@@ -471,6 +489,10 @@ def reliability_names_disagreement_view( request_IN ):
             reliability_names_action_IN = request_inputs.get( "reliability_names_action", ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_LOOKUP )
             response_dictionary[ "reliability_names_action" ] = reliability_names_action_IN
             
+            # also grab tag list, if present.
+            reliability_names_action_tag_list_string = cleaned_inputs.get( "reliability_names_action_tag_list", [] )
+            reliability_names_action_tag_list = ListHelper.get_value_as_list( reliability_names_action_tag_list_string, delimiter_IN = "," )
+
             # got an action?
             if ( ( reliability_names_action_IN is not None ) and ( reliability_names_action_IN != "" ) ):
 
@@ -547,7 +569,11 @@ def reliability_names_disagreement_view( request_IN ):
                         # Reliability_Names ID IN list
                         reliability_names_id_in_list_string = cleaned_inputs.get( "reliability_names_id_in_list", None )
                         action_detail_list.append( "<lookup> IDs IN = " + str( reliability_names_id_in_list_string ) )
-                        
+
+                        # Reliability_Names tag IN list
+                        reliability_names_tag_in_list_string = cleaned_inputs.get( "reliability_names_tag_in_list", None )
+                        action_detail_list.append( "<lookup> tags IN = " + str( reliability_names_tag_in_list_string ) )
+
                         # Reliability_Names related Article ID IN list
                         reliability_names_article_id_in_list_string = cleaned_inputs.get( "reliability_names_article_id_in_list", None )
                         action_detail_list.append( "<lookup> Article IDs IN = " + str( reliability_names_article_id_in_list_string ) )
@@ -605,6 +631,22 @@ def reliability_names_disagreement_view( request_IN ):
                                 reliability_names_qs = reliability_names_qs.filter( pk__in = reliability_names_id_in_list )
                             
                             #-- END check to see if IDs to filter on --#
+                            
+                            # got any tags to filter on?
+                            reliability_names_tag_in_list = ListHelper.get_value_as_list( reliability_names_tag_in_list_string, delimiter_IN = "," )
+                            reliability_names_tag_count = len( reliability_names_tag_in_list )
+                            if ( reliability_names_tag_count > 0 ):
+                            
+                                # there are tags to filter on.
+                                reliability_names_qs = reliability_names_qs.filter( tags__name__in = reliability_names_tag_in_list )
+                                #response_dictionary[ 'output_string' ] = "Tried to filter on tags...: " + str( ",".join( reliability_names_tag_in_list ) ) + "; string: " + str( reliability_names_tag_in_list_string )
+                                
+                            else:
+                            
+                                #response_dictionary[ 'output_string' ] = "No tags in list: " + str( reliability_names_tag_in_list_string )
+                                pass
+                            
+                            #-- END check to see if tags to filter on --#
                             
                             # got any article IDs to filter on?
                             reliability_names_article_id_in_list = ListHelper.get_value_as_list( reliability_names_article_id_in_list_string, delimiter_IN = "," )
@@ -669,6 +711,7 @@ def reliability_names_disagreement_view( request_IN ):
                                     reliability_names_output_info[ Reliability_Names.PROP_NAME_INSTANCE ] = reliability_names
                                     reliability_names_output_info[ Reliability_Names.PROP_NAME_ID ] = str( reliability_names.id )
                                     reliability_names_output_info[ Reliability_Names.PROP_NAME_LABEL ] = reliability_names.label
+                                    reliability_names_output_info[ Reliability_Names.PROP_NAME_TAGS ] = reliability_names.tags
                                     reliability_names_output_info[ Reliability_Names.PROP_NAME_ARTICLE_ID ] = str( reliability_names.article_id )
                                     reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_NAME ] = reliability_names.person_name
                                     reliability_names_output_info[ Reliability_Names.PROP_NAME_PERSON_FIRST_NAME ] = reliability_names.person_first_name
@@ -797,7 +840,7 @@ def reliability_names_disagreement_view( request_IN ):
                         #-- END loop over selected IDs. --#
                         
                         # update the action details list.
-                        action_summary = "Deleted Reliability_Names records with IDs: " + str( select_id_list )
+                        action_summary = "Deleted " + str( delete_counter ) + " Reliability_Names records with IDs: " + str( select_id_list )
                         action_detail_list.append( action_summary )
                         action_detail_list.extend( detail_string_list )
                         
@@ -806,7 +849,7 @@ def reliability_names_disagreement_view( request_IN ):
                         # when merging coding, can only do one FROM and one INTO
                         response_dictionary[ 'output_string' ] = "Delete requested, but no records selected.  Nothing deleted."        
 
-                    #-- END check to make sure one FROM and one INTO. --#
+                    #-- END check to make sure at least one. --#
                     
                 # merge?
                 elif ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_MERGE_CODING ):
@@ -844,6 +887,98 @@ def reliability_names_disagreement_view( request_IN ):
                         response_dictionary[ 'output_string' ] = "When merging coding, you can only merge coding that refers to a single person INTO the coding that refers to a single other person (FROM 1 INTO 1)."        
 
                     #-- END check to make sure one FROM and one INTO. --#
+                    
+                # add tag(s)?
+                elif ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_ADD_TAG ):
+                
+                    # ! ---- add tags
+                    
+                    # first, make sure there is something in tag list.
+                    tag_list_count = len( reliability_names_action_tag_list )
+                    if ( tag_list_count > 0 ):
+                    
+                        # got at least one tag - check to see if anything in select_id_list
+                        select_count = len( select_id_list )
+                        if ( select_count > 0 ):
+                            
+                            # loop over IDs, looking up record for each, then
+                            #     add tag(s).
+                            add_tag_counter = 0
+                            for reliability_names_id in select_id_list:
+                            
+                                add_tag_counter += 1
+                                
+                                # lookup record for ID.
+                                reliability_names_instance = Reliability_Names.objects.get( pk = reliability_names_id )
+                                
+                                # add all tags in list
+                                reliability_names_instance.tags.add( *reliability_names_action_tag_list )
+                                                                
+                            #-- END loop over selected IDs. --#
+                            
+                            # update the action details list.
+                            action_summary = "Added tag(s): " + str( reliability_names_action_tag_list ) + " to " + str( add_tag_counter ) + " Reliability_Names records."
+                            action_detail_list.append( action_summary + " ==> IDs: " + str( select_id_list ) )
+                            
+                        else:
+                        
+                            # Nothing selected.
+                            response_dictionary[ 'output_string' ] = "Add tag requested, but no records selected.  Did not add tag(s): " + str( ", ".join( reliability_names_tag_in_list ) )
+    
+                        #-- END check to make sure at least one selected. --#
+                        
+                    else:
+                    
+                        # when adding tags, must specify at least one tag.
+                        response_dictionary[ 'output_string' ] = "Add tag requested, but no tags specified.  Nothing updated."        
+
+                    #-- END check to see if tags --#
+                    
+                # remove tag(s)?
+                elif ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_REMOVE_TAG ):
+                
+                    # ! ---- remove tags
+                    
+                    # first, make sure there is something in tag list.
+                    tag_list_count = len( reliability_names_action_tag_list )
+                    if ( tag_list_count > 0 ):
+                    
+                        # got at least one tag - check to see if anything in select_id_list
+                        select_count = len( select_id_list )
+                        if ( select_count > 0 ):
+                            
+                            # loop over IDs, looking up record for each, then
+                            #     remove tags.
+                            remove_tag_counter = 0
+                            for reliability_names_id in select_id_list:
+                            
+                                remove_tag_counter += 1
+                                
+                                # lookup record for ID.
+                                reliability_names_instance = Reliability_Names.objects.get( pk = reliability_names_id )
+                                
+                                # add all tags in list
+                                reliability_names_instance.tags.remove( *reliability_names_action_tag_list )
+                                                                
+                            #-- END loop over selected IDs. --#
+                            
+                            # update the action details list.
+                            action_summary = "Removed tag(s): " + str( reliability_names_action_tag_list ) + " from " + str( remove_tag_counter ) + " Reliability_Names records."
+                            action_detail_list.append( action_summary + " ==> IDs: " + str( select_id_list ) )
+                            
+                        else:
+                        
+                            # Nothing selected.
+                            response_dictionary[ 'output_string' ] = "Remove tag requested, but no records selected.  Did not remove tag(s): " + str( ", ".join( reliability_names_tag_in_list ) )
+    
+                        #-- END check to make sure at least one selected. --#
+                        
+                    else:
+                    
+                        # when adding tags, must specify at least one tag.
+                        response_dictionary[ 'output_string' ] = "Remove tag requested, but no tags specified.  Nothing updated."        
+
+                    #-- END check to see if tags --#
                     
                 #-- END check to see what action --#                
 
