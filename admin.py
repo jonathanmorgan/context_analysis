@@ -37,6 +37,13 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
                 'fields' : [ 'label', 'reliability_names', 'original_reliability_names_id', 'person_name', 'persons',  'article', 'article_datas', 'status', 'status_message', 'notes' ]
             }
         ),
+        (
+            "Merge Detail",
+            {
+                'fields' : [ 'merged_from_id', 'merged_from_article_data', 'merged_to_id', 'merged_to_article_data' ],
+                'classes' : ( "collapse", )
+            }
+        ),
     ]
 
     list_display = ( 'id', 'person_name', 'status', 'status_message', 'label', 'article' )
