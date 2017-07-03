@@ -1334,10 +1334,20 @@ class Reliability_Names_Evaluation( models.Model ):
     person_name = models.CharField( max_length = 255, blank = True, null = True )
     persons = models.ManyToManyField( Person )
     article = models.ForeignKey( Article, blank = True, null = True )
-    article_datas = models.ManyToManyField( Article_Data )
+    article_datas = models.ManyToManyField( Article_Data, related_name = "rne_article_data" )
     status = models.CharField( max_length = 255, blank = True, null = True, choices = STATUS_CHOICES )
     status_message = models.TextField( blank = True, null = True )
     notes = models.TextField( blank = True, null = True )
+    is_ground_truth_fixed = models.BooleanField( default = False )
+    is_deleted = models.BooleanField( default = False )
+    
+    # need to add fields for merge from/to ID and Article_Data.
+    merged_from_id = models.IntegerField( blank = True, null = True )
+    merged_to_id = models.IntegerField( blank = True, null = True )
+    merged_from_article_data = models.ForeignKey( Article_Data, blank = True, null = True, related_name = "rne_merged_from_article_data" )
+    merged_to_article_data = models.ForeignKey( Article_Data, blank = True, null = True, related_name = "rne_merged_to_article_data" )
+    
+    # time stamps
     create_date = models.DateTimeField( auto_now_add = True )
     last_modified = models.DateTimeField( auto_now = True )
 
