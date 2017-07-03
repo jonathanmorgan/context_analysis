@@ -2,9 +2,49 @@ from django.contrib import admin
 
 # Register your models here.
 
+# import code for AJAX select
+from ajax_select import make_ajax_form
+from ajax_select.admin import AjaxSelectAdmin
+
 # Import models
 from sourcenet_analysis.models import Reliability_Names
+from sourcenet_analysis.models import Reliability_Names_Evaluation
 from sourcenet_analysis.models import Reliability_Ties
 
-#admin.site.register( Reliability_Names )
-#admin.site.register( Reliability_Ties )
+admin.site.register( Reliability_Names )
+#admin.site.register( Reliability_Names_Evaluation )
+admin.site.register( Reliability_Ties )
+
+#-------------------------------------------------------------------------------
+# Reliability_Names_Evaluation admin definition
+#-------------------------------------------------------------------------------
+
+class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
+
+    # set up ajax-selects - for make_ajax_form, 1st argument is the model you
+    #     are looking to make ajax selects form fields for; 2nd argument is a
+    #     dict of pairs of field names in the model in argument 1 (with no quotes
+    #     around them) mapped to lookup channels used to service them (lookup
+    #     channels are defined in settings.py, implemented in a separate module -
+    #     in this case, implemented in sourcenet/lookups.py and
+    #     sourcenet_analysis/lookups.py
+    form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data' ) )
+
+    fieldsets = [
+        (
+            None,
+            {
+                'fields' : [ 'label', 'reliability_names', 'original_reliability_names_id', 'person_name', 'persons',  'article', 'article_datas', 'status', 'status_message', 'notes' ]
+            }
+        ),
+    ]
+
+    list_display = ( 'id', 'person_name', 'status', 'status_message', 'label', 'article' )
+    list_display_links = ( 'id', 'person_name', 'status', 'status_message', 'label' )
+    list_filter = [ 'label', 'status' ]
+    search_fields = [ 'name', 'status', 'status_message' ]
+    date_hierarchy = 'create_date'
+    
+#-- END admin class Reliability_Names_EvaluationAdmin --#
+
+admin.site.register( Reliability_Names_Evaluation, Reliability_Names_EvaluationAdmin )
