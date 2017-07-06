@@ -133,8 +133,7 @@ class Reliability_NamesLookup( sourcenet.lookups.LookupParent ):
 
             # No exact match for q as ID.  Return search of text in contributor.
             query_set_OUT = self.my_class.objects.filter( Q( person_name__icontains = q )
-                                                          | Q( status__icontains = q )
-                                                          | Q( status_message__icontains = q )
+                                                          | Q( person_type__icontains = q )
                                                           | Q( notes__icontains = q )
                                                           | Q( label__icontains = q )
                                                         )
@@ -153,7 +152,7 @@ class Reliability_NamesLookup( sourcenet.lookups.LookupParent ):
             on the admin page.  This is for displaying the currently selected
             items (in the case of a ManyToMany field)
         """
-        return self.my_class.objects.filter(pk__in=ids).order_by( 'label', 'article', 'person_name', 'status' )
+        return self.my_class.objects.filter(pk__in=ids).order_by( 'label', 'article', 'person_name' )
 
     #-- END method get_objects --#
 
