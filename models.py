@@ -1379,10 +1379,11 @@ class Reliability_Names_Evaluation( models.Model ):
     def create_from_reliability_names( cls,
                                        reliability_names_id_IN,
                                        label_IN = None,
-                                       status_IN = STATUS_CORRECT,
-                                       status_message_IN = STATUS_MESSAGE_DEFAULT,
+                                       status_IN = "correct",
+                                       status_message_IN = "MISSED",
                                        notes_IN = None,
-                                       tag_list_IN = None ):
+                                       tag_list_IN = None,
+                                       reliability_names_instance_IN = None ):
         
         '''
         Accepts Reliability_Names ID and a few optional parameters.  Uses
@@ -1465,8 +1466,18 @@ class Reliability_Names_Evaluation( models.Model ):
             #-- END tags. --#
             
             # get Reliability_Names instance.
-            reliability_names_qs = Reliability_Names.objects.all()
-            reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
+            if ( reliability_names_instance_IN is not None ):
+            
+                # instance passed in.  Use it.
+                reliability_names_instance = reliability_names_instance_IN
+                
+            else:
+
+                # no instance passed in.  Retrieve it.
+                reliability_names_qs = Reliability_Names.objects.all()
+                reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
+                
+            #-- END check to see if instance passed in --#                
             
             # ==> Reliability_Names information
             instance_OUT.reliability_names = reliability_names_instance
@@ -1581,7 +1592,172 @@ class Reliability_Names_Evaluation( models.Model ):
         
         return instance_OUT
     
-    #-- END method build_reliability_name_detail_string() --#
+    #-- END method create_from_reliability_names() --#
+    
+    
+    @classmethod
+    def create_from_reliability_data( cls,
+                                      reliability_names_id_IN,
+                                      label_IN = None,
+                                      person_name_IN = None,
+                                      article_id_IN = None,
+                                      article_data_id_list_IN = None,
+                                      status_IN = "correct",
+                                      status_message_IN = "MISSED",
+                                      notes_IN = None,
+                                      tag_list_IN = None ):
+        
+        '''
+        Accepts Reliability_Names ID and a few optional parameters.  Uses
+            information from it to populate a Reliability_Names_Evaluation
+            instance.
+        '''
+        
+        # return reference
+        instance_OUT = None
+        
+        # declare variables
+        detail_string_list = []
+        detail_string = ""
+        reliability_names_id = -1
+        reliability_names_qs = None
+        reliability_names_instance = None
+        related_article = None
+        article_id = -1
+        article_data_id = -1
+        master_person_instance = None
+        master_person_name = None
+        
+        # declare variables - retrieve information from Article_Data rows.
+        article_data_id = -1
+        article_data_qs = None
+        article_data_instance = None
+        
+        # get information for output
+        reliability_names_id = reliability_names_id_IN
+        if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
+        
+            # see if there is a Reliability_Names instance for ID.
+            try:
+            
+                # get Reliability_Names instance.
+                reliability_names_qs = Reliability_Names.objects.all()
+                
+                # try to retrieve the Reliability_Names row.
+                reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
+                
+                # Success!  Call create_from_reliability_names()
+                instance_OUT = cls.create_from_reliability_names( reliability_names_id,
+                                                                  label_IN = label_IN,
+                                                                  status_IN = status_IN,
+                                                                  status_message_IN = status_message_IN,
+                                                                  notes_IN = notes_IN,
+                                                                  tag_list_IN = tag_list_IN,
+                                                                  reliability_names_instance_IN = reliability_names_instance )
+                                                                  
+            except Reliability_Names.DoesNotExist as rn_dne:
+            
+                # create Reliability_Names_Evaluation instance
+                instance_OUT = cls()
+                
+                # ==> status and status_message
+                instance_OUT.status = status_IN
+                instance_OUT.status_message = status_message_IN
+    
+                # ==> got a label?
+                if ( ( label_IN is not None ) and ( label_IN != "" ) ):
+    
+                    # yes - set it.
+                    instance_OUT.label = label_IN
+    
+                #-- END label --#
+                
+                # ==> got notes?
+                if ( ( notes_IN is not None ) and ( notes_IN != "" ) ):
+    
+                    # yes - set it.
+                    instance_OUT.notes = notes_IN
+    
+                #-- END notes --#
+                
+                # ==> tags?
+                if ( ( tag_list_IN is not None ) and ( len( tag_list_IN ) > 0 ) ):
+                
+                    # loop over tags.
+                    for tag_value in tag_list_IN:
+                    
+                        # add tag.
+                        instance_OUT.tags.add( tag_value )
+                    
+                    #-- END loop over tags --#
+                
+                #-- END tags. --#
+                
+                # ! person information
+                master_person_name = person_name_IN
+                
+                # ==> person information
+                if ( ( master_person_name is not None ) and ( master_person_name != "" ) ):
+    
+                    # store person name.
+                    instance_OUT.person_name = master_person_name
+                    
+                #-- END check for person name --#
+    
+                # ==> Reliability_Names information
+                instance_OUT.original_reliability_names_id = reliability_names_id
+    
+                # get related article.
+                if ( article_id_IN is not None ):
+
+                    related_article = Article.objects.get( id = article_id_IN )
+                    article_id = related_article.id
+                    
+                #-- END check to see if article ID --#
+                
+                # ==> related article
+                if ( related_article is not None ):
+    
+                    # we have a related article.  Store it.
+                    instance_OUT.article = related_article
+                    
+                #-- END related article --#
+                
+                # save so we can add related Article_Data.
+                instance_OUT.save()
+    
+                # Got Article_Data ids in list?
+                if ( ( article_data_id_list_IN is not None ) and ( len( article_data_id_list_IN ) > 0 ) ):
+                
+                    # Get info for Article_Data ids in list.
+                    for article_data_id in article_data_id_list_IN:
+                    
+                        # we have an ID value, try to get Article_Data...
+                        article_data_qs = Article_Data.objects.all()
+                        article_data_instance = article_data_qs.get( pk = article_data_id )
+                        
+                        # ==> Add to set of Article_Datas.
+                        instance_OUT.article_datas.add( article_data_instance )                        
+                                    
+                    #-- END loop over Article_Data IDs. --#
+                    
+                #-- END check to see if Article_Data ID list --#
+                
+                # and, save again, just to be sure.
+                instance_OUT.save()
+        
+            #-- END try...except --#
+
+        else:
+        
+            # no ID passed in.  Return None.
+            instance_OUT = None
+        
+        #-- END check to see if Reliabilty_Names ID passed in. --#
+        
+        return instance_OUT
+    
+    #-- END method create_from_reliability_data() --#
     
     
     #----------------------------------------------------------------------------
