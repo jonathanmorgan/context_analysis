@@ -28,13 +28,13 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
     #     channels are defined in settings.py, implemented in a separate module -
     #     in this case, implemented in sourcenet/lookups.py and
     #     sourcenet_analysis/lookups.py
-    form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data' ) )
+    form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data', merged_from_article_data = 'article_data', merged_to_article_data = 'article_data' ) )
 
     fieldsets = [
         (
             None,
             {
-                'fields' : [ 'label', 'reliability_names', 'original_reliability_names_id', 'person_name', 'persons',  'article', 'article_datas', 'status', 'status_message', 'notes' ]
+                'fields' : [ 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'label' ]
             }
         ),
         (
@@ -46,10 +46,10 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         ),
     ]
 
-    list_display = ( 'id', 'person_name', 'status', 'status_message', 'label', 'article' )
-    list_display_links = ( 'id', 'person_name', 'status', 'status_message', 'label' )
-    list_filter = [ 'label', 'status' ]
-    search_fields = [ 'name', 'status', 'status_message' ]
+    list_display = ( 'id', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label', 'article' )
+    list_display_links = ( 'id', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label' )
+    list_filter = [ 'label', 'is_ground_truth_fixed', 'is_deleted', 'status' ]
+    search_fields = [ 'person_name', 'status', 'status_message' ]
     date_hierarchy = 'create_date'
     
 #-- END admin class Reliability_Names_EvaluationAdmin --#

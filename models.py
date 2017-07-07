@@ -1317,9 +1317,9 @@ class Reliability_Names_Evaluation( models.Model ):
 
 
     # statuses
-    STATUS_CORRECT = "correct"
-    STATUS_ERROR = "error"
-    STATUS_INCOMPLETE = "incomplete"
+    STATUS_CORRECT = "CORRECT"
+    STATUS_ERROR = "ERROR"
+    STATUS_INCOMPLETE = "INCOMPLETE"
     STATUS_CHOICES = (
         ( STATUS_CORRECT, "CORRECT" ),
         ( STATUS_ERROR, "ERROR" ),
@@ -1338,7 +1338,7 @@ class Reliability_Names_Evaluation( models.Model ):
     reliability_names = models.ForeignKey( Reliability_Names, blank = True, null = True )
     original_reliability_names_id = models.IntegerField( blank = True, null = True )
     person_name = models.CharField( max_length = 255, blank = True, null = True )
-    persons = models.ManyToManyField( Person )
+    persons = models.ManyToManyField( Person, blank = True )
     article = models.ForeignKey( Article, blank = True, null = True )
     article_datas = models.ManyToManyField( Article_Data, related_name = "rne_article_data" )
     status = models.CharField( max_length = 255, blank = True, null = True, choices = STATUS_CHOICES )
