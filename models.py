@@ -1328,6 +1328,18 @@ class Reliability_Names_Evaluation( models.Model ):
     
     # default status message
     STATUS_MESSAGE_DEFAULT = "MISSED"
+    
+    # event type
+    EVENT_TYPE_DELETE = "delete"
+    EVENT_TYPE_MERGE = "merge"
+    EVENT_TYPE_ADD_TAGS = "add_tags"
+    EVENT_TYPE_REMOVE_TAGS = "remove_tags"
+    EVENT_TYPE_CHOICES = (
+        ( EVENT_TYPE_DELETE, EVENT_TYPE_DELETE ),
+        ( EVENT_TYPE_MERGE, EVENT_TYPE_MERGE ),
+        ( EVENT_TYPE_ADD_TAGS, "add tags" ),
+        ( EVENT_TYPE_REMOVE_TAGS, "remove tags" )
+    )
  
 
     #----------------------------------------------------------------------
@@ -1346,6 +1358,7 @@ class Reliability_Names_Evaluation( models.Model ):
     notes = models.TextField( blank = True, null = True )
     is_ground_truth_fixed = models.BooleanField( default = False )
     is_deleted = models.BooleanField( default = False )
+    event_type = models.CharField( max_length = 255, blank = True, null = True, choices = EVENT_TYPE_CHOICES )
     
     # need to add fields for merge from/to ID and Article_Data.
     merged_from_id = models.IntegerField( blank = True, null = True )
@@ -1379,11 +1392,12 @@ class Reliability_Names_Evaluation( models.Model ):
     def create_from_reliability_names( cls,
                                        reliability_names_id_IN,
                                        label_IN = None,
-                                       status_IN = "correct",
+                                       status_IN = "CORRECT",
                                        status_message_IN = "MISSED",
                                        notes_IN = None,
                                        tag_list_IN = None,
-                                       reliability_names_instance_IN = None ):
+                                       reliability_names_instance_IN = None,
+                                       event_type_IN = None ):
         
         '''
         Accepts Reliability_Names ID and a few optional parameters.  Uses
@@ -1443,6 +1457,14 @@ class Reliability_Names_Evaluation( models.Model ):
                 instance_OUT.label = label_IN
 
             #-- END label --#
+            
+            # ==> got event_type?
+            if ( ( event_type_IN is not None ) and ( event_type_IN != "" ) ):
+
+                # yes - set it.
+                instance_OUT.event_type = event_type_IN
+
+            #-- END event_type --#
             
             # ==> got notes?
             if ( ( notes_IN is not None ) and ( notes_IN != "" ) ):
@@ -1602,10 +1624,11 @@ class Reliability_Names_Evaluation( models.Model ):
                                       person_name_IN = None,
                                       article_id_IN = None,
                                       article_data_id_list_IN = None,
-                                      status_IN = "correct",
+                                      status_IN = "CORRECT",
                                       status_message_IN = "MISSED",
                                       notes_IN = None,
-                                      tag_list_IN = None ):
+                                      tag_list_IN = None,
+                                      event_type_IN = None ):
         
         '''
         Accepts Reliability_Names ID and a few optional parameters.  Uses
@@ -1653,7 +1676,8 @@ class Reliability_Names_Evaluation( models.Model ):
                                                                   status_message_IN = status_message_IN,
                                                                   notes_IN = notes_IN,
                                                                   tag_list_IN = tag_list_IN,
-                                                                  reliability_names_instance_IN = reliability_names_instance )
+                                                                  reliability_names_instance_IN = reliability_names_instance,
+                                                                  event_type_IN = event_type_IN )
                                                                   
             except Reliability_Names.DoesNotExist as rn_dne:
             
@@ -1671,6 +1695,14 @@ class Reliability_Names_Evaluation( models.Model ):
                     instance_OUT.label = label_IN
     
                 #-- END label --#
+                
+                # ==> got event_type?
+                if ( ( event_type_IN is not None ) and ( event_type_IN != "" ) ):
+    
+                    # yes - set it.
+                    instance_OUT.event_type = event_type_IN
+    
+                #-- END event_type --#
                 
                 # ==> got notes?
                 if ( ( notes_IN is not None ) and ( notes_IN != "" ) ):
@@ -1693,7 +1725,7 @@ class Reliability_Names_Evaluation( models.Model ):
                 
                 #-- END tags. --#
                 
-                # ! person information
+                # person information
                 master_person_name = person_name_IN
                 
                 # ==> person information
@@ -1823,6 +1855,197 @@ class Reliability_Names_Evaluation( models.Model ):
 
     #-- END method __str__() --#
      
+
+    def build_detail_string( self,
+                             delimiter_IN = "|",
+                             prefix_IN = "| ",
+                             suffix_IN = " |",
+                             default_status_IN = "CORRECT",
+                             protocol_IN = "http",
+                             host_IN = "research.local",
+                             app_path_IN = "sourcenet/" ):
+    
+        '''
+        Accepts Reliability_Names instance, and optional delimiter, prefix, and
+            suffix.  Retrieves the Article_Data, and Article_Subject(s) that the
+            Reliability_Name refers to.  Uses information from all to build a detail
+            string. 
+        '''
+        
+        # return reference
+        detail_string_OUT = None
+        
+        # declare variables
+        detail_string_list = []
+        detail_string = ""
+        reliability_names_id = -1
+        reliability_names_qs = None
+        reliability_names_instance = None
+        related_article = None
+        article_id = -1
+        index_list = []
+        current_index = -1
+        
+        # declare variables - retrieve information from Reliability_Names row.
+        current_suffix = ""
+        article_data_id = -1
+        article_data_qs = None
+        article_data_instance = None
+        person_type_column_name = ""
+        person_type = ""
+        article_person_id_column_name = ""
+        article_person_id = -1
+        article_person_qs = None
+        article_person_instance = None
+        person_name = None
+        person_verbatim_name = None
+        person_lookup_name = None
+        person_title = None
+        person_organization = None
+        
+        # get information for output
+        reliability_names_id = self.original_reliability_names_id
+        if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
+        
+            # get Reliability_Names instane.
+            reliability_names_qs = Reliability_Names.objects.all()
+            reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
+            
+            # get related article.
+            related_article = reliability_names_instance.article
+            article_id = related_article.id
+            
+            # Get info for all with related Article_Data.
+            
+            # initialize
+            index_list = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+            for current_index in index_list:
+            
+                # see if there is an Article_Data ID.
+                current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID
+                article_data_id = reliability_names_instance.get_field_value( current_index, current_suffix )
+                if ( article_data_id is not None ):
+                
+                    # we have an ID value, try to get Article_Data...
+                    article_data_qs = Article_Data.objects.all()
+                    article_data_instance = article_data_qs.get( pk = article_data_id )
+                    
+                    # ...person_type...
+                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
+                    person_type = reliability_names_instance.get_field_value( current_index, current_suffix )
+    
+                    # ...and based on Type, Article_Subject or Article_Author.
+                    # is there also a person ID?
+                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID
+                    article_person_id = reliability_names_instance.get_field_value( current_index, current_suffix )
+                    if ( ( article_person_id is not None ) and ( article_person_id > 0 ) ):
+                    
+                        # get Article_Subject or Article_Author
+                        if ( person_type == Reliability_Names.PERSON_TYPE_AUTHOR ):
+                        
+                            # author.
+                            article_person_qs = Article_Author.objects.all()
+                            article_person_instance = article_person_qs.get( pk = article_person_id )
+                            
+                        elif ( ( person_type == Reliability_Names.SUBJECT_TYPE_MENTIONED )
+                            or ( person_type == Reliability_Names.SUBJECT_TYPE_QUOTED ) ):
+                            
+                            # subject.
+                            article_person_qs = Article_Subject.objects.all()
+                            article_person_instance = article_person_qs.get( pk = article_person_id )
+                        
+                        else:
+                        
+                            article_person_instance = None
+    
+                        #-- END check of person type. --#
+                    
+                    #-- END check to see if article_person_id --#
+                
+                    # build detail string.
+                    detail_string = prefix_IN
+                    
+                    # ==> Reliability_Names_Evaluation ID
+                    detail_string += str( self.id )
+
+                    detail_string += " " + delimiter_IN + " "        
+        
+                    # ==> Reliability_Names ID
+                    detail_string += str( reliability_names_id )
+                    detail_string += " " + delimiter_IN + " "
+                    
+                    # ==> Article ID and link
+                    detail_string += "Article ["
+                    detail_string += str( article_id )
+                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
+                    detail_string += str( article_id )
+                    detail_string += ")"
+                    detail_string += " " + delimiter_IN + " "
+
+                    # ==> Article_Data ID and link
+                    detail_string += "Article_Data ["
+                    detail_string += str( article_data_id )
+                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
+                    detail_string += str( article_id )
+                    detail_string += "&article_data_id_select="
+                    detail_string += str( article_data_id )
+                    detail_string += ") " + delimiter_IN + " "
+                    
+                    # ==> Person instance
+                    detail_string += StringHelper.object_to_unicode_string( article_person_instance )
+                    
+                    #------------------------------------------#
+                    # got a name?
+                    person_name = article_person_instance.name
+                    if ( ( person_name is not None ) and ( person_name != "" ) ):
+                        detail_string += " ==> name: " + person_name
+                    #-- END check to see if name captured. --#
+                    
+                    # lookup name different from verbatim name?
+                    person_verbatim_name = article_person_instance.verbatim_name
+                    person_lookup_name = article_person_instance.lookup_name
+                    if ( ( person_lookup_name is not None ) and ( person_lookup_name != "" ) and ( person_lookup_name != person_verbatim_name ) ):
+                        detail_string += " ====> verbatim name: " + person_verbatim_name
+                        detail_string += " ====> lookup name: " + person_lookup_name
+                    #-- END check to see if name captured. --#
+                    
+                    person_title = article_person_instance.title
+                    if ( ( person_title is not None ) and ( person_title != "" ) ):
+                        detail_string += " ==> title: " + person_title
+                    #-- END check to see if name captured. --#
+                    
+                    # got an organization string?
+                    person_organization = article_person_instance.organization_string
+                    if ( ( person_organization is not None ) and ( person_organization != "" ) ):
+                        detail_string += " ==> organization: " + person_organization
+                    #-- END check to see if name captured. --#
+                    
+                    # add status
+                    detail_string += " " + delimiter_IN + " " + default_status_IN
+    
+                    detail_string += suffix_IN
+                    
+                    # add to list
+                    detail_string_list.append( detail_string )
+                
+                #-- END check to see if Article_Data ID. --#
+                            
+            #-- END loop over indexes. --#
+            
+            # tie all populated together.
+            detail_string_OUT = "\n".join( detail_string_list )
+    
+        else:
+        
+            # no ID passed in.  Return None.
+            detail_string_OUT = None
+        
+        #-- END check to see if Reliabilty_Names ID passed in. --#
+        
+        return detail_string_OUT
+    
+    #-- END method build_detail_string() --#
+
 
     def build_summary_string( self,
                               delimiter_IN = "|",
@@ -1954,6 +2177,11 @@ class Reliability_Names_Evaluation( models.Model ):
         
         # build detail string.
         detail_string = prefix_IN
+        
+        # ==> Reliability_Names_Evaluation ID
+        detail_string += str( self.id )
+
+        detail_string += " " + delimiter_IN + " "        
         
         # ==> Reliability_Names ID
         detail_string += str( reliability_names_id )
