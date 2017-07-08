@@ -37,6 +37,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from python_utilities.analysis.statistics.stats_helper import StatsHelper
 from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.status.status_container import StatusContainer
+from python_utilities.strings.string_helper import StringHelper
 
 # sourcenet imports
 from sourcenet.models import Article
@@ -1971,7 +1972,7 @@ class Reliability_Names_Evaluation( models.Model ):
                     detail_string += " " + delimiter_IN + " "        
         
                     # ==> Reliability_Names ID
-                    detail_string += str( reliability_names_id )
+                    detail_string += str( self.original_reliability_names_id )
                     detail_string += " " + delimiter_IN + " "
                     
                     # ==> Article ID and link
@@ -2184,7 +2185,7 @@ class Reliability_Names_Evaluation( models.Model ):
         detail_string += " " + delimiter_IN + " "        
         
         # ==> Reliability_Names ID
-        detail_string += str( reliability_names_id )
+        detail_string += str( self.original_reliability_names_id )
 
         detail_string += " " + delimiter_IN + " "
         

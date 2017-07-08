@@ -724,6 +724,9 @@ def reliability_names_disagreement_view( request_IN ):
                     #-- END check for "*_person_id_<person_id>" prefixes --#
                                         
                 #-- END loop over request_inputs --#
+                
+                # label
+                reliability_names_label = cleaned_inputs.get( "reliability_names_label", "" )
             
                 # Got one.  what are we doing?  Lookup?
                 if ( reliability_names_action_IN == ReliabilityNamesActionForm.RELIABILITY_NAMES_ACTION_LOOKUP ):
@@ -1097,7 +1100,7 @@ def reliability_names_disagreement_view( request_IN ):
                             
                         # add merge details
                         reliability_names_evaluation_instance.merged_from_id = from_id
-                        reliability_names_evaluation_instance.merged_to_id = to_id
+                        reliability_names_evaluation_instance.merged_to_id = into_id
                         reliability_names_evaluation_instance.save()
                         
                     else:
