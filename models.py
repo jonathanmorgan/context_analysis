@@ -1359,11 +1359,12 @@ class Reliability_Names_Evaluation( models.Model ):
     notes = models.TextField( blank = True, null = True )
     is_ground_truth_fixed = models.BooleanField( default = False )
     is_deleted = models.BooleanField( default = False )
+    is_automated_error = models.BooleanField( default = False )
     event_type = models.CharField( max_length = 255, blank = True, null = True, choices = EVENT_TYPE_CHOICES )
     
-    # need to add fields for merge from/to ID and Article_Data.
-    merged_from_id = models.IntegerField( blank = True, null = True )
-    merged_to_id = models.IntegerField( blank = True, null = True )
+    # need to add fields for merge from/to Reliability_Names ID and Article_Data.
+    merged_from_reliability_names_id = models.IntegerField( blank = True, null = True )
+    merged_to_reliability_names_id = models.IntegerField( blank = True, null = True )
     merged_from_article_data = models.ForeignKey( Article_Data, blank = True, null = True, related_name = "rne_merged_from_article_data" )
     merged_to_article_data = models.ForeignKey( Article_Data, blank = True, null = True, related_name = "rne_merged_to_article_data" )
     
@@ -1387,6 +1388,437 @@ class Reliability_Names_Evaluation( models.Model ):
     #----------------------------------------------------------------------------
     # ! ==> class methods
     #----------------------------------------------------------------------------
+
+
+    @classmethod
+    def build_detail_string_from_rn_id( cls,
+                                        reliability_names_id_IN,
+                                        delimiter_IN = "|",
+                                        prefix_IN = "| ",
+                                        suffix_IN = " |",
+                                        default_status_IN = "CORRECT",
+                                        protocol_IN = "http",
+                                        host_IN = "research.local",
+                                        app_path_IN = "sourcenet/",
+                                        rne_instance_IN = None ):
+    
+        '''
+        Accepts Reliability_Names instance, and optional delimiter, prefix, and
+            suffix.  Retrieves the Article_Data, and Article_Subject(s) that the
+            Reliability_Name refers to.  Uses information from all to build a detail
+            string. 
+        '''
+        
+        # return reference
+        detail_string_OUT = None
+        
+        # declare variables
+        rne_instance = None
+        detail_string_list = []
+        detail_string = ""
+        reliability_names_id = -1
+        reliability_names_qs = None
+        reliability_names_instance = None
+        related_article = None
+        article_id = -1
+        index_list = []
+        current_index = -1
+        
+        # declare variables - retrieve information from Reliability_Names row.
+        current_suffix = ""
+        article_data_id = -1
+        article_data_qs = None
+        article_data_instance = None
+        person_type_column_name = ""
+        person_type = ""
+        article_person_id_column_name = ""
+        article_person_id = -1
+        article_person_qs = None
+        article_person_instance = None
+        person_name = None
+        person_verbatim_name = None
+        person_lookup_name = None
+        person_title = None
+        person_organization = None
+        
+        # do we have Reliability_Names_Evaluation (rne) instance?
+        if ( rne_instance_IN is not None ):
+        
+            # we do.  Use it.
+            rne_instance = rne_instance_IN
+            
+        #-- END check to see if Reliability_Names_Evaluation instance --#
+        
+        # get information for output
+        reliability_names_id = reliability_names_id_IN
+        if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
+        
+            # get Reliability_Names instane.
+            reliability_names_qs = Reliability_Names.objects.all()
+            reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
+            
+            # get related article.
+            related_article = reliability_names_instance.article
+            article_id = related_article.id
+            
+            # Get info for all with related Article_Data.
+            
+            # initialize
+            index_list = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+            for current_index in index_list:
+            
+                # see if there is an Article_Data ID.
+                current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID
+                article_data_id = reliability_names_instance.get_field_value( current_index, current_suffix )
+                if ( article_data_id is not None ):
+                
+                    # we have an ID value, try to get Article_Data...
+                    article_data_qs = Article_Data.objects.all()
+                    article_data_instance = article_data_qs.get( pk = article_data_id )
+                    
+                    # ...person_type...
+                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
+                    person_type = reliability_names_instance.get_field_value( current_index, current_suffix )
+    
+                    # ...and based on Type, Article_Subject or Article_Author.
+                    # is there also a person ID?
+                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID
+                    article_person_id = reliability_names_instance.get_field_value( current_index, current_suffix )
+                    if ( ( article_person_id is not None ) and ( article_person_id > 0 ) ):
+                    
+                        # get Article_Subject or Article_Author
+                        if ( person_type == Reliability_Names.PERSON_TYPE_AUTHOR ):
+                        
+                            # author.
+                            article_person_qs = Article_Author.objects.all()
+                            article_person_instance = article_person_qs.get( pk = article_person_id )
+                            
+                        elif ( ( person_type == Reliability_Names.SUBJECT_TYPE_MENTIONED )
+                            or ( person_type == Reliability_Names.SUBJECT_TYPE_QUOTED ) ):
+                            
+                            # subject.
+                            article_person_qs = Article_Subject.objects.all()
+                            article_person_instance = article_person_qs.get( pk = article_person_id )
+                        
+                        else:
+                        
+                            article_person_instance = None
+    
+                        #-- END check of person type. --#
+                    
+                    #-- END check to see if article_person_id --#
+                
+                    # build detail string.
+                    detail_string = prefix_IN
+                    
+                    # ==> Reliability_Names_Evaluation ID?
+                    if ( rne_instance is not None ):
+
+                        # make it a link
+                        # example: http://research.local/sourcenet/admin/sourcenet_analysis/reliability_names_evaluation/6/change/
+                        detail_string += "<a href=\""
+                        detail_string += str( protocol_IN ) + "://"
+                        detail_string += str( host_IN ) + "/" + str( app_path_IN )
+                        detail_string += "admin/sourcenet_analysis/reliability_names_evaluation/"
+                        detail_string += str( rne_instance.id )
+                        detail_string += "/change/\">"
+                        detail_string += str( rne_instance.id )
+                        detail_string += "</a>"
+                        
+                        # and add a delimiter
+                        detail_string += " " + delimiter_IN + " "
+                        
+                    #-- END check to see if Reliability_Names_Evaluation ID --#
+            
+                    # ==> Reliability_Names ID
+                    detail_string += str( reliability_names_id )
+                    detail_string += " " + delimiter_IN + " "
+                    
+                    # ==> Article ID and link
+                    detail_string += "Article ["
+                    detail_string += str( article_id )
+                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
+                    detail_string += str( article_id )
+                    detail_string += ")"
+                    detail_string += " " + delimiter_IN + " "
+
+                    # ==> Article_Data ID and link
+                    detail_string += "Article_Data ["
+                    detail_string += str( article_data_id )
+                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
+                    detail_string += str( article_id )
+                    detail_string += "&article_data_id_select="
+                    detail_string += str( article_data_id )
+                    detail_string += ") " + delimiter_IN + " "
+                    
+                    # ==> Person instance
+                    detail_string += StringHelper.object_to_unicode_string( article_person_instance )
+                    
+                    #------------------------------------------#
+                    # got a name?
+                    person_name = article_person_instance.name
+                    if ( ( person_name is not None ) and ( person_name != "" ) ):
+                        detail_string += " ==> name: " + person_name
+                    #-- END check to see if name captured. --#
+                    
+                    # lookup name different from verbatim name?
+                    person_verbatim_name = article_person_instance.verbatim_name
+                    person_lookup_name = article_person_instance.lookup_name
+                    if ( ( person_lookup_name is not None ) and ( person_lookup_name != "" ) and ( person_lookup_name != person_verbatim_name ) ):
+                        detail_string += " ====> verbatim name: " + person_verbatim_name
+                        detail_string += " ====> lookup name: " + person_lookup_name
+                    #-- END check to see if name captured. --#
+                    
+                    person_title = article_person_instance.title
+                    if ( ( person_title is not None ) and ( person_title != "" ) ):
+                        detail_string += " ==> title: " + person_title
+                    #-- END check to see if name captured. --#
+                    
+                    # got an organization string?
+                    person_organization = article_person_instance.organization_string
+                    if ( ( person_organization is not None ) and ( person_organization != "" ) ):
+                        detail_string += " ==> organization: " + person_organization
+                    #-- END check to see if name captured. --#
+                    
+                    # add status
+                    detail_string += " " + delimiter_IN + " " + default_status_IN
+    
+                    detail_string += suffix_IN
+                    
+                    # add to list
+                    detail_string_list.append( detail_string )
+                
+                #-- END check to see if Article_Data ID. --#
+                            
+            #-- END loop over indexes. --#
+            
+            # tie all populated together.
+            detail_string_OUT = "\n".join( detail_string_list )
+    
+        else:
+        
+            # no ID passed in.  Return None.
+            detail_string_OUT = None
+        
+        #-- END check to see if Reliabilty_Names ID passed in. --#
+        
+        return detail_string_OUT
+    
+    #-- END method build_detail_string_from_rn_id() --#
+
+
+    @classmethod
+    def build_summary_string_from_rn_id( cls,
+                                         reliability_names_id_IN,
+                                         delimiter_IN = "|",
+                                         prefix_IN = "| ",
+                                         suffix_IN = " |",
+                                         default_status_IN = "CORRECT",
+                                         protocol_IN = "http",
+                                         host_IN = "research.local",
+                                         app_path_IN = "sourcenet/",
+                                         default_error_IN = "MISSED",
+                                         rne_instance_IN = None ):
+        
+        '''
+        Accepts Reliability_Names instance, and optional delimiter, prefix, and
+            suffix.  Retrieves the Article_Data, and Article_Subject(s) that the
+            Reliability_Name refers to.  Uses information from all to build a 
+            delimited summary string.
+        '''
+        
+        # return reference
+        detail_string_OUT = None
+        
+        # declare variables
+        detail_string_list = []
+        detail_string = ""
+        reliability_names_id = -1
+        reliability_names_qs = None
+        reliability_names_instance = None
+        person_name = ""
+        related_article = None
+        article_id = -1
+        index_list = []
+        current_index = -1
+        
+        # declare variables - retrieve information from Reliability_Names row.
+        current_suffix = ""
+        article_data_id = -1
+        article_data_qs = None
+        article_data_instance = None
+        article_data_coder_id = -1
+        article_data_id_list = []
+        person_type_column_name = ""
+        person_type = ""
+        article_person_id_column_name = ""
+        article_person_id = -1
+        article_person_qs = None
+        article_person_instance = None
+        
+        # declare variables - output rendering.
+        article_data_link_list = []
+        article_data_link = ""
+        
+        # do we have Reliability_Names_Evaluation (rne) instance?
+        if ( rne_instance_IN is not None ):
+        
+            # we do.  Use it.
+            rne_instance = rne_instance_IN
+            
+        #-- END check to see if Reliability_Names_Evaluation instance --#
+        
+        # get information for output
+        reliability_names_id = reliability_names_id_IN
+        if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
+        
+            # get Reliability_Names instane.
+            reliability_names_qs = Reliability_Names.objects.all()
+            reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
+
+            # get person name
+            person_name = reliability_names_instance.person_name
+            
+            # get related article.
+            related_article = reliability_names_instance.article
+            article_id = related_article.id
+            
+            # Get list of related Article_Data ids.
+            article_data_id_list = []
+            article_data_link_list = []
+            
+            # initialize
+            index_list = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+            for current_index in index_list:
+            
+                # see if there is an Article_Data ID.
+                current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID
+                article_data_id = reliability_names_instance.get_field_value( current_index, current_suffix )
+                if ( article_data_id is not None ):
+        
+                    # add to list
+                    article_data_id_list.append( article_data_id )
+    
+                    # we have an ID value, try to get Article_Data...
+                    article_data_qs = Article_Data.objects.all()
+                    article_data_instance = article_data_qs.get( pk = article_data_id )
+                    article_data_coder_id = article_data_instance.coder_id
+                    
+                    # ...person_type...
+                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
+                    person_type = reliability_names_instance.get_field_value( current_index, current_suffix )
+    
+                    # ...and based on Type, Article_Subject or Article_Author.
+                    # is there also a person ID?
+                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID
+                    article_person_id = reliability_names_instance.get_field_value( current_index, current_suffix )
+                    if ( ( article_person_id is not None ) and ( article_person_id > 0 ) ):
+                    
+                        # get Article_Subject or Article_Author
+                        if ( person_type == Reliability_Names.PERSON_TYPE_AUTHOR ):
+                        
+                            # author.
+                            article_person_qs = Article_Author.objects.all()
+                            article_person_instance = article_person_qs.get( pk = article_person_id )
+                            
+                        elif ( ( person_type == Reliability_Names.SUBJECT_TYPE_MENTIONED )
+                            or ( person_type == Reliability_Names.SUBJECT_TYPE_QUOTED ) ):
+                            
+                            # subject.
+                            article_person_qs = Article_Subject.objects.all()
+                            article_person_instance = article_person_qs.get( pk = article_person_id )
+                        
+                        else:
+                        
+                            article_person_instance = None
+    
+                        #-- END check of person type. --#
+                    
+                    #-- END check to see if article_person_id --#
+                    
+                    # create link (very basic for now):
+                    article_data_link = "[" + str( article_data_id ) + " (coder=" + str( article_data_coder_id ) + ")]"
+                    article_data_link += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
+                    article_data_link += str( article_id )
+                    article_data_link += "&article_data_id_select="
+                    article_data_link += str( article_data_id )
+                    article_data_link += ")"
+                    
+                    # add to list.
+                    article_data_link_list.append( article_data_link )
+    
+                #-- END check to see if Article_Data ID. --#
+                            
+            #-- END loop over indexes. --#
+            
+            # build detail string.
+            detail_string = prefix_IN
+            
+            # ==> Reliability_Names_Evaluation ID?
+            if ( rne_instance is not None ):
+
+                # make it a link
+                # example: http://research.local/sourcenet/admin/sourcenet_analysis/reliability_names_evaluation/6/change/
+                detail_string += "<a href=\""
+                detail_string += str( protocol_IN ) + "://"
+                detail_string += str( host_IN ) + "/" + str( app_path_IN )
+                detail_string += "admin/sourcenet_analysis/reliability_names_evaluation/"
+                detail_string += str( rne_instance.id )
+                detail_string += "/change/\">"
+                detail_string += str( rne_instance.id )
+                detail_string += "</a>"
+                
+                # and add a delimiter
+                detail_string += " " + delimiter_IN + " "
+                
+            #-- END check to see if Reliability_Names_Evaluation ID --#
+            
+            # ==> Reliability_Names ID
+            detail_string += str( reliability_names_id )
+    
+            detail_string += " " + delimiter_IN + " "
+            
+            # ==> person name
+            detail_string += person_name
+            
+            detail_string += " " + delimiter_IN + " "
+    
+            # ==> Article ID and link
+            detail_string += "Article "
+            detail_string += "[" + str( article_id ) + "]"
+            detail_string += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
+            detail_string += str( article_id )
+            detail_string += ")"
+            
+            detail_string += " " + delimiter_IN + " "
+    
+            # ==> Article_Data IDs and links
+            detail_string += "Article_Data: "
+            detail_string += "; ".join( article_data_link_list )
+            
+            # ==> status
+            detail_string += " " + delimiter_IN + " " + default_status_IN
+            
+            # ==> error
+            detail_string += " " + delimiter_IN + " " + default_error_IN
+            
+            # ==> notes
+            detail_string += " " + delimiter_IN + " None"
+            
+            detail_string += suffix_IN
+    
+            detail_string_OUT = detail_string
+    
+        else:
+        
+            # no ID passed in.  Return None.
+            detail_string_OUT = None
+        
+        #-- END check to see if Reliabilty_Names ID passed in. --#
+        
+        return detail_string_OUT
+    
+    #-- END method build_summary_string_from_rn_id() --#
 
 
     @classmethod
@@ -1867,181 +2299,42 @@ class Reliability_Names_Evaluation( models.Model ):
                              app_path_IN = "sourcenet/" ):
     
         '''
-        Accepts Reliability_Names instance, and optional delimiter, prefix, and
-            suffix.  Retrieves the Article_Data, and Article_Subject(s) that the
-            Reliability_Name refers to.  Uses information from all to build a detail
-            string. 
+        Accepts Reliability_Names (from self), and optional delimiter, prefix,
+            and suffix.  Retrieves the Article_Data, and Article_Subject(s) that
+            the Reliability_Names refers to.  Uses information from all to build
+            a delimited detail string.
         '''
         
         # return reference
         detail_string_OUT = None
         
         # declare variables
-        detail_string_list = []
-        detail_string = ""
         reliability_names_id = -1
-        reliability_names_qs = None
-        reliability_names_instance = None
-        related_article = None
-        article_id = -1
-        index_list = []
-        current_index = -1
-        
-        # declare variables - retrieve information from Reliability_Names row.
-        current_suffix = ""
-        article_data_id = -1
-        article_data_qs = None
-        article_data_instance = None
-        person_type_column_name = ""
-        person_type = ""
-        article_person_id_column_name = ""
-        article_person_id = -1
-        article_person_qs = None
-        article_person_instance = None
-        person_name = None
-        person_verbatim_name = None
-        person_lookup_name = None
-        person_title = None
-        person_organization = None
-        
+                
         # get information for output
         reliability_names_id = self.original_reliability_names_id
         if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
         
-            # get Reliability_Names instane.
-            reliability_names_qs = Reliability_Names.objects.all()
-            reliability_names_instance = reliability_names_qs.get( pk = reliability_names_id )
-            
-            # get related article.
-            related_article = reliability_names_instance.article
-            article_id = related_article.id
-            
-            # Get info for all with related Article_Data.
-            
-            # initialize
-            index_list = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
-            for current_index in index_list:
-            
-                # see if there is an Article_Data ID.
-                current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID
-                article_data_id = reliability_names_instance.get_field_value( current_index, current_suffix )
-                if ( article_data_id is not None ):
-                
-                    # we have an ID value, try to get Article_Data...
-                    article_data_qs = Article_Data.objects.all()
-                    article_data_instance = article_data_qs.get( pk = article_data_id )
-                    
-                    # ...person_type...
-                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
-                    person_type = reliability_names_instance.get_field_value( current_index, current_suffix )
-    
-                    # ...and based on Type, Article_Subject or Article_Author.
-                    # is there also a person ID?
-                    current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID
-                    article_person_id = reliability_names_instance.get_field_value( current_index, current_suffix )
-                    if ( ( article_person_id is not None ) and ( article_person_id > 0 ) ):
-                    
-                        # get Article_Subject or Article_Author
-                        if ( person_type == Reliability_Names.PERSON_TYPE_AUTHOR ):
-                        
-                            # author.
-                            article_person_qs = Article_Author.objects.all()
-                            article_person_instance = article_person_qs.get( pk = article_person_id )
-                            
-                        elif ( ( person_type == Reliability_Names.SUBJECT_TYPE_MENTIONED )
-                            or ( person_type == Reliability_Names.SUBJECT_TYPE_QUOTED ) ):
-                            
-                            # subject.
-                            article_person_qs = Article_Subject.objects.all()
-                            article_person_instance = article_person_qs.get( pk = article_person_id )
-                        
-                        else:
-                        
-                            article_person_instance = None
-    
-                        #-- END check of person type. --#
-                    
-                    #-- END check to see if article_person_id --#
-                
-                    # build detail string.
-                    detail_string = prefix_IN
-                    
-                    # ==> Reliability_Names_Evaluation ID
-                    detail_string += str( self.id )
+            # call method
+            detail_string_OUT = Reliability_Names_Evaluation.build_detail_string_from_rn_id(
+                    reliability_names_id,
+                    delimiter_IN = delimiter_IN,
+                    prefix_IN = prefix_IN,
+                    suffix_IN = suffix_IN,
+                    default_status_IN = default_status_IN,
+                    protocol_IN = protocol_IN,
+                    host_IN = host_IN,
+                    app_path_IN = app_path_IN,
+                    rne_instance_IN = self
+                )
 
-                    detail_string += " " + delimiter_IN + " "        
-        
-                    # ==> Reliability_Names ID
-                    detail_string += str( self.original_reliability_names_id )
-                    detail_string += " " + delimiter_IN + " "
-                    
-                    # ==> Article ID and link
-                    detail_string += "Article ["
-                    detail_string += str( article_id )
-                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
-                    detail_string += str( article_id )
-                    detail_string += ")"
-                    detail_string += " " + delimiter_IN + " "
-
-                    # ==> Article_Data ID and link
-                    detail_string += "Article_Data ["
-                    detail_string += str( article_data_id )
-                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
-                    detail_string += str( article_id )
-                    detail_string += "&article_data_id_select="
-                    detail_string += str( article_data_id )
-                    detail_string += ") " + delimiter_IN + " "
-                    
-                    # ==> Person instance
-                    detail_string += StringHelper.object_to_unicode_string( article_person_instance )
-                    
-                    #------------------------------------------#
-                    # got a name?
-                    person_name = article_person_instance.name
-                    if ( ( person_name is not None ) and ( person_name != "" ) ):
-                        detail_string += " ==> name: " + person_name
-                    #-- END check to see if name captured. --#
-                    
-                    # lookup name different from verbatim name?
-                    person_verbatim_name = article_person_instance.verbatim_name
-                    person_lookup_name = article_person_instance.lookup_name
-                    if ( ( person_lookup_name is not None ) and ( person_lookup_name != "" ) and ( person_lookup_name != person_verbatim_name ) ):
-                        detail_string += " ====> verbatim name: " + person_verbatim_name
-                        detail_string += " ====> lookup name: " + person_lookup_name
-                    #-- END check to see if name captured. --#
-                    
-                    person_title = article_person_instance.title
-                    if ( ( person_title is not None ) and ( person_title != "" ) ):
-                        detail_string += " ==> title: " + person_title
-                    #-- END check to see if name captured. --#
-                    
-                    # got an organization string?
-                    person_organization = article_person_instance.organization_string
-                    if ( ( person_organization is not None ) and ( person_organization != "" ) ):
-                        detail_string += " ==> organization: " + person_organization
-                    #-- END check to see if name captured. --#
-                    
-                    # add status
-                    detail_string += " " + delimiter_IN + " " + default_status_IN
-    
-                    detail_string += suffix_IN
-                    
-                    # add to list
-                    detail_string_list.append( detail_string )
-                
-                #-- END check to see if Article_Data ID. --#
-                            
-            #-- END loop over indexes. --#
             
-            # tie all populated together.
-            detail_string_OUT = "\n".join( detail_string_list )
-    
         else:
         
-            # no ID passed in.  Return None.
-            detail_string_OUT = None
-        
-        #-- END check to see if Reliabilty_Names ID passed in. --#
+            # error - no Reliability_Names ID.
+            detail_string_OUT = "ERROR - no Reliability_Names ID, so can't make detail string."
+
+        #-- END check to see if Reliabilty_Names ID. --#
         
         return detail_string_OUT
     
@@ -2059,167 +2352,43 @@ class Reliability_Names_Evaluation( models.Model ):
                               default_error_IN = "MISSED" ):
         
         '''
-        Accepts Reliability_Names instance, and optional delimiter, prefix, and
-            suffix.  Retrieves the Article_Data, and Article_Subject(s) that the
-            Reliability_Name refers to.  Uses information from all to build a 
-            delimited summary string.
+        Accepts Reliability_Names (from self), and optional delimiter, prefix,
+            and suffix.  Retrieves the Article_Data, and Article_Subject(s) that
+            the Reliability_Names refers to.  Uses information from all to build
+            a delimited summary string.
         '''
         
         # return reference
         detail_string_OUT = None
         
         # declare variables
-        detail_string_list = []
-        detail_string = ""
         reliability_names_id = -1
-        reliability_names_qs = None
-        reliability_names_instance = None
-        person_name = ""
-        related_article = None
-        article_id = -1
-        index_list = []
-        current_index = -1
-        
-        # declare variables - retrieve information from Reliability_Names row.
-        current_suffix = ""
-        article_data_id = -1
-        article_data_qs = None
-        article_data_instance = None
-        article_data_coder_id = -1
-        article_data_id_list = []
-        person_type_column_name = ""
-        person_type = ""
-        article_person_id_column_name = ""
-        article_person_id = -1
-        article_person_qs = None
-        article_person_instance = None
-        
-        # declare variables - output rendering.
-        article_data_link_list = []
-        article_data_link = ""
-        
-        # get Reliability_Names instance.
-        reliability_names_instance = self.reliability_names
-        
-        # get person name
-        person_name = self.person_name
-        
-        # get related article.
-        related_article = self.article
-        article_id = related_article.id
-        
-        # Get list of related Article_Data ids.
-        article_data_id_list = []
-        article_data_link_list = []
-        
-        # initialize
-        index_list = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
-        for current_index in index_list:
-        
-            # see if there is an Article_Data ID.
-            current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID
-            article_data_id = reliability_names_instance.get_field_value( current_index, current_suffix )
-            if ( article_data_id is not None ):
-    
-                # add to list
-                article_data_id_list.append( article_data_id )
-
-                # we have an ID value, try to get Article_Data...
-                article_data_qs = Article_Data.objects.all()
-                article_data_instance = article_data_qs.get( pk = article_data_id )
-                article_data_coder_id = article_data_instance.coder_id
                 
-                # ...person_type...
-                current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_PERSON_TYPE
-                person_type = reliability_names_instance.get_field_value( current_index, current_suffix )
+        # get information for output
+        reliability_names_id = self.original_reliability_names_id
+        if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
+        
+            # call method
+            detail_string_OUT = Reliability_Names_Evaluation.build_summary_string_from_rn_id(
+                     reliability_names_id,
+                     delimiter_IN = delimiter_IN,
+                     prefix_IN = prefix_IN,
+                     suffix_IN = suffix_IN,
+                     default_status_IN = default_status_IN,
+                     protocol_IN = protocol_IN,
+                     host_IN = host_IN,
+                     app_path_IN = app_path_IN,
+                     default_error_IN = default_error_IN,
+                     rne_instance_IN = self
+                )
 
-                # ...and based on Type, Article_Subject or Article_Author.
-                # is there also a person ID?
-                current_suffix = Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_PERSON_ID
-                article_person_id = reliability_names_instance.get_field_value( current_index, current_suffix )
-                if ( ( article_person_id is not None ) and ( article_person_id > 0 ) ):
-                
-                    # get Article_Subject or Article_Author
-                    if ( person_type == Reliability_Names.PERSON_TYPE_AUTHOR ):
-                    
-                        # author.
-                        article_person_qs = Article_Author.objects.all()
-                        article_person_instance = article_person_qs.get( pk = article_person_id )
-                        
-                    elif ( ( person_type == Reliability_Names.SUBJECT_TYPE_MENTIONED )
-                        or ( person_type == Reliability_Names.SUBJECT_TYPE_QUOTED ) ):
-                        
-                        # subject.
-                        article_person_qs = Article_Subject.objects.all()
-                        article_person_instance = article_person_qs.get( pk = article_person_id )
-                    
-                    else:
-                    
-                        article_person_instance = None
+        else:
+        
+            # error - no Reliability_Names ID.
+            detail_string_OUT = "ERROR - no Reliability_Names ID, so can't make summary string."
 
-                    #-- END check of person type. --#
-                
-                #-- END check to see if article_person_id --#
-                
-                # create link (very basic for now):
-                article_data_link = "[" + str( article_data_id ) + " (coder=" + str( article_data_coder_id ) + ")]"
-                article_data_link += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
-                article_data_link += str( article_id )
-                article_data_link += "&article_data_id_select="
-                article_data_link += str( article_data_id )
-                article_data_link += ")"
-                
-                # add to list.
-                article_data_link_list.append( article_data_link )
-
-            #-- END check to see if Article_Data ID. --#
-                        
-        #-- END loop over indexes. --#
+        #-- END check to see if Reliabilty_Names ID. --#
         
-        # build detail string.
-        detail_string = prefix_IN
-        
-        # ==> Reliability_Names_Evaluation ID
-        detail_string += str( self.id )
-
-        detail_string += " " + delimiter_IN + " "        
-        
-        # ==> Reliability_Names ID
-        detail_string += str( self.original_reliability_names_id )
-
-        detail_string += " " + delimiter_IN + " "
-        
-        # ==> person name
-        detail_string += person_name
-        
-        detail_string += " " + delimiter_IN + " "
-
-        # ==> Article ID and link
-        detail_string += "Article "
-        detail_string += "[" + str( article_id ) + "]"
-        detail_string += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
-        detail_string += str( article_id )
-        detail_string += ")"
-        
-        detail_string += " " + delimiter_IN + " "
-
-        # ==> Article_Data IDs and links
-        detail_string += "Article_Data: "
-        detail_string += "; ".join( article_data_link_list )
-        
-        # ==> status
-        detail_string += " " + delimiter_IN + " " + default_status_IN
-        
-        # ==> error
-        detail_string += " " + delimiter_IN + " " + default_error_IN
-        
-        # ==> notes
-        detail_string += " " + delimiter_IN + " None"
-        
-        detail_string += suffix_IN
-
-        detail_string_OUT = detail_string
-    
         return detail_string_OUT
     
     #-- END method build_summary_string() --#

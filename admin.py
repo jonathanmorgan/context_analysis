@@ -34,22 +34,22 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             None,
             {
-                'fields' : [ 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'label' ]
+                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'label', 'tags' ]
             }
         ),
         (
             "Merge Detail",
             {
-                'fields' : [ 'merged_from_id', 'merged_from_article_data', 'merged_to_id', 'merged_to_article_data' ],
+                'fields' : [ 'merged_from_reliability_names_id', 'merged_from_article_data', 'merged_to_reliability_names_id', 'merged_to_article_data' ],
                 'classes' : ( "collapse", )
             }
         ),
     ]
 
-    list_display = ( 'id', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label', 'article' )
-    list_display_links = ( 'id', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label' )
-    list_filter = [ 'label', 'is_ground_truth_fixed', 'is_deleted', 'status' ]
-    search_fields = [ 'person_name', 'status', 'status_message' ]
+    list_display = ( 'id', 'event_type', 'person_name', 'original_reliability_names_id', 'status', 'status_message', 'label', 'article' )
+    list_display_links = ( 'id', 'event_type', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label' )
+    list_filter = [ 'label', 'event_type', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'status' ]
+    search_fields = [ 'person_name', 'status', 'status_message', 'notes', 'event_type' ]
     date_hierarchy = 'create_date'
     
 #-- END admin class Reliability_Names_EvaluationAdmin --#

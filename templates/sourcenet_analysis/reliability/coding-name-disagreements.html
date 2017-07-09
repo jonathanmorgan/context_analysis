@@ -63,7 +63,7 @@
                         <p><strong>Action Details:</strong></p>
                         <ul>
                             {% for detail_item in action_detail_list %}
-                                <li>{{ detail_item }}</li>
+                                <li>{{ detail_item | safe }}</li>
                             {% empty %}
                                 <li>No details returned...</li>
                             {% endfor %}
