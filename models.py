@@ -1348,11 +1348,11 @@ class Reliability_Names_Evaluation( models.Model ):
     #----------------------------------------------------------------------
 
     label = models.CharField( max_length = 255, blank = True, null = True )
-    reliability_names = models.ForeignKey( Reliability_Names, blank = True, null = True )
+    reliability_names = models.ForeignKey( Reliability_Names, blank = True, null = True, on_delete = models.SET_NULL )
     original_reliability_names_id = models.IntegerField( blank = True, null = True )
     person_name = models.CharField( max_length = 255, blank = True, null = True )
     persons = models.ManyToManyField( Person, blank = True )
-    article = models.ForeignKey( Article, blank = True, null = True )
+    article = models.ForeignKey( Article, blank = True, null = True, on_delete = models.SET_NULL )
     article_datas = models.ManyToManyField( Article_Data, related_name = "rne_article_data" )
     status = models.CharField( max_length = 255, blank = True, null = True, choices = STATUS_CHOICES )
     status_message = models.TextField( blank = True, null = True )
