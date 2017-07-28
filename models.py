@@ -1383,7 +1383,8 @@ class Reliability_Names_Evaluation( models.Model ):
 
     # Meta-data for this class.
     class Meta:
-        ordering = [ 'label', 'article', 'person_name', 'status' ]
+        ordering = [ '-last_modified' ]
+        #ordering = [ 'id', 'label', 'article', 'person_name', 'status' ]
 
 
     #----------------------------------------------------------------------------
