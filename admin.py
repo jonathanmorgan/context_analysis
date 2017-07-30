@@ -114,7 +114,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             None,
             {
-                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'label', 'tags' ]
+                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'label', 'tags' ]
             }
         ),
         (
@@ -128,7 +128,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
 
     list_display = ( 'id', 'last_modified', 'event_type', 'person_name', 'original_reliability_names_id', 'status', 'status_message', 'label', 'article' )
     list_display_links = ( 'id', 'event_type', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label' )
-    list_filter = [ 'label', 'event_type', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'status' ]
+    list_filter = [ 'label', 'event_type', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'status' ]
     search_fields = [ 'person_name', 'status', 'status_message', 'notes', 'event_type' ]
     date_hierarchy = 'create_date'
     

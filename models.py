@@ -1431,6 +1431,7 @@ class Reliability_Names_Evaluation( models.Model ):
     is_deleted = models.BooleanField( default = False )
     is_automated_error = models.BooleanField( default = False )
     is_single_name = models.BooleanField( default = False )
+    is_ambiguous = models.BooleanField( default = False )
     event_type = models.CharField( max_length = 255, blank = True, null = True, choices = EVENT_TYPE_CHOICES )
     
     # need to add fields for merge from/to Reliability_Names ID and Article_Data.
