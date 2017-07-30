@@ -844,7 +844,7 @@ def reliability_names_disagreement_view( request_IN ):
                         for coder_number, article_data_id in six.iteritems( article_data_dict ):
                         
                             # get instance
-                            article_data_instance = Article_Data.objects.get( article_data_id )
+                            article_data_instance = Article_Data.objects.get( id = article_data_id )
                             
                             # add to list.
                             from_article_data_list.append( article_data_instance )
@@ -864,7 +864,7 @@ def reliability_names_disagreement_view( request_IN ):
                         for coder_number, article_data_id in six.iteritems( article_data_dict ):
                         
                             # get instance
-                            article_data_instance = Article_Data.objects.get( article_data_id )
+                            article_data_instance = Article_Data.objects.get( id = article_data_id )
                             
                             # add to list.
                             into_article_data_list.append( article_data_instance )
