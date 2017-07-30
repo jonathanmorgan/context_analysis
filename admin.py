@@ -65,18 +65,9 @@ class Reliability_NamesAdmin( admin.ModelAdmin ):
         # loop over suffixes
         for current_suffix in Reliability_Names.ALL_FIELD_NAME_SUFFIX_LIST:
         
-            # start field name.
-            current_field_name = Reliability_Names.FIELD_NAME_PREFIX_CODER + coder_number_string
-        
-            # check if value empty (there is one empty, which is intentional,
-            #     for the actual coder Foreign Key).
-            if ( ( current_suffix is not None ) and ( current_suffix != "" ) ):
-            
-                # append.
-                current_field_name += "_" + current_suffix
-            
-            #-- END check to see if suffix empty or None --#
-            
+            # build field name.
+            current_field_name = Reliability_Names.build_field_name( coder_number, current_suffix )
+                    
             # append to the list.
             fields_list.append( current_field_name )
             
@@ -117,7 +108,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
     #     channels are defined in settings.py, implemented in a separate module -
     #     in this case, implemented in sourcenet/lookups.py and
     #     sourcenet_analysis/lookups.py
-    form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data', merged_from_article_data = 'article_data', merged_to_article_data = 'article_data' ) )
+    form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data', merged_from_article_datas = 'article_data', merged_to_article_datas = 'article_data' ) )
 
     fieldsets = [
         (
@@ -129,7 +120,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             "Merge Detail",
             {
-                'fields' : [ 'merged_from_reliability_names_id', 'merged_from_article_data', 'merged_to_reliability_names_id', 'merged_to_article_data' ],
+                'fields' : [ 'merged_from_reliability_names_id', 'merged_from_article_datas', 'merged_to_reliability_names_id', 'merged_to_article_datas' ],
                 'classes' : ( "collapse", )
             }
         ),

@@ -351,6 +351,14 @@ def reliability_names_disagreement_view( request_IN ):
     # declare variables - merge
     from_id = -1
     into_id = -1
+    from_instance = None
+    into_instance = None
+    article_data_dict = None
+    from_article_data_list = None
+    into_article_data_list = None
+    coder_number = -1
+    article_data_id = None
+    article_data_instance = None
     merge_status = None
     
     # declare variables - add and remove tags
@@ -813,10 +821,56 @@ def reliability_names_disagreement_view( request_IN ):
                         #     copy the values for each index into the fields for
                         #     that index in the INTO.
                         
-                        # get the person IDs.
+                        # get the Reliability_Names IDs...
                         from_id = select_id_list[ 0 ]
                         into_id = merge_into_id_list[ 0 ]
                         
+                        # ...corresponding instances...
+                        from_instance = Reliability_Names.objects.get( id = from_id )
+                        into_instance = Reliability_Names.objects.get( id = into_id )
+                        
+                        # ...and associated Article_Data instances.
+                        
+                        # ==> FROM...
+                        article_data_dict = from_instance.get_field_values(
+                                Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID,
+                                default_IN = None,
+                                omit_empty_IN = True,
+                                empty_values_IN = ( None, )
+                            )
+                            
+                        # Build list of Article_Data instances.
+                        from_article_data_list = []
+                        for coder_number, article_data_id in six.iteritems( article_data_dict ):
+                        
+                            # get instance
+                            article_data_instance = Article_Data.objects.get( article_data_id )
+                            
+                            # add to list.
+                            from_article_data_list.append( article_data_instance )
+                            
+                        #-- END loop over from Article_Data records.
+                        
+                        # ==> ...AND TO
+                        article_data_dict = into_instance.get_field_values(
+                                Reliability_Names.FIELD_NAME_SUFFIX_ARTICLE_DATA_ID,
+                                default_IN = None,
+                                omit_empty_IN = True,
+                                empty_values_IN = ( None, )
+                            )
+                            
+                        # Build list of Article_Data instances.
+                        into_article_data_list = []
+                        for coder_number, article_data_id in six.iteritems( article_data_dict ):
+                        
+                            # get instance
+                            article_data_instance = Article_Data.objects.get( article_data_id )
+                            
+                            # add to list.
+                            into_article_data_list.append( article_data_instance )
+                            
+                        #-- END loop over into Article_Data records.
+                                                
                         # call the merge method.
                         merge_status = Reliability_Names.merge_records( from_id, into_id, delete_from_record_IN = False )
                         
@@ -836,11 +890,15 @@ def reliability_names_disagreement_view( request_IN ):
                                 event_type_IN = Reliability_Names_Evaluation.EVENT_TYPE_MERGE
                             )
                             
-                        # add merge details
-                        reliability_names_evaluation_instance.merged_from_id = from_id
-                        reliability_names_evaluation_instance.merged_to_id = into_id
+                        # add Reliability_Names IDs
+                        reliability_names_evaluation_instance.merged_from_reliability_names_id = from_id
+                        reliability_names_evaluation_instance.merged_to_reliability_names_id = into_id
                         reliability_names_evaluation_instance.save()
                         
+                        # add Article_Data references
+                        reliability_names_evaluation_instance.merged_from_article_datas.set( from_article_data_list )
+                        reliability_names_evaluation_instance.merged_to_article_datas.set( into_article_data_list )
+                                                
                     else:
                     
                         # when merging coding, can only do one FROM and one INTO

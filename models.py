@@ -22,6 +22,10 @@ along with http://github.com/jonathanmorgan/sourcenet_analysis.  If not, see
 <http://www.gnu.org/licenses/>.
 '''
 
+# imports - six
+import six
+from six.moves import range
+
 # taggit tagging APIs
 from taggit.managers import TaggableManager
 
@@ -1081,6 +1085,72 @@ class Reliability_Names( models.Model ):
     #-- END method get_field_value() --#
 
 
+    def get_field_values( self, field_name_suffix_IN, default_IN = None, omit_empty_IN = True, empty_values_IN = ( None, ) ):
+        
+        '''
+        Accepts a field_name_suffix and optional:
+        - default_IN - default field value in case field name doesn't exist (defaults to None)
+        - omit_empty_IN - boolean flag telling whether we want function to omit empty values from output (defaults to True).
+        - empty_values_IN - tuple or list of values that should be considered empty.  Defaults to just None.  For number, could include 0 and -1, for string include "", etc.'
+        
+        Loops over all available indexes.  For each, tries to get value for the
+            field name with that index.  If not omitting empty, stores the value
+            in dictionary mapped to current index (coder number).  If omitting
+            empty, only adds to dictionary if value is not in the values listed
+            in variable empty_values_IN.
+        
+        Returns dictionary of all values found in current record, with each
+            mapped in a dictionary to their index/coder number.
+        '''
+        
+        # return reference
+        dictionary_OUT = {}
+        
+        # declare variables.
+        coder_number = -1
+        coder_number_string = None
+        current_field_name = ""
+        current_field_value = ""
+        
+        # loop over indexes 1 through 10.
+        for coder_number in range( 1, 11 ):
+        
+            # Make field name
+            coder_number_string = str( coder_number )
+            current_field_name = ""
+            
+            # build field name.
+            current_field_name = Reliability_Names.build_field_name( coder_number, field_name_suffix_IN )
+            
+            # get the value
+            current_field_value = getattr( self, current_field_name, default_IN )
+            
+            # omitting empty?
+            if ( omit_empty_IN == True ):
+            
+                # empty?
+                if ( current_field_value not in empty_values_IN ):
+                
+                    # not empty - add to dictionary.
+                    dictionary_OUT[ coder_number ] = current_field_value
+                    
+                #-- END check to see if empty --#
+                    
+            else:
+            
+                # add to dictionary
+                dictionary_OUT[ coder_number ] = current_field_value
+                
+            #-- END check to see if omitting empty. --#
+    
+        #-- END loop over coder numbers. --#
+        
+        return dictionary_OUT
+        
+    #-- END method get_field_values() --#
+    
+
+
     def has_disagreement( self, coder_count_IN = -1, comparison_suffix_list_IN = None, include_optional_IN = False ):
         
         '''
@@ -1366,8 +1436,8 @@ class Reliability_Names_Evaluation( models.Model ):
     # need to add fields for merge from/to Reliability_Names ID and Article_Data.
     merged_from_reliability_names_id = models.IntegerField( blank = True, null = True )
     merged_to_reliability_names_id = models.IntegerField( blank = True, null = True )
-    merged_from_article_data = models.ForeignKey( Article_Data, blank = True, null = True, related_name = "rne_merged_from_article_data" )
-    merged_to_article_data = models.ForeignKey( Article_Data, blank = True, null = True, related_name = "rne_merged_to_article_data" )
+    merged_from_article_datas = models.ManyToManyField( Article_Data, related_name = "rne_merged_from_article_data" )
+    merged_to_article_datas = models.ManyToManyField( Article_Data, related_name = "rne_merged_to_article_data" )
     
     # time stamps
     create_date = models.DateTimeField( auto_now_add = True )
