@@ -787,6 +787,7 @@ def reliability_names_disagreement_view( request_IN ):
                             
                             # remove reference to Reliability_Names row
                             reliability_names_evaluation_instance.reliability_names = None
+                            reliability_names_evaluation_instance.is_deleted = True
                             reliability_names_evaluation_instance.save()
                             
                             # delete it
@@ -899,6 +900,10 @@ def reliability_names_disagreement_view( request_IN ):
                         reliability_names_evaluation_instance.merged_from_article_datas.set( from_article_data_list )
                         reliability_names_evaluation_instance.merged_to_article_datas.set( into_article_data_list )
                                                 
+                        # Add summary string to the output (includes link).
+                        detail_string = reliability_names_evaluation_instance.build_summary_string()
+                        action_detail_list.append( detail_string )
+
                     else:
                     
                         # when merging coding, can only do one FROM and one INTO
