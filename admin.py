@@ -114,7 +114,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             None,
             {
-                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'label', 'tags' ]
+                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'label', 'tags' ]
             }
         ),
         (
