@@ -827,6 +827,12 @@ class Reliability_Names( models.Model ):
         
         # declare variables
         temp_string = ""
+        current_index = -1
+        attr_name = None
+        attr_value = None
+        coder_instance = None
+        is_detected = None
+        person_id = None
         
         # start with stuff we should always have.
         if ( self.id ):
@@ -875,31 +881,52 @@ class Reliability_Names( models.Model ):
             
             temp_string = ""
             
-            if ( self.coder1 ):
+            # loop over range from 1 to 10.
+            for current_index in range( 1, 11 ):
             
-                # output details for coder 1
-                string_OUT += "1"
-                temp_string += " ====> 1 - " + str( self.coder1.id ) + "; " + str( self.coder1_detected ) + "; " + str( self.coder1_person_id )
-                
-            #-- END check to see if coder1 --#
+                # get attribute values.
 
-            if ( self.coder2 ):
-            
-                # output details for coder 2
-                string_OUT += "2"
-                temp_string += " ====> 2 - " + str( self.coder2.id ) + "; " + str( self.coder2_detected ) + "; " + str( self.coder2_person_id )
+                # ==> coder instance - build field name, then retrieve it.
                 
-            #-- END check to see if coder2 --#
-        
-            if ( self.coder3 ):
-            
-                # output details for coder 3
-                string_OUT += "3"
-                temp_string += " ====> 3 - " + str( self.coder3.id ) + "; " + str( self.coder3_detected ) + "; " + str( self.coder3_person_id )
+                # build attribute name
+                attr_name = self.FIELD_NAME_PREFIX_CODER + str( current_index )
+                if ( ( self.FIELD_NAME_SUFFIX_CODER is not None ) and ( self.FIELD_NAME_SUFFIX_CODER != "" ) ):
                 
-            #-- END check to see if coder3 --#
+                    attr_name += "_" + self.FIELD_NAME_SUFFIX_CODER
+                    
+                #-- END check to see if there is a coder suffix. --#
+                
+                # get value
+                coder_instance = getattr( self, attr_name, None )
+                
+                # ==> detected flag - build field name, then retrieve it.
+                
+                # build attribute name
+                attr_name = self.FIELD_NAME_PREFIX_CODER + str( current_index ) + "_" + self.FIELD_NAME_SUFFIX_DETECTED
+                
+                # get value
+                is_detected = getattr( self, attr_name, None )
+                
+                # ==> person ID - build field name, then retrieve it.
+                
+                # build attribute name
+                attr_name = self.FIELD_NAME_PREFIX_CODER + str( current_index ) + "_" + self.FIELD_NAME_SUFFIX_PERSON_ID
+                
+                # get value
+                person_id = getattr( self, attr_name, None )
+                
+                # got a coder?
+                if ( coder_instance ):
+                
+                    # yes - output details for coder.
+                    string_OUT += "[" + str( current_index ) + "]"
+                    temp_string += " ==> [" + str( current_index ) + "] - coder=" + str( coder_instance.id ) + "; detected=" + str( is_detected ) + "; person=" + str( person_id )
+                    
+                #-- END check to see if coder instance. --#
+                
+            #-- END loop over coders --#
             
-            string_OUT += temp_string
+            string_OUT += ": " + temp_string
         
         return string_OUT
 
@@ -1434,6 +1461,7 @@ class Reliability_Names_Evaluation( models.Model ):
     is_ambiguous = models.BooleanField( default = False )
     is_quoted_shb_mentioned = models.BooleanField( default = False )
     is_mentioned_shb_quoted = models.BooleanField( default = False )
+    is_not_hard_news = models.BooleanField( default = False )
     event_type = models.CharField( max_length = 255, blank = True, null = True, choices = EVENT_TYPE_CHOICES )
     
     # need to add fields for merge from/to Reliability_Names ID and Article_Data.
