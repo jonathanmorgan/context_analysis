@@ -435,17 +435,41 @@ class Reliability_Names( models.Model ):
         # return reference
         record_list_OUT = []
         
+        # call update_reliability_names_for_article()
+        record_list_OUT = cls.update_reliabilty_names_for_article( article_id_IN,
+                                                                   filter_label_IN = label_IN,
+                                                                   new_label_IN = None,
+                                                                   do_delete_IN = do_delete_IN )
+        
+        return record_list_OUT
+        
+    #-- END class method delete_reliabilty_names_for_article() --#
+
+
+    @classmethod
+    def update_reliabilty_names_for_article( cls, article_id_IN, filter_label_IN = None, new_label_IN = None, do_delete_IN = False ):
+        
+        '''
+        Accepts article ID and optional label.  Finds all Reliability_Names
+            records in that reference article ID and have label (if requested).
+            Removes all matches.  Returns list of str() of each record removed.
+        '''
+        
+        # return reference
+        record_list_OUT = []
+        
         # declare variables
         article_id = -1
         label = ""
         matching_names_qs = None
         current_record = None
+        is_updated = False
         current_record_string = None
         do_delete = True
         
         # first, get existing Reliability_Names rows for article and label.
         article_id = article_id_IN
-        label = label_IN
+        label = filter_label_IN
         do_delete = do_delete_IN
         
         # get matching Reliability_Names rows
@@ -453,7 +477,7 @@ class Reliability_Names( models.Model ):
         matching_names_qs = matching_names_qs.filter( article__id = article_id )
         
         # got a label?
-        if ( ( label is not None ) and ( label != "" ) ):
+        if ( label is not None ):
             
             # yes - filter.
             matching_names_qs = matching_names_qs.filter( label = label )
@@ -464,6 +488,9 @@ class Reliability_Names( models.Model ):
         
         # delete these records.
         for current_record in matching_names_qs:
+        
+            # initialize
+            is_updated = False
         
             # add the str() of the row to the list.
             current_record_string = str( current_record )
@@ -477,8 +504,28 @@ class Reliability_Names( models.Model ):
                 
             else:
                 
-                # print info on record.
-                current_record_string = "- match: " + current_record_string
+                # is there a new label?
+                if ( new_label_IN is not None ):
+                
+                    # yes.  replace.
+                    current_record.label = new_label_IN
+                    is_updated = True
+                    
+                #-- END check to see if new label. --#
+                
+                # updated?
+                if ( is_updated == True ):
+                
+                    # updated.  Save.
+                    current_record.save()
+                    current_record_string = "- updated: " + current_record_string
+                    
+                else:
+                
+                    # no update - print info on record.
+                    current_record_string = "- match: " + current_record_string
+                    
+                #-- END check to see if record updated. --#
                 
             #-- END check to see if we delete. --#
             
@@ -488,7 +535,7 @@ class Reliability_Names( models.Model ):
         
         return record_list_OUT
         
-    #-- END class method delete_reliabilty_names_for_article() --#
+    #-- END class method update_reliabilty_names_for_article() --#
 
 
     @classmethod
