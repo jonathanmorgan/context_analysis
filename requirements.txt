@@ -5,3 +5,7 @@ pandas
 pyRserve
 django-taggit
 ipykernel
+scikit-learn
+patsy
+statsmodels
+
