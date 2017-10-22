@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 '''
-Copyright 2016 Jonathan Morgan
+Copyright 2016-2017 Jonathan Morgan
 
 This file is part of http://github.com/jonathanmorgan/sourcenet_analysis.
 
@@ -12,6 +12,8 @@ sourcenet_analysis is distributed in the hope that it will be useful, but WITHOU
 
 You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
 '''
+
+# ! TODO - integrate index_helper.py so each index can have its own settings.
 
 # python built-in libraries
 import hashlib
@@ -127,8 +129,14 @@ class ReliabilityNamesBuilder( object ):
         # tying coders to indexes in database.
         self.article_id_to_info_map = {}
         self.coder_id_to_instance_map = {}        
-        self.coder_id_to_index_map = {}
-        self.coder_id_to_priority_map = {}
+
+        # master index info map.
+        self.index_to_info_map = {}
+
+        # so a given user can be a part of multiple indexes, with a different
+        #    priority in each.
+        #self.coder_id_to_index_map = {}
+        #self.coder_id_to_priority_map = {}
         
         # multiple coders for an index
         self.index_to_coder_priorities_map = {}
@@ -160,9 +168,6 @@ class ReliabilityNamesBuilder( object ):
         
         # debug variables
         self.debug_output_json_file_path = ""
-        
-        # temporary index info map.
-        self.index_to_info_map = {}
         
     #-- END method __init__() --#
     
@@ -755,6 +760,13 @@ class ReliabilityNamesBuilder( object ):
             among the coders configured for each index.  Returns dictionary that
             maps each index that has been assigned one or more coders to the
             coder to use for the current article.
+            
+        Specifically, for a given article, get index info, and then for each
+            index with coders, go through the prioritized list of coders and use
+            the first that has an Article_Data in the current article.  Use this
+            information to build a map of indices to coder IDs, and then loop
+            over that in processing below (so no longer doing something with
+            every coder, just looping over indices that had at least one coder).
             
         Preconditions: This object needs to have been configured with at least
             one coder assigned to an index.
