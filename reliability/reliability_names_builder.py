@@ -40,6 +40,7 @@ from sourcenet.models import Person
 
 # sourcenet_analysis imports
 from sourcenet_analysis.models import Reliability_Names
+from sourcenet_analysis.reliability.index_helper import IndexHelper
 
 #-------------------------------------------------------------------------------
 # class definitions
@@ -131,7 +132,7 @@ class ReliabilityNamesBuilder( object ):
         self.coder_id_to_instance_map = {}        
 
         # master index info map.
-        self.index_to_info_map = {}
+        self.index_helper = IndexHelper()
 
         # so a given user can be a part of multiple indexes, with a different
         #    priority in each.
@@ -350,6 +351,9 @@ class ReliabilityNamesBuilder( object ):
             - self.limit_to_automated_coder_types - list of automated coder types we want included.
             - ).  Returns filtered QuerySet.
         '''
+        
+        # ! TODO - make static version that this calls.
+        # ! TODO - push these all up into Article_Data model filter_records() method.
         
         # return reference
         qs_OUT = None

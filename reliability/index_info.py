@@ -31,10 +31,7 @@ from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.status.status_container import StatusContainer
 
 # sourcenet imports
-from sourcenet.models import Article
 from sourcenet.models import Article_Data
-from sourcenet.models import Article_Subject
-from sourcenet.models import Person
 
 # sourcenet_analysis imports
 from sourcenet_analysis.models import Reliability_Names
@@ -116,7 +113,6 @@ class IndexInfo( object ):
         # declare variables
         coder_index_info = None
         coder_id_to_info_dict = None
-        coder_id_to_instance_dict = {}
         coder_user_id = -1
         coder_index = -1
         coder_user = None
@@ -126,7 +122,6 @@ class IndexInfo( object ):
         
         # get maps from instance
         coder_id_to_info_dict = self.get_coder_id_to_info_map()
-        coder_id_to_instance_dict = self.get_coder_id_to_instance_map()
         
         # init from input parameters.
         coder_user_id = coder_id_IN
@@ -143,23 +138,6 @@ class IndexInfo( object ):
                 # yes.  Lookup the user.
                 coder_user = User.objects.get( id = coder_user_id )
                 
-                # Set all the things up internally.
-                coder_id_to_instance_dict[ coder_user_id ] = coder_user
-                
-                # set priority?
-                is_priority_valid = IntegerHelper.is_valid_integer( coder_priority, must_be_greater_than_IN = -1 )
-                if ( is_priority_valid == True ):
-
-                    # priority value is valid - set priority.
-                    priority_status = self.set_coder_priority( coder_user_id, coder_priority )
-                    
-                else:
-                
-                    # not valid.  Set coder_priority to None.
-                    coder_priority = None
-                    
-                #-- END check to see if priority value is valid --#
-                                
                 # Make CoderIndexInfo instance.
                 coder_index_info = CoderIndexInfo( coder_user_id_IN = coder_user_id,
                                                    coder_instance_IN = coder_user,
@@ -169,7 +147,7 @@ class IndexInfo( object ):
                 # add it to map of coder ID to info for current index.
                 coder_id_to_info_dict[ coder_user_id ] = coder_index_info
                 
-                # rebuild other derived index information.
+                # always rebuild other derived index information.
                 self.build_index_info()
 
             else:
@@ -196,7 +174,9 @@ class IndexInfo( object ):
         '''
         Creates any helpful derived information on this index that can be used
             for processing.  Includes:
-            - m_prioritized_coder_list - list of coder User instances for this
+            - self.m_coder_id_to_instance_map - map coder's User ID to their User instance.
+            - self.m_coder_id_to_priority_map - map coder's User ID to their priority.
+            - self.m_prioritized_coder_list - list of coder User instances for this
                 index, in order of their priority, from highest to lowest.
             
         Postconditions: Returns StatusContainer.
@@ -208,23 +188,39 @@ class IndexInfo( object ):
         # declare variables
         me = "build_index_info"
         status_message = None
-        index_list = None
-        current_index = -1
-        index_info = None
+        coder_info_map = None
+        coder_user_id = None
+        coder_info = None
         coder_list = None
         
         # init status
         status_OUT.set_status_code( StatusContainer.STATUS_CODE_SUCCESS )
+        
+        # ! ----> clear out existing derived information
+        self.m_coder_id_to_instance_map = {}
+        self.m_coder_id_to_priority_map = {}
+        self.m_prioritized_coder_list = None
+        
+        # ! ----> loop over coder info records.
+        coder_info_map = self.get_coder_id_to_info_map()
+        for coder_user_id, coder_info in six.iteritems( coder_info_map ):
+        
+            # update information for current coder:
+            # ! --------> update id-to-instance map
+            # ! --------> update id-to-priority map
+            self.update_index_info_for_coder( coder_info )
+            
+        #-- END loop over coder info records --#
                 
         # ! ----> rebuild coder list for index.
         coder_list = self.get_prioritized_coder_list( rebuild_IN = True )
         
         return status_OUT
         
-    #-- END method build_index_to_coder_list_map() --#
+    #-- END method build_index_info() --#
 
 
-    def get_coder_for_article( self, article_IN, mapping_type_IN = MAPPING_INDEX_TO_CODER, *args, **kwargs ):
+    def get_coder_for_article( self, article_IN, *args, **kwargs ):
 
         '''
         Accepts an article for which we want to pick a coder.  Returns User
@@ -780,6 +776,98 @@ class IndexInfo( object ):
         return value_OUT
     
     #-- END method set_prioritized_coder_list() --#
+    
+    
+    def update_index_info_for_coder( self, coder_info_IN, *args, **kwargs ):
+        
+        '''
+        Accepts a CoderIndexInfo instance.  Updates all the stuff in this
+            instance to make sure the coder is added correctly, Including:
+            - map coder's User ID to their User instance.
+            - map coder's User ID to their priority.
+            
+        Preconditions: called as part of self.build_index_info(), so this does
+            not call that.
+        '''
+        
+        # return reference
+        status_OUT = ""
+        
+        # declare variables
+        coder_index_info = None
+        coder_id_to_instance_dict = {}
+        coder_user_id = -1
+        coder_index = -1
+        coder_user = None
+        coder_priority = None
+        is_priority_valid = False
+        priority_status = None
+        
+        # get maps from instance
+        coder_id_to_instance_dict = self.get_coder_id_to_instance_map()
+        
+        # got info?
+        if ( coder_info_IN is not None ):
+        
+            # yes - get info on user from it.
+            coder_index_info = coder_info_IN
+        
+            # init from info.
+            coder_user_id = coder_index_info.get_coder_user_id()
+            coder_user = coder_index_info.get_coder_user_instance()
+            coder_index = coder_index_info.get_index()
+            coder_priority = coder_index_info.get_priority()
+            
+            # got ID?
+            if ( ( coder_user_id is not None ) and ( int( coder_user_id ) > 0 ) ):
+            
+                # got index?
+                if ( ( coder_index is not None ) and ( int( coder_index ) > 0 ) ):
+                
+                    # Set all the things up internally.
+                    coder_id_to_instance_dict[ coder_user_id ] = coder_user
+                    
+                    # set priority?
+                    is_priority_valid = IntegerHelper.is_valid_integer( coder_priority, must_be_greater_than_IN = -1 )
+                    if ( is_priority_valid == True ):
+    
+                        # priority value is valid - set priority.
+                        priority_status = self.set_coder_priority( coder_user_id, coder_priority )
+                        
+                    else:
+                    
+                        # not valid.  Set coder_priority to None.
+                        coder_priority = None
+                        
+                    #-- END check to see if priority value is valid --#
+                                    
+                    # rebuild other derived index information.
+                    #self.build_index_info()
+    
+                else:
+                
+                    # no index - broken.
+                    status_OUT = "No index - can't associate user with no index."
+                
+                #-- END check to see if index present. --#
+            
+            else:
+            
+                # no coder ID - broken.
+                status_OUT = "No coder ID - can't associate user if no user."
+            
+            #-- END check to see if valid ID. --#
+            
+        else:
+        
+            # no info passed in, nothing to do.
+            status_OUT = "No coder info passed in, nothing to do."
+            
+        #-- END check to see if coder info. --#
+
+        return status_OUT        
+        
+    #-- END method update_index_info_for_user() --#
 
 
 #-- END class IndexInfo --#
