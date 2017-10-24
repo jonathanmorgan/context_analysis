@@ -127,12 +127,14 @@ class ReliabilityNamesBuilder( object ):
 
         # ! ==> declare instance variables
         
-        # tying coders to indexes in database.
+        # info for each article ID.
         self.article_id_to_info_map = {}
-        self.coder_id_to_instance_map = {}        
+        
+        # now housed in m_index_helper.
+        #self.coder_id_to_instance_map = {}        
 
         # master index info map.
-        self.index_helper = IndexHelper()
+        self.m_index_helper = IndexHelper()
 
         # so a given user can be a part of multiple indexes, with a different
         #    priority in each.
@@ -154,8 +156,8 @@ class ReliabilityNamesBuilder( object ):
         #-- END loop over indices to initialize priorities map --#
         
         # limit users included
-        self.limit_to_user_ids = []
-        self.exclude_user_ids = []
+        self.m_limit_to_user_ids = []
+        self.m_exclude_user_ids = []
         
         # variable to hold desired automated coder type
         self.limit_to_automated_coder_type = ""
@@ -184,61 +186,14 @@ class ReliabilityNamesBuilder( object ):
         status_OUT = ""
         
         # declare variables
-        coder_id_to_index_dict = {}
-        coder_id_to_instance_dict = {}
-        limit_to_user_id_list = []
-        coder_user_id = -1
-        coder_index = -1
-        coder_user = None
-        is_priority_valid = False
-        priority_status = None
+        my_index_helper = None
         
-        # get maps from instance
-        coder_id_to_index_dict = self.coder_id_to_index_map
-        coder_id_to_instance_dict = self.coder_id_to_instance_map
-        limit_to_user_id_list = self.limit_to_user_ids
+        # get index_helper
+        my_index_helper = self.get_index_helper()
         
-        # init from input parameters.
-        coder_user_id = coder_id_IN
-        coder_index = index_IN
+        # add coder.
+        status_OUT = my_index_helper.add_coder_at_index( coder_id_IN, index_IN, priority_IN, *args, **kwargs )
         
-        # got ID?
-        if ( ( coder_user_id is not None ) and ( int( coder_user_id ) > 0 ) ):
-        
-            # got index?
-            if ( ( coder_index is not None ) and ( int( coder_index ) > 0 ) ):
-            
-                # yes.  Lookup the user.
-                coder_user = User.objects.get( id = coder_user_id )
-                
-                # Set all the things up internally.
-                coder_id_to_index_dict[ coder_user_id ] = coder_index
-                coder_id_to_instance_dict[ coder_user_id ] = coder_user
-                limit_to_user_id_list.append( coder_user_id )
-                
-                # set priority?
-                is_priority_valid = IntegerHelper.is_valid_integer( priority_IN, must_be_greater_than_IN = -1 )
-                if ( is_priority_valid == True ):
-
-                    # priority value is valid - set priority.
-                    priority_status = self.set_coder_priority( coder_user_id, priority_IN, index_IN )
-                    
-                #-- END check to see if priority value is valid --#
-                                
-            else:
-            
-                # no index - broken.
-                status_OUT = "No index - can't associate user with no index."
-            
-            #-- END check to see if index present. --#
-        
-        else:
-        
-            # no coder ID - broken.
-            status_OUT = "No coder ID - can't associate user if no user."
-        
-        #-- END check to see if valid ID. --#
-
         return status_OUT        
         
     #-- END method add_coder_at_index() --#
@@ -259,44 +214,20 @@ class ReliabilityNamesBuilder( object ):
         index_to_info_map_OUT = {}
         
         # declare variables
-        index_list = None
-        current_index = -1
-        index_info = None
-        coder_list = None
+        my_index_helper = None
         
-        
-        # create list of indices from 1 to self.TABLE_MAX_CODERS.
-        index_list = range( 1, self.TABLE_MAX_CODERS + 1 )
-        
-        # loop
-        for current_index in index_list:
-        
-            # create index_info
-            index_info = {}
-            
-            # ! ----> add index
-            index_info[ self.INDEX_INFO_INDEX ] = current_index
-            
-            # ! ----> retrieve coder list for index.
-            coder_list = self.get_coders_for_index( current_index )
-            
-            # add result to info.
-            index_info[ self.INDEX_INFO_PRIORITIZED_CODER_LIST ] = coder_list
-            
-            # add info to map
-            index_to_info_map_OUT[ current_index ] = index_info
-        
-        #-- END loop over indices --#
-        
-        # save internally
-        self.set_index_to_info_map( index_to_info_map_OUT )
+        # get IndexHelper instance
+        my_index_helper = self.get_index_helper()
+
+        # call method on helper.
+        my_index_helper.build_index_info( *args, **kwargs )
         
         # return map
-        index_to_info_map_OUT = self.get_index_to_info_map()
+        index_to_info_map_OUT = my_index_helper.get_index_to_info_map( *args, **kwargs )
         
         return index_to_info_map_OUT
         
-    #-- END method build_index_to_coder_list_map() --#
+    #-- END method build_index_info() --#
 
 
     def build_reliability_names_data( self, tag_list_IN = None, label_IN = None ):
@@ -348,7 +279,9 @@ class ReliabilityNamesBuilder( object ):
             that relate to filtering.  Returns filtered QuerySet.
            
         Filters on:
-            - self.limit_to_automated_coder_types - list of automated coder types we want included.
+            - self.limit_to_automated_coder_types - list of automated coder types we want included.\
+            - list of coder IDs we want to limit to.
+            - 
             - ).  Returns filtered QuerySet.
         '''
         
@@ -361,6 +294,7 @@ class ReliabilityNamesBuilder( object ):
         # declare variables
         me = "filter_article_data"
         logging_message = ""
+        my_index_helper = None
         my_logger = None
         automated_coder_type = None
         coder_type_list = None
@@ -370,10 +304,13 @@ class ReliabilityNamesBuilder( object ):
         # init logger
         my_logger = LoggingHelper.get_a_logger( self.LOGGER_NAME )        
         
+        # get index helper
+        my_index_helper = self.get_index_helper()
+        
         # start by just returning what is passed in.
         qs_OUT = article_data_qs_IN
         
-        # see if we have a single coder type.
+        # see if we have a single automated coder type.
         automated_coder_type = self.limit_to_automated_coder_type
         if ( ( automated_coder_type is not None ) and ( automated_coder_type != "" ) ):
         
@@ -403,7 +340,7 @@ class ReliabilityNamesBuilder( object ):
         #-- END check to see if anything in coder_type_list.
 
         # got a list of coder IDs to limit to?
-        coder_id_include_list = self.limit_to_user_ids
+        coder_id_include_list = self.get_limit_to_user_ids_list()
         if ( ( isinstance( coder_id_include_list, list ) == True ) and ( len( coder_id_include_list ) > 0 ) ):
         
             qs_OUT = qs_OUT.filter( coder__in = coder_id_include_list )
@@ -423,6 +360,140 @@ class ReliabilityNamesBuilder( object ):
     #-- END method filter_article_data() --#
 
 
+    def get_coder_for_index( self, index_IN ):
+        
+        '''
+        Accepts a coder index.  Uses it to get ID of coder associated with that
+           index and returns instance of that User.  If none found, returns
+           None.
+        '''
+        
+        # return reference
+        instance_OUT = None
+        
+        # declare variables
+        my_index_helper = None
+        
+        # get index_helper
+        my_index_helper = self.get_index_helper()
+        
+        # add coder.
+        instance_OUT = my_index_helper.get_coder_for_index( index_IN )
+        
+        return instance_OUT        
+        
+    #-- END method get_coder_for_index() --#
+    
+        
+    def get_coder_id_to_instance_map( self ):
+        
+        '''
+        Retrieves nested m_coder_id_to_instance_map from this instance.
+        '''
+        
+        # ! TODO - CURRENT
+        
+        # return reference
+        value_OUT = None
+        
+        # declare variables
+        my_index_helper = None
+        
+        # get value and return it.
+        my_index_helper = self.get_index_helper()
+        value_OUT = self.m_coder_id_to_instance_map
+        
+        return value_OUT
+        
+    #-- END method get_coder_id_to_instance_map() --#
+
+
+    def get_coder_index( self, coder_id_IN ):
+        
+        '''
+        Accepts a coder ID, retrieves and returns the index for that coder.
+            Returns None if no associated index.
+        '''
+        
+        # return reference
+        value_OUT = None
+        
+        # declare variables
+        me = "get_coder_index"
+        coder_index = -1
+        
+        # try to get index for coder.
+        coder_index = self.coder_id_to_index_map.get( coder_id_IN, None )
+
+        value_OUT = coder_index
+        
+        return instance_OUT        
+        
+    #-- END method get_coder_index() --#
+    
+        
+    def get_coder_priority( self, coder_id_IN, index_IN = None, default_priority_IN = -1 ):
+        
+        '''
+        Accepts a coder ID and an index.  Uses this information to get the
+            priority of the specified user, either in general, or in the context
+            of the index passed in, if one present.
+        '''
+        
+        # return reference
+        value_OUT = None
+        
+        # declare variables
+        me = "get_coder_priority"
+        coder_index = -1
+        index_to_priority_map_dict = {}
+        priority_map_dict = {}
+        coder_priority = -1
+        coder_index = -1
+        
+        # got an index?
+        if ( index_IN is not None ):
+        
+            # passed in - use it.
+            coder_index = index_IN
+            
+            # get priority map for selected index.
+            priority_map_dict = self.get_index_priority_map( index_IN )
+            
+            # retrieve priority from there.
+            coder_priority = priority_map_dict.get( coder_id_IN, None )
+            
+        #-- END check to see if coder's index passed in. --#
+
+        # ! got a priority?
+        if ( ( coder_priority is None )
+            or ( isinstance( coder_priority, six.integer_types ) == False )
+            or ( coder_priority < 0 ) ):
+                
+            # no.  Get coder ID to priority map.
+            priority_map_dict = self.coder_id_to_priority_map
+                
+            # and then get the priority for the coder.
+            coder_priority = priority_map_dict.get( coder_id_IN, None )
+
+        #-- END check to see if we got a priority based on index. --#
+        
+        # store coder_priority in instance_OUT.
+        value_OUT = coder_priority
+        
+        # got anything?
+        if ( ( value_OUT is None ) or ( value_OUT < 0 ) ):
+        
+            # no.  Return the default.
+            value_OUT = default_priority_IN
+            
+        #-- END check to see if value_OUT. --#
+        
+        return value_OUT        
+        
+    #-- END method get_coder_priority() --#
+    
+        
     def get_coders_for_index( self, index_IN ):
         
         '''
@@ -560,127 +631,26 @@ class ReliabilityNamesBuilder( object ):
     #-- END method get_coders_for_index() --#
     
         
-    def get_coder_for_index( self, index_IN ):
+    def get_index_helper( self ):
         
         '''
-        Accepts a coder index.  Uses it to get ID of coder associated with that
-           index with the , and returns instance of that User.  If none found, returns
-           None.
-        '''
-        
-        # return reference
-        instance_OUT = None
-        
-        # declare variables
-        coder_list = None
-        coder_count = -1
-
-        # get list of coders for current index
-        coder_list = self.get_coders_for_index( index_IN )
-        
-        # got anything?
-        coder_count = len( coder_list )
-        
-        if ( coder_count > 0 ):
-        
-            # yes.  Return first item in the list (it is in priority order, from
-            #     highest priority to lowest).
-            instance_OUT = coder_list[ 0 ]
-            print( "++++ found User: " + str( instance_OUT ) )
-        
-        #-- END check to see if we have a User ID. --#
-        
-        return instance_OUT        
-        
-    #-- END method get_coder_for_index() --#
-    
-        
-    def get_coder_index( self, coder_id_IN ):
-        
-        '''
-        Accepts a coder ID, retrieves and returns the index for that coder.
-            Returns None if no associated index.
+        Retrieves nested m_index_helper from this instance.
         '''
         
         # return reference
         value_OUT = None
         
         # declare variables
-        me = "get_coder_index"
-        coder_index = -1
+        my_index_helper = None
         
-        # try to get index for coder.
-        coder_index = self.coder_id_to_index_map.get( coder_id_IN, None )
+        # get value and return it.
+        value_OUT = self.m_index_helper
+        
+        return value_OUT
+        
+    #-- END method get_index_helper() --#
 
-        value_OUT = coder_index
-        
-        return instance_OUT        
-        
-    #-- END method get_coder_index() --#
-    
-        
-    def get_coder_priority( self, coder_id_IN, index_IN = None, default_priority_IN = -1 ):
-        
-        '''
-        Accepts a coder ID and an index.  Uses this information to get the
-            priority of the specified user, either in general, or in the context
-            of the index passed in, if one present.
-        '''
-        
-        # return reference
-        value_OUT = None
-        
-        # declare variables
-        me = "get_coder_priority"
-        coder_index = -1
-        index_to_priority_map_dict = {}
-        priority_map_dict = {}
-        coder_priority = -1
-        coder_index = -1
-        
-        # got an index?
-        if ( index_IN is not None ):
-        
-            # passed in - use it.
-            coder_index = index_IN
-            
-            # get priority map for selected index.
-            priority_map_dict = self.get_index_priority_map( index_IN )
-            
-            # retrieve priority from there.
-            coder_priority = priority_map_dict.get( coder_id_IN, None )
-            
-        #-- END check to see if coder's index passed in. --#
 
-        # ! got a priority?
-        if ( ( coder_priority is None )
-            or ( isinstance( coder_priority, six.integer_types ) == False )
-            or ( coder_priority < 0 ) ):
-                
-            # no.  Get coder ID to priority map.
-            priority_map_dict = self.coder_id_to_priority_map
-                
-            # and then get the priority for the coder.
-            coder_priority = priority_map_dict.get( coder_id_IN, None )
-
-        #-- END check to see if we got a priority based on index. --#
-        
-        # store coder_priority in instance_OUT.
-        value_OUT = coder_priority
-        
-        # got anything?
-        if ( ( value_OUT is None ) or ( value_OUT < 0 ) ):
-        
-            # no.  Return the default.
-            value_OUT = default_priority_IN
-            
-        #-- END check to see if value_OUT. --#
-        
-        return value_OUT        
-        
-    #-- END method get_coder_priority() --#
-    
-        
     def get_index_priority_map( self, index_IN ):
         
         '''
@@ -738,24 +708,66 @@ class ReliabilityNamesBuilder( object ):
         # return reference
         index_to_info_map_OUT = None
         
-        # see if we have a map already populated.
-        index_to_info_map_OUT = self.index_to_info_map
+        # declare variables
+        my_index_helper = None
         
-        # got anything?
-        if ( ( index_to_info_map_OUT is None )
-            or ( isinstance( index_to_info_map_OUT, dict ) == False )
-            or ( len( index_to_info_map_OUT ) <= 0 ) ):
+        # get index helper
+        my_index_helper = self.get_index_helper()
         
-            # no.  Build it, then return it.
-            index_to_info_map_OUT = self.build_index_info()
-            
-        #-- END check to see if map already made --#
+        # call this method on helper.
+        index_to_info_map_OUT = my_index_helper.get_index_to_info_map( *args, **kwargs )
             
         return index_to_info_map_OUT        
         
     #-- END method get_index_to_info_map() --#
     
         
+    def get_limit_to_user_id_list( self, update_from_index_helper_IN = False ):
+        
+        '''
+        Retrieves nested m_limit_to_user_id_list from this instance.
+        '''
+        
+        # return reference
+        value_OUT = None
+        
+        # declare variables
+        my_index_helper = None
+        helper_user_id_include_list = None
+        current_user_id = None
+        
+        # get value and return it.
+        value_OUT = self.m_limit_to_user_ids
+        
+        # update from IndexHelper?
+        if ( ( update_from_index_helper_IN == True )
+            or ( value_OUT is None )
+            or ( len( value_OUT ) == 0 ) ):
+        
+            # get list from IndexHelper instance.
+            my_index_helper = self.get_index_helper()
+            helper_user_id_include_list = my_index_helper.get_limit_to_user_id_list()
+            
+            # loop, checking to make sure each is already in our local list.
+            for current_user_id in helper_user_id_include_list:
+            
+                # is it in local list?
+                if ( current_user_id not in value_OUT ):
+                
+                    # no.  Add it.
+                    value_OUT.append( current_user_id )
+                    
+                #-- END check to see if current user not in list. --#
+                
+            #-- END loop over helper user include list. --#
+            
+        #-- end check to see if we update. --#
+        
+        return value_OUT
+        
+    #-- END method get_limit_to_user_id_list() --#
+
+
     def map_index_to_coder_for_article( self, article_IN, mapping_type_IN = MAPPING_INDEX_TO_CODER, *args, **kwargs ):
 
         '''

@@ -178,6 +178,43 @@ class IndexInfo( object ):
     #-- END method add_coder_at_index() --#
     
 
+    def build_index_info( self, *args, **kwargs ):
+        
+        '''
+        Loops over indices represented in index_to_info_map.  For each, in
+            IndexInfo instance, calls build_index_info().
+            
+        Updated information is stored within each IndexInfo instance, and in the
+            IndexHelper instance.  Returns index-to-info dictionary that is
+            housed inside this helper.
+        '''
+        
+        # return reference
+        index_to_info_map_OUT = {}
+        
+        # declare variables
+        index_to_info_dict = None
+        current_index = None
+        current_index_info = None
+        
+        # get index-to-info map
+        index_to_info_dict = self.get_index_to_info_map()
+        
+        # loop over indexes present in map.
+        for current_index, current_index_info in six.iteritems( index_to_info_dict ):
+        
+            # call build_index_info() on info object, forcing rebuild.
+            current_index_info.build_index_info( *args, **kwargs )
+            
+        #-- END loop over IndexInfo instances. --#
+        
+        index_to_info_map_OUT = index_to_info_dict
+        
+        return index_to_info_map_OUT
+        
+    #-- END method build_index_info() --#
+
+
     def get_coder_for_index( self, index_IN ):
         
         '''
