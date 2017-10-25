@@ -48,7 +48,7 @@ from sourcenet_analysis.reliability.coder_index_info import CoderIndexInfo
 #-------------------------------------------------------------------------------
 
 
-class IndexInfo( object ):
+class IndexHelper( object ):
     
     
     #----------------------------------------------------------------------
@@ -70,6 +70,9 @@ class IndexInfo( object ):
     # index-to-coder mappings
     MAPPING_INDEX_TO_CODER = "index-to-coder"
     MAPPING_CODER_TO_INDEX = "coder-to-index"
+    
+    # DEBUG
+    DEBUG = True
 
     
     #----------------------------------------------------------------------------
@@ -80,7 +83,7 @@ class IndexInfo( object ):
     def __init__( self, *args, **kwargs ):
         
         # ! ==> call parent's __init__()
-        super( ReliabilityNamesBuilder, self ).__init__()
+        super( IndexHelper, self ).__init__()
 
         # ! ==> declare instance variables
         
@@ -105,6 +108,61 @@ class IndexInfo( object ):
         
     #-- END method __init__() --#
     
+
+    def __str__( self ):
+        
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        current_value = None
+        current_value_label = None
+        field_output_list = []
+        
+        current_value = self.get_index_to_info_map()
+        current_value_label = "index-info-map"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        # DEBUG?
+        if ( self.DEBUG == True ):
+
+            current_value = self.get_coder_id_to_instance_map()
+            current_value_label = "id-to-instance-info"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+    
+            current_value = self.get_index_priority_map()
+            current_value_label = "id-to-instance-info"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+    
+            current_value = self.get_limit_to_user_id_list()
+            current_value_label = "limit-users"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+    
+        #-- END check to see if debug --#
+
+        # convert output list to string
+        string_OUT = "\n====>".join( field_output_list )
+                
+        return string_OUT
+        
+    #-- END method __str__() --#
+
 
     def add_coder_at_index( self, coder_id_IN, index_IN, priority_IN = None, *args, **kwargs ):
         
@@ -489,6 +547,12 @@ class IndexInfo( object ):
         
         # return reference
         is_valid_OUT = False
+        
+        # declare variables
+        coder_index = None
+        
+        # init coder_index
+        coder_index = index_IN
     
         # do we have a valid index value?
         if ( ( coder_index is not None )

@@ -88,6 +88,56 @@ class CoderIndexInfo( object ):
     #-- END method __init__() --#
     
         
+    def __str__( self ):
+        
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        current_value = None
+        current_value_label = None
+        field_output_list = []
+        
+        current_value = self.get_coder_user_id()
+        current_value_label = "user ID"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        current_value = self.get_coder_user_instance()
+        current_value_label = "user instance"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        current_value = self.get_index()
+        current_value_label = "index"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        current_value = self.get_priority()
+        current_value_label = "priority"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        # convert output list to string
+        string_OUT = ", ".join( field_output_list )
+                
+        return string_OUT
+        
+    #-- END method __str__() --#
+
+
     def get_coder_user_id( self ):
         
         '''

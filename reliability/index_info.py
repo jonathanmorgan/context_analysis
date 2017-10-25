@@ -61,6 +61,9 @@ class IndexInfo( object ):
     INDEX_INFO_PRIORITIZED_CODER_LIST = "prioritized_coder_list"
     INDEX_INFO_CODER_ID_TO_PRIORITY_MAP = "coder_id_to_priority_map"
     
+    # debug flag
+    DEBUG = False
+    
     
     #----------------------------------------------------------------------------
     # instance methods
@@ -70,7 +73,7 @@ class IndexInfo( object ):
     def __init__( self, *args, **kwargs ):
         
         # ! ==> call parent's __init__()
-        super( ReliabilityNamesBuilder, self ).__init__()
+        super( IndexInfo, self ).__init__()
 
         # ! ==> declare instance variables
         
@@ -96,6 +99,93 @@ class IndexInfo( object ):
         
     #-- END method __init__() --#
     
+
+    def __str__( self ):
+        
+        # return reference
+        string_OUT = ""
+        
+        # declare variables
+        current_value = None
+        current_value_label = None
+        field_output_list = []
+        
+        current_value = self.get_index()
+        current_value_label = "index"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        current_value = self.get_coder_id_to_info_map()
+        current_value_label = "coder info"
+        if ( current_value is not None ):
+        
+            field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+            
+        #-- END check to see if coder_user_id --#
+
+        # DEBUG?
+        if ( self.DEBUG == True ):
+
+            current_value = self.get_coder_id_to_instance_map()
+            current_value_label = "id-to-instance-info"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+    
+            current_value = self.get_coder_id_to_priority_map()
+            current_value_label = "id-to-priority"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+            
+            current_value = self.get_prioritized_coder_list( rebuild_IN = True )
+            current_value_label = "get_prioritized_coder_list()"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+            
+            current_value = self.get_prioritized_coder_id_list( rebuild_IN = True )
+            current_value_label = "get_prioritized_coder_id_list()"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+            
+            current_value = self.get_coders_for_index( rebuild_IN = True )
+            current_value_label = "get_coders_for_index()"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+            
+            current_value = self.get_coder_for_index()
+            current_value_label = "get_coder_for_index()"
+            if ( current_value is not None ):
+            
+                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
+                
+            #-- END check to see if coder_user_id --#
+            
+        #-- END check to see if debug --#
+
+        # convert output list to string
+        string_OUT = "\n====>".join( field_output_list )
+                
+        return string_OUT
+        
+    #-- END method __str__() --#
+
 
     def add_coder( self, coder_id_IN, priority_IN = None, *args, **kwargs ):
         
@@ -358,7 +448,7 @@ class IndexInfo( object ):
         coder_count = -1
 
         # get list of coders for current index
-        coder_list = self.get_coders_for_index( index_IN )
+        coder_list = self.get_coders_for_index()
         
         # got anything?
         coder_count = len( coder_list )
