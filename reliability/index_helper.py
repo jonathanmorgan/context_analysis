@@ -67,6 +67,10 @@ class IndexInfo( object ):
     INDEX_INFO_PRIORITIZED_CODER_LIST = "prioritized_coder_list"
     INDEX_INFO_CODER_ID_TO_PRIORITY_MAP = "coder_id_to_priority_map"
     
+    # index-to-coder mappings
+    MAPPING_INDEX_TO_CODER = "index-to-coder"
+    MAPPING_CODER_TO_INDEX = "coder-to-index"
+
     
     #----------------------------------------------------------------------------
     # instance methods
@@ -511,12 +515,7 @@ class IndexInfo( object ):
 
         '''
         Accepts an article for which we want to pick a coder for each index
-            in our output.  Pulls in index-to-info map, uses it to choose from
-            among the coders configured for each index.  Returns dictionary that
-            maps each index that has been assigned one or more coders to the
-            User instance of coder to use for the current article.
-            
-        Specifically, for a given article, get index info, and then for each
+            in our output.  For a given article, get index info, then for each
             index with coders, go through the prioritized list of coders and use
             the first that has an Article_Data in the current article.  Use this
             information to build a map of indices to coder User instances, and 
@@ -526,8 +525,9 @@ class IndexInfo( object ):
         Preconditions: This object needs to have been configured with at least
             one coder assigned to an index.
             
-        Postconditions: returns map of indices to the coder who should be used
-            to provide data for that index for the provided article.
+        Postconditions: Returns dictionary that maps each index that has been
+            assigned one or more coders to the User instance of coder who should
+            be used to provide data for that index for the provided article.
         '''
 
         # return reference
@@ -622,7 +622,7 @@ class IndexInfo( object ):
         
         return map_OUT
         
-    #-- END method create_index_to_coder_map_for_article() --#
+    #-- END method map_index_to_coder_for_article() --#
 
 
     def set_index_to_info_map( self, map_IN, *args, **kwargs ):
