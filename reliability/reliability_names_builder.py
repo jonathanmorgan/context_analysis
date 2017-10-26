@@ -159,10 +159,10 @@ class ReliabilityNamesBuilder( object ):
         self.automated_coder_type_include_list = []
         
         # exception helper
-        self.exception_helper = ExceptionHelper()
-        self.exception_helper.set_logger_name( self.LOGGER_NAME )
-        self.exception_helper.logger_debug_flag = True
-        self.exception_helper.logger_also_print_flag = False
+        self.m_exception_helper = ExceptionHelper()
+        self.m_exception_helper.set_logger_name( self.LOGGER_NAME )
+        self.m_exception_helper.logger_debug_flag = True
+        self.m_exception_helper.logger_also_print_flag = False
         
         # debug variables
         self.debug_output_json_file_path = ""
@@ -335,7 +335,7 @@ class ReliabilityNamesBuilder( object ):
         #-- END check to see if anything in coder_type_list.
 
         # got a list of coder IDs to limit to?
-        coder_id_include_list = self.get_limit_to_user_ids_list()
+        coder_id_include_list = self.get_limit_to_user_id_list()
         if ( ( isinstance( coder_id_include_list, list ) == True ) and ( len( coder_id_include_list ) > 0 ) ):
         
             qs_OUT = qs_OUT.filter( coder__in = coder_id_include_list )
@@ -582,7 +582,7 @@ class ReliabilityNamesBuilder( object ):
         my_index_helper = None
         
         # init logger
-        my_logger = self.exception_helper        
+        my_logger = self.m_exception_helper        
         
         # article
         if ( article_IN is not None ):
@@ -591,7 +591,7 @@ class ReliabilityNamesBuilder( object ):
             my_index_helper = self.get_index_helper()
             
             # call IndexHelper method.
-            map_OUT = my_index_helper.map_index_to_coder_for_article()
+            map_OUT = my_index_helper.map_index_to_coder_for_article( article_IN, mapping_type_IN = mapping_type_IN )
 
         #-- END check to see if article actually passed in. --#
         
@@ -788,7 +788,7 @@ class ReliabilityNamesBuilder( object ):
         coder_article_data_id = -1
         
         # init logger
-        my_logger = self.exception_helper        
+        my_logger = self.m_exception_helper        
         
         # article
         if ( article_IN is not None ):
@@ -1111,7 +1111,7 @@ class ReliabilityNamesBuilder( object ):
         my_index_helper = self.get_index_helper()
         
         # retrieve master list of users we are to include, if it exists.
-        coder_id_include_list = self.get_limit_to_user_ids_list()
+        coder_id_include_list = self.get_limit_to_user_id_list()
         coder_id_exclude_list = self.get_exclude_user_id_list()
         
         #-------------------------------------------------------------------------------
@@ -1507,7 +1507,7 @@ class ReliabilityNamesBuilder( object ):
                                 except Exception as e:
                                 
                                     # exception
-                                    self.exception_helper.process_exception( exception_IN = e, message_IN = "Exception caught converting organization_string to sha256 hash." )
+                                    self.m_exception_helper.process_exception( exception_IN = e, message_IN = "Exception caught converting organization_string to sha256 hash." )
                                 
                                     # On error, store self.ORG_HASH_ERROR_STRING
                                     org_hash = self.ORG_HASH_ERROR_STRING

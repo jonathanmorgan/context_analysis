@@ -72,7 +72,7 @@ class IndexHelper( object ):
     MAPPING_CODER_TO_INDEX = "coder-to-index"
     
     # DEBUG
-    DEBUG = True
+    DEBUG = False
 
     
     #----------------------------------------------------------------------------
@@ -98,10 +98,10 @@ class IndexHelper( object ):
         self.m_exclude_user_id_list = []
         
         # exception helper
-        self.exception_helper = ExceptionHelper()
-        self.exception_helper.set_logger_name( self.LOGGER_NAME )
-        self.exception_helper.logger_debug_flag = True
-        self.exception_helper.logger_also_print_flag = False
+        self.m_exception_helper = ExceptionHelper()
+        self.m_exception_helper.set_logger_name( self.LOGGER_NAME )
+        self.m_exception_helper.logger_debug_flag = True
+        self.m_exception_helper.logger_also_print_flag = False
         
         # debug variables
         self.debug_output_json_file_path = ""
@@ -131,14 +131,6 @@ class IndexHelper( object ):
         if ( self.DEBUG == True ):
 
             current_value = self.get_coder_id_to_instance_map()
-            current_value_label = "id-to-instance-info"
-            if ( current_value is not None ):
-            
-                field_output_list.append( str( current_value_label ) + ": " + str( current_value ) )
-                
-            #-- END check to see if coder_user_id --#
-    
-            current_value = self.get_index_priority_map()
             current_value_label = "id-to-instance-info"
             if ( current_value is not None ):
             
@@ -176,6 +168,8 @@ class IndexHelper( object ):
         
         # declare variables
         me = "add_coder_at_index"
+        my_logger = None
+        logging_message = None
         coder_id_to_instance_dict = {}
         limit_to_user_id_list = []
         coder_user_id = -1
@@ -184,6 +178,11 @@ class IndexHelper( object ):
         is_valid_index = False
         index_info = None
         coder_user = None
+        add_status = None
+        debug_flag = self.DEBUG
+        
+        # init logger
+        my_logger = self.m_exception_helper
         
         # get maps from instance
         coder_id_to_instance_dict = self.get_coder_id_to_instance_map()
@@ -194,9 +193,16 @@ class IndexHelper( object ):
         coder_index = index_IN
         coder_priority = priority_IN
         
+        # ==> DEBUG
+        if ( debug_flag == True ):
+            # top of add.
+            logging_message = "user ID = {user_id}; index = {index}; priority = {priority}".format( user_id = str( coder_user_id ), index = str( coder_index ), priority = str( coder_priority ) )
+            my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+        #-- END DEBUG --#
+                    
         # got ID?
         if ( ( coder_user_id is not None ) and ( int( coder_user_id ) > 0 ) ):
-        
+
             # do we have a valid index value?
             is_valid_index = self.is_index_valid( coder_index )
             if ( is_valid_index == True ):
@@ -204,9 +210,23 @@ class IndexHelper( object ):
                 # yes.  Retrieve index info.
                 index_info = self.get_info_for_index( coder_index )
                 
+                # ==> DEBUG
+                if ( debug_flag == True ):
+                    # top of add.
+                    logging_message = "index_info BEFORE: {index_info_instance}".format( index_info_instance = str( index_info ) )
+                    my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                #-- END DEBUG --#
+            
                 # add the coder.
-                index_info.add_coder( coder_user_id, coder_priority )
+                add_status = index_info.add_coder( coder_user_id, coder_priority )
                 
+                # ==> DEBUG
+                if ( debug_flag == True ):
+                    # top of add.
+                    logging_message = "index_info AFTER ({status}): {index_info_instance}".format( status = add_status, index_info_instance = str( index_info ) )
+                    my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                #-- END DEBUG --#
+            
                 # Lookup the user.
                 coder_user = User.objects.get( id = coder_user_id )
                 
@@ -221,6 +241,13 @@ class IndexHelper( object ):
                     
                 #-- END check to see if user in approved coder user list. --#
                 
+                # ==> DEBUG
+                if ( debug_flag == True ):
+                    # top of add.
+                    logging_message = "index_to_info_map: {index_to_info}".format( index_to_info = str( self.get_index_to_info_map() ) )
+                    my_logger.output_debug_message( logging_message, method_IN = me, indent_with_IN = "====> ", do_print_IN = True )
+                #-- END DEBUG --#
+            
             else:
             
                 # no index - broken.
@@ -420,7 +447,7 @@ class IndexHelper( object ):
             
                 # no.  Create IndexInfo, add it to the map.
                 my_index_info = IndexInfo()
-                my_index_info.index = index_IN
+                my_index_info.set_index( index_IN )
                 index_to_info_dict[ index_IN ] = my_index_info
                 
             #-- END check to see if info for index. --#
@@ -438,53 +465,6 @@ class IndexHelper( object ):
         return instance_OUT        
         
     #-- END method get_info_for_index() --#
-    
-        
-    def get_index_priority_map( self, index_IN ):
-        
-        '''
-        Accepts a coder index.  Uses it to get associated map of Coder User IDs
-            to priority values, for use when more than one coder maps to a given
-            index.
-        '''
-        
-        # return reference
-        instance_OUT = None
-        
-        # declare variables
-        is_valid_index = False
-        index_to_priorities_dict = {}
-        priority_dict = {}
-
-        # do we have a valid index value?
-        is_valid_index = self.is_index_valid( index_IN )
-        if ( is_valid_index == True ):
-        
-            # got an index - get map from instance
-            index_to_priorities_dict = self.index_to_coder_priorities_map
-            
-            # try to use index to get back priority_dict.
-            if ( index_IN in index_to_priorities_dict ):
-            
-                # index is present, grab and return the value for the index.
-                priority_dict = index_to_priorities_dict.get( index_IN, None )
-            
-            else:
-            
-                # no index present in the dictionary.  Add empty dictionary for
-                #     the index, then come calling again.
-                index_to_priorities_dict[ index_IN ] = {}
-                priority_dict = self.get_index_priority_map( index_IN )
-                
-            #-- END retrieval of priority_dict. --#
-            
-            instance_OUT = priority_dict
-        
-        #-- END check to see if index. --#
-                                            
-        return instance_OUT        
-        
-    #-- END method get_index_priority_map() --#
     
         
     def get_index_to_info_map( self, *args, **kwargs ):
@@ -610,7 +590,7 @@ class IndexHelper( object ):
         found_coder_for_index = False
         
         # init logger
-        my_logger = self.exception_helper        
+        my_logger = self.m_exception_helper        
         
         # article
         if ( article_IN is not None ):

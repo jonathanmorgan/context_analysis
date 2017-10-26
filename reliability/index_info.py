@@ -340,7 +340,7 @@ class IndexInfo( object ):
         article_data_count = -1
         
         # init logger
-        my_logger = self.exception_helper        
+        my_logger = self.m_exception_helper        
         
         # article
         if ( article_IN is not None ):
