@@ -7,12 +7,12 @@ import six
 from django.contrib.auth.models import User
 
 # sourcenet imports
-from sourcenet.models import Analysis_Reliability_Ties
 from sourcenet.models import Article
 from sourcenet.models import Article_Data
 from sourcenet.models import Person
 
 # sourcenet_analysis imports
+from sourcenet_analysis.models import Reliability_Ties
 from sourcenet_analysis.reliability.reliability_names_builder import ReliabilityNamesBuilder
 
 #-------------------------------------------------------------------------------
@@ -54,14 +54,17 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
     #----------------------------------------------------------------------    
 
     
+    # Logger name
+    LOGGER_NAME = "sourcenet_analysis.network.network_person_info"
+
     # retrieving reliability row fields by name
     COLUMN_NAME_PREFIX_CODER = "coder"
     COLUMN_NAME_SUFFIX_MENTION_COUNT = "_mention_count"
     COLUMN_NAME_SUFFIX_ID_LIST = "_id_list"
     
     # person types
-    PERSON_TYPE_AUTHOR = Analysis_Reliability_Ties.PERSON_TYPE_AUTHOR
-    PERSON_TYPE_SOURCE = Analysis_Reliability_Ties.PERSON_TYPE_SOURCE
+    PERSON_TYPE_AUTHOR = Reliability_Ties.PERSON_TYPE_AUTHOR
+    PERSON_TYPE_SOURCE = Reliability_Ties.PERSON_TYPE_SOURCE
     
     # information about table.
     TABLE_MAX_CODERS = 3
@@ -88,6 +91,9 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
 
     # source property names
     PROP_SOURCE_AUTHOR_LIST = "source_author_list"
+    
+    # DEBUG
+    DEBUG = False
 
     
     #----------------------------------------------------------------------------
@@ -98,181 +104,188 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
     def __init__( self, *args, **kwargs ):
         
         # ! ==> call parent's __init__()
-        super( Network_Person_Info, self ).__init__()
-
-        # declare instance variables
-        self.coder_id_to_instance_map = {}
-        self.coder_id_to_index_map = {}
-        self.coder_index_to_data_map = {}
+        super( NetworkPersonInfo, self ).__init__()
         
         # variables to filter reliability row lookup.
         self.reliability_row_label = ""
         
         # variable to hold desired automated coder type
-        self.limit_to_automated_coder_type = ""
+        #self.limit_to_automated_coder_type = ""
+        
+        # coder index to data map.
+        self.coder_index_to_data_map = {}
         
     #-- END method __init__() --#
     
 
-    def filter_article_data( self, article_data_qs_IN ):
+    def get_article_data_for_index( self, index_IN, article_data_qs_IN ):
         
         '''
-        Accepts Article_Data QuerySet.  Filters it based on any nested variables
-           that relate to filtering (at this point, just
-           self.limit_to_automated_coder_type).  Returns filtered QuerySet.
-        '''
-        
-        # return reference
-        qs_OUT = None
-        
-        # declare variables
-        automated_coder_type = None
-        coder_type_list = []
-        
-        # start by just returning what is passed in.
-        qs_OUT = article_data_qs_IN
-        
-        # see if we have a coder type.
-        automated_coder_type = self.limit_to_automated_coder_type
-        if ( ( automated_coder_type is not None ) and ( automated_coder_type != "" ) ):
-        
-            # got one.  Filter the QuerySet.
-            coder_type_list = [ automated_coder_type, ]
-            qs_OUT = Article_Data.filter_automated_by_coder_type( qs_OUT, coder_type_list )
-        
-        #-- END check to see if automated coder type. --#
-        
-        return qs_OUT
-    
-    #-- END method filter_article_data() --#
-
-
-    def get_coder_author_data( self, coder_IN ):
-        
-        '''
-        Accepts a coder instance.  Uses it to get author data associated with
-           that coder, and returns data dictionary.  If none found, creates
-           empty dictionary, stores it for the coder's ID, then returns it.
+        Accepts index and article_data QuerySet. Gets prioritized coder list for
+            index passed in, then goes in order through the list, returning the
+            Article_Data of the first user in the list that has an Article_Data
+            record.
         '''
         
         # return reference
         instance_OUT = None
         
         # declare variables
-        me = "get_coder_author_data"
+        prioritized_coder_list = None
+        got_article_data = None
+        current_coder = None
+        
+        # get prioritized coder list for index.
+        prioritized_coder_list = self.get_coders_for_index( index_IN )
+        
+        # loop
+        got_article_data = False
+        for current_coder in prioritized_coder_list:
+        
+            if ( got_article_data == False ):
+        
+                # see if coder has an Article_Data record for current article.
+                try:
+                
+                    # try to get the article data for coder.
+                    instance_OUT = article_data_qs_IN.get( coder = current_coder )
+                    
+                    # no exception - got it!
+                    got_article_data = True
+                    
+                    # Now what?
+                
+                except Article_Data.DoesNotExist as addne:
+                
+                    # no article data.  Keep it false.
+                    got_article_data = False
+                
+                #-- END try/except around .get()
+                
+            #-- END check to see if already have article data. --#
+            
+        #-- END loop over prioritized coder list. --#
+        
+        return instance_OUT
+        
+    #-- END function get_article_data_for_index --#
+        
+    
+    def get_index_author_data( self, index_IN ):
+        
+        '''
+        Accepts an index value.  Uses it to get author data associated with
+            that index, and returns data dictionary.  If none found, creates
+            empty dictionary, stores it for the index, then returns it.
+        '''
+        
+        # return reference
+        instance_OUT = None
+        
+        # declare variables
+        me = "get_index_author_data"
 
         # call method to retrieve data
-        instance_OUT = self.get_coder_data_property_dict( coder_IN, self.PROP_CODER_AUTHOR_DATA )
+        instance_OUT = self.get_index_data_property_dict( index_IN, self.PROP_CODER_AUTHOR_DATA )
         
         return instance_OUT        
         
-    #-- END method get_coder_author_data() --#
+    #-- END method get_index_author_data() --#
     
         
-    def get_coder_data( self, coder_IN ):
+    def get_index_data( self, index_IN ):
         
         '''
-        Accepts a coder instance.  Uses it to get data associated with that
-           coder, and returns data dictionary.  If none found, creates empty
-           dictionary, stores it for the coder's ID, then returns it.
+        Accepts an index value.  Uses it to get data associated with that
+            index, and returns data dictionary.  If none found, creates empty
+            dictionary, stores it for the index value, then returns it.
         '''
         
         # return reference
         instance_OUT = None
         
         # declare variables
-        me = "get_coder_data"
+        me = "get_index_data"
         coder_index_to_data_dict = {}
         coder_user_id = -1
         coder_id_to_index_dict = {}
         coder_index = -1
         
-        # make sure we have a coder instance passed in.
-        if ( coder_IN is not None ):
+        # make sure we have an index value instance passed in.
+        coder_index = index_IN
+        if ( ( coder_index is not None ) and ( coder_index > 0 ) ):
         
             # get map from instance
             coder_index_to_data_dict = self.coder_index_to_data_map
+                        
+            # Get instance from coder_index_to_data_dict.
+            instance_OUT = coder_index_to_data_dict.get( coder_index, None )
             
-            # get coder ID.
-            coder_user_id = coder_IN.id
+            # got one?
+            if ( instance_OUT is None ):
             
-            # get index for ID.
-            coder_id_to_index_dict = self.coder_id_to_index_map
-            coder_index = coder_id_to_index_dict.get( coder_user_id, -1 )
-            
-            # make sure we have an index.  If not, error, return None.
-            if ( ( coder_index is not None ) and ( coder_index > 0 ) ):
-    
-                # Get instance from coder_index_to_data_dict.
-                instance_OUT = coder_index_to_data_dict.get( coder_index, None )
+                # no - need to make new dictionary, store it for user, then
+                #    return it.
+                instance_OUT = {}
+                instance_OUT[ self.PROP_CODER_AUTHOR_DATA ] = {}
+                instance_OUT[ self.PROP_CODER_SOURCE_DATA ] = {}
+                coder_index_to_data_dict[ coder_index ] = instance_OUT
                 
-                # got one?
-                if ( instance_OUT is None ):
+            #-- END check to see if coder already has data. --#
                 
-                    # no - need to make new dictionary, store it for user, then
-                    #    return it.
-                    instance_OUT = {}
-                    instance_OUT[ self.PROP_CODER_SOURCE_DATA ] = {}
-                    coder_index_to_data_dict[ coder_index ] = instance_OUT
-                    
-                #-- END check to see if coder already has data. --#
-                
-            else:
-            
-                # no index, should be at this point - return None.
-                instance_OUT = None
-                print( "ERROR - In " + me + ": no index found for coder ID " + str( coder_user_id ) )       
-            
-            # -- END check to see if index for Coder's ID. --#
-                
-        #-- END check to see if we have a Coder instance passed in. --#
+        else:
         
+            # no index, should be at this point - return None.
+            instance_OUT = None
+            print( "ERROR - In " + me + ": no index passed in." )       
+        
+        # -- END check to see if index passed in. --#
+            
         return instance_OUT        
         
-    #-- END method get_coder_data() --#
+    #-- END method get_index_data() --#
     
         
-    def get_coder_data_property_dict( self, coder_IN, prop_name_IN ):
+    def get_index_data_property_dict( self, index_IN, prop_name_IN ):
         
         '''
-        Accepts a coder instance.  Uses it to get data associated with that
-           coder, and returns data dictionary.  If none found, creates empty
-           dictionary, stores it for the coder's ID, then returns it.
+        Accepts an index number.  Uses it to get data associated with that
+           index, and returns data dictionary.  If none found, creates empty
+           dictionary, stores it for the index value, then returns it.
         '''
         
         # return reference
         instance_OUT = None
         
         # declare variables
-        me = "get_coder_data_property_dict"
+        me = "get_index_data_property_dict"
         coder_user_id = -1
         coder_data_dict = {}
         
-        # make sure we have a coder instance passed in...
-        if ( coder_IN is not None ):
+        # make sure we have an index passed in...
+        if ( index_IN is not None ):
         
             # ...and a property name.
             if ( ( prop_name_IN is not None ) and ( prop_name_IN != "" ) ):
         
-                # get coder ID.
-                coder_user_id = coder_IN.id
-        
-                # Get coder's data dictionary.
-                coder_data_dict = self.get_coder_data( coder_IN )
+                # Get index's data dictionary.
+                index_data_dict = self.get_index_data( index_IN )
                 
-                # retrieve the coder's source data.
-                instance_OUT = coder_data_dict.get( prop_name_IN, None )
+                # retrieve the index's source data.
+                instance_OUT = index_data_dict.get( prop_name_IN, None )
                 
                 # got one?
                 if ( instance_OUT is None ):
                 
                     # no - need to make new dictionary, store it and return it.
                     instance_OUT = {}
-                    coder_data_dict[ prop_name_IN ] = instance_OUT
+                    index_data_dict[ prop_name_IN ] = instance_OUT
                     
-                #-- END check to see if coder already has source data. --#
+                #-- END check to see if index already has data. --#
                     
-                print( "++++ In " + me + ": found " + prop_name_IN + " data for user " + str( coder_user_id ) )
+                if ( self.DEBUG == True ):
+                    print( "++++ In " + me + ": found " + prop_name_IN + " data for index " + str( index_IN ) )
+                #-- END DEBUG --#
             
             #-- END check to see if we have property name passed in. --#
         
@@ -280,81 +293,29 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         
         return instance_OUT        
         
-    #-- END method get_coder_data_property_dict() --#
+    #-- END method get_index_data_property_dict() --#
     
         
-    def get_coder_for_index( self, index_IN ):
+    def get_index_source_data( self, index_IN ):
         
         '''
-        Accepts a coder index.  Uses it to get ID of coder associated with that
-           index, and returns instance of that User.  If none found, returns
-           None.
+        Accepts an index value.  Uses it to get source data associated with
+            that index, and returns data dictionary.  If none found, creates
+            empty dictionary, stores it for the index, then returns it.
         '''
         
         # return reference
         instance_OUT = None
         
         # declare variables
-        me = "get_coder_for_index"
-        coder_id_to_index_dict = {}
-        coder_id_to_instance_dict = {}
-        coder_user_id = -1
-        coder_index = -1
-        matching_user_id = -1
-        
-        # get maps from instance
-        coder_id_to_index_dict = self.coder_id_to_index_map
-        coder_id_to_instance_dict = self.coder_id_to_instance_map
-        
-        # first, use index to get coder ID.
-        for coder_user_id, coder_index in six.iteritems( coder_id_to_index_dict ):
-        
-            # check to see if current index matches that passed in.
-            if ( index_IN == coder_index ):
-            
-                # yes - store the ID.
-                matching_user_id = coder_user_id
-            
-            #-- END check to see if indices match --#
-            
-        #-- END loop over ID-to-index map. --#
-        
-        print( "++++ In " + me + ": found ID: " + str( matching_user_id ) )
-        
-        # if we have an ID, use it to get User instance.
-        if ( matching_user_id > 0 ):
-        
-            # we do.  Get instance from coder_id_to_instance_dict.
-            instance_OUT = coder_id_to_instance_dict.get( matching_user_id, None )
-            print( "++++ In " + me + ": found User: " + str( instance_OUT ) )
-        
-        #-- END check to see if we have a User ID. --#
-        
-        return instance_OUT        
-        
-    #-- END method get_coder_for_index() --#
-    
-        
-    def get_coder_source_data( self, coder_IN ):
-        
-        '''
-        Accepts a coder instance.  Uses it to get source data associated with
-           that coder, and returns data dictionary.  If none found, creates
-           empty dictionary, stores it for the coder's ID, then returns it.
-        '''
-        
-        # return reference
-        instance_OUT = None
-        
-        # declare variables
-        me = "get_coder_source_data"
+        me = "get_source_data_for_index"
 
         # call method to retrieve data
-        instance_OUT = self.get_coder_data_property_dict( coder_IN, self.PROP_CODER_SOURCE_DATA )
+        instance_OUT = self.get_index_data_property_dict( index_IN, self.PROP_CODER_SOURCE_DATA )
                 
         return instance_OUT        
         
-    #-- END method get_coder_source_data() --#
+    #-- END method get_index_source_data() --#
     
         
     def process_articles( self, tag_list_IN = [] ):
@@ -376,11 +337,14 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         article_data_count = -1
         article_data_counter = -1
         
+        # get article data for article and index based on priority.
+        prioritized_coder_list = None
+        current_coder = None
+        got_article_data = None
+        
         # declare variables - compiling information for articles.
         article_id = -1
         author_to_source_info_dict = None
-        coder_id_to_instance_dict = None
-        coder_id_to_index_dict = None
         current_article_data = None
         coder_index = -1
         coder_1_article_data = None
@@ -403,13 +367,6 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         
         #article_qs = article_qs[ : 2 ]
             
-        # For reference, also build up a dictionary of coder IDs that reference
-        #    coder instances, so we know how many coders, and coder IDs to
-        #    index, from 1 up, so we can keep them straight when outputting
-        #    data.
-        coder_id_to_instance_dict = self.coder_id_to_instance_map
-        coder_id_to_index_dict = self.coder_id_to_index_map
-        
         # loop over the articles.
         article_data_counter = 0
         for current_article in article_qs:
@@ -431,102 +388,62 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
             # filter out certain automated coding types.
             article_data_qs = self.filter_article_data( article_data_qs )
             
-            # order by coder ID, descending, so we always use coder 6 as
-            #    coder #1 if they coded an article.
-            article_data_qs = article_data_qs.order_by( "-coder__id" )
-            
             # how many Article_Data?
             article_data_count = len( article_data_qs )
         
-            # output summary row.
-            print( "- In " + me + ": Article ID = " + str( current_article.id ) + "; Article_Data count = " + str( article_data_count ) )
+            # DEBUG - output summary row.
+            if ( self.DEBUG == True ):
+                print( "- In " + me + ": Article ID = " + str( current_article.id ) + "; Article_Data count = " + str( article_data_count ) )
+            #-- END DEBUG --#
             
             # for each article, make or update row in reliability table that
-            #    matches the author and source, and label if one is specified
-            #    in this object's instance (self.reliability_row_label).
+            #     matches the author and source, and label if one is specified
+            #     in this object's instance (self.reliability_row_label).
+            
+            # get Article_Data for index 1
+            coder_1_article_data = self.get_article_data_for_index( 1, article_data_qs )
+            
+            # get Article_Data for index 2
+            coder_2_article_data = self.get_article_data_for_index( 2, article_data_qs )
+            
+            # get Article_Data for index 3
+            coder_3_article_data = self.get_article_data_for_index( 3, article_data_qs )
             
             # compile information.
-            
-            # loop over related Article_Data instances, filtering so we only
-            #    have one set of data for coder 1 (user ID 6, if no user 6,
-            #    user ID 4), and coder 2 (user ID 2).
-            for current_article_data in article_data_qs:
-            
-                article_data_counter += 1
-            
-                print( "---> In " + me + ": article data #" + str( article_data_counter ) + " - " + str( current_article_data ) )
-            
-                # get coder and coder's User ID.
-                article_data_coder = current_article_data.coder
-                article_data_coder_id = article_data_coder.id
-                
-                # assume that coder ID to index and instance maps are already
-                #    set up.
-                
-                # get index for this user.
-                coder_index = coder_id_to_index_dict.get( article_data_coder_id, -1 )
-                
-                print( "-------> In " + me + ": Coder ID = " + str( article_data_coder_id ) + "; index = " + str( coder_index ) )
-                
-                # if no article_data yet stored for that index, store this one.
-                #    If something already stored, move on.
-                if ( coder_index == 1 ):
-                
-                    # do we have article data stored yet?
-                    if ( coder_1_article_data is None ):
-                    
-                        # no - but we do now - store current.
-                        coder_1_article_data = current_article_data
-                        
-                    #-- END check to see if coder_1_article_data. --#
-                
-                elif ( coder_index == 2 ):
-                
-                    # do we have article data stored yet?
-                    if ( coder_2_article_data is None ):
-                    
-                        # no - but we do now - store current.
-                        coder_2_article_data = current_article_data
-                        
-                    #-- END check to see if coder_2_article_data. --#
-                
-                elif ( coder_index == 3 ):
-                
-                    # do we have article data stored yet?
-                    if ( coder_3_article_data is None ):
-                    
-                        # no - but we do now - store current.
-                        coder_3_article_data = current_article_data
-                        
-                    #-- END check to see if coder_3_article_data. --#
-                
-                #-- END check to see which index we have --#
-                        
-            #-- END loop over related Article_Data
             
             # call process_relations for coder 1 if instance.
             if ( coder_1_article_data is not None ):
 
-                print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing coder 1\n" )
-                self.process_relations( coder_1_article_data )
+                if ( self.DEBUG == True ):
+                    print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index 1\n" )
+                #-- END DEBUG --#
+
+                # call process_relations for index 1.
+                self.process_relations( 1, coder_1_article_data )
                 
             #-- END check to see if coder_1_article_data --#
             
             # call process_relations for coder 2 if instance.
             if ( coder_2_article_data is not None ):
-
-                # call process_relations for coder 2.
-                print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing coder 2\n" )
-                self.process_relations( coder_2_article_data )
+            
+                if ( self.DEBUG == True ):
+                    print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index 2\n" )
+                #-- END DEBUG --#
+            
+                # call process_relations for index 2.
+                self.process_relations( 2, coder_2_article_data )
                 
             #-- END check to see if coder_2_article_data --#
                         
             # call process_relations for coder 2 if instance.
             if ( coder_3_article_data is not None ):
 
-                # call process_relations for coder 3.
-                print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing coder 3\n" )
-                self.process_relations( coder_3_article_data )
+                if ( self.DEBUG == True ):
+                    print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index 3\n" )
+                #-- END DEBUG --#
+
+                # call process_relations for index 3.
+                self.process_relations( 3, coder_3_article_data )
             
             #-- END check to see if coder_3_article_data --#
         
@@ -553,7 +470,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
     #-- END method process_articles() --#
 
 
-    def process_relations( self, article_data_IN ):
+    def process_relations( self, index_IN, article_data_IN ):
         
         '''
         Accepts Article_Data instance whose relations we need to process.  For
@@ -597,7 +514,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                 author_person = current_author.person
                 
                 # update author article id list
-                self.update_author_article_id_list( article_data_coder, author_person, article_id )
+                self.update_author_article_id_list( index_IN, author_person, article_id )
                     
                 # update author info for each related source.
                 for current_source in article_source_qs:
@@ -606,10 +523,10 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                     source_person = current_source.person
                     
                     # call method to update author info.
-                    self.update_author_info( author_person, source_person, article_data_coder )
+                    self.update_author_info( author_person, source_person, index_IN )
                 
                     # call method to update source info.
-                    self.update_source_info( author_person, source_person, article_data_coder )
+                    self.update_source_info( author_person, source_person, index_IN )
                     
                 #-- END loop over sources --#
 
@@ -655,8 +572,10 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         author_article_id_list = None
         coder_author_article_count_list = None
         
-        print( "" )
-        print( "Start of " + me + "():" )
+        if ( self.DEBUG == True ):
+            print( "" )
+            print( "Start of " + me + "():" )
+        #-- END DEBUG --#
         
         # get dict that holds map of coder index to coder data.
         coder_index_to_data_dict = self.coder_index_to_data_map
@@ -664,7 +583,9 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         # loop over the dictionary to process each coder/index.
         for coder_index, coder_data_dict in six.iteritems( coder_index_to_data_dict ):
         
-            print( "Summarizing coder index " + str( coder_index ) )
+            if ( self.DEBUG == True ):
+                print( "Summarizing coder index " + str( coder_index ) )
+            #-- END DEBUG --#
         
             # initialize data.
             coder_author_id_list = []
@@ -720,7 +641,10 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                 author_article_id_list = author_info.get( self.PROP_AUTHOR_ARTICLE_ID_LIST, [] )
                 article_count = len( author_article_id_list )
                 coder_author_article_count_list.append( article_count )
-                print( "******** In " + me + "(): Summarizing coder index " + str( coder_index ) + "; author " + str( author_id ) + "; article ID list = " + str( author_article_id_list ) )
+
+                if ( self.DEBUG == True ):
+                    print( "******** In " + me + "(): Summarizing coder index " + str( coder_index ) + "; author " + str( author_id ) + "; article ID list = " + str( author_article_id_list ) )
+                #-- END DEBUG --#
             
             #-- END loop over authors. --#
             
@@ -737,7 +661,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
     #-- END method summarize_data --#
 
 
-    def update_author_article_id_list( self, coder_user_IN, author_person_IN, article_id_IN ):
+    def update_author_article_id_list( self, index_IN, author_person_IN, article_id_IN ):
         
         # return reference
         status_OUT = ""
@@ -746,7 +670,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         me = "update_author_article_id_list"
         author_person_id = None
         source_person_id = None
-        coder_author_data_dict = None
+        index_author_data_dict = None
         author_info_dict = None
         author_article_id_list = None
         
@@ -756,17 +680,17 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
             # get ID
             author_person_id = author_person_IN.id
         
-            # ...and a coder.
-            if ( coder_user_IN is not None ):
+            # ...and an index.
+            if ( ( index_IN is not None ) and ( index_IN > 0 ) ):
             
-                # got everything we need.  Get data for the current coder.
-                coder_author_data_dict = self.get_coder_author_data( coder_user_IN )
+                # got everything we need.  Get data for the current index.
+                index_author_data_dict = self.get_index_author_data( index_IN )
                 
                 # got something back?
-                if ( coder_author_data_dict is not None ):
+                if ( index_author_data_dict is not None ):
 
                     # yes.  Get author info.
-                    author_info_dict = coder_author_data_dict.get( author_person_id, None )
+                    author_info_dict = index_author_data_dict.get( author_person_id, None )
                     
                     # got any?
                     if ( author_info_dict is None ):
@@ -775,7 +699,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                         author_info_dict = {}
                         author_info_dict[ self.PROP_AUTHOR_SOURCE_LIST ] = []
                         author_info_dict[ self.PROP_AUTHOR_ARTICLE_ID_LIST ] = []
-                        coder_author_data_dict[ author_person_id ] = author_info_dict
+                        index_author_data_dict[ author_person_id ] = author_info_dict
                         
                     #-- END check to see if author info present. --#
                     
@@ -802,7 +726,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                 else:
                 
                     # error.  Should always have source info after calling
-                    #    get_coder_author_data().
+                    #    get_index_author_data().
                     pass
                 
                 #-- END check to see if we have author info --#
@@ -816,7 +740,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
     #-- END method update_author_article_id_list() --#
 
 
-    def update_author_info( self, author_person_IN, source_person_IN, coder_user_IN ):
+    def update_author_info( self, author_person_IN, source_person_IN, index_IN ):
         
         # return reference
         status_OUT = ""
@@ -825,7 +749,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         me = "update_author_info"
         author_person_id = None
         source_person_id = None
-        coder_author_data_dict = None
+        index_author_data_dict = None
         author_info_dict = None
         author_source_list = None
         
@@ -841,17 +765,17 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                 # get ID
                 source_person_id = source_person_IN.id
             
-                # ...and a coder.
-                if ( coder_user_IN is not None ):
+                # ...and an index.
+                if ( ( index_IN is not None ) and ( index_IN > 0 ) ):
                 
-                    # got everything we need.  Get data for the current coder.
-                    coder_author_data_dict = self.get_coder_author_data( coder_user_IN )
+                    # got everything we need.  Get data for the current index.
+                    index_author_data_dict = self.get_index_author_data( index_IN )
                     
                     # got something back?
-                    if ( coder_author_data_dict is not None ):
+                    if ( index_author_data_dict is not None ):
 
                         # yes.  Get author info.
-                        author_info_dict = coder_author_data_dict.get( author_person_id, None )
+                        author_info_dict = index_author_data_dict.get( author_person_id, None )
                         
                         # got any?
                         if ( author_info_dict is None ):
@@ -860,7 +784,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                             author_info_dict = {}
                             author_info_dict[ self.PROP_AUTHOR_SOURCE_LIST ] = []
                             author_info_dict[ self.PROP_AUTHOR_ARTICLE_ID_LIST ] = []
-                            coder_author_data_dict[ author_person_id ] = author_info_dict
+                            index_author_data_dict[ author_person_id ] = author_info_dict
                             
                         #-- END check to see if author info present. --#
                         
@@ -888,7 +812,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                     else:
                     
                         # error.  Should always have source info after calling
-                        #    get_coder_author_data().
+                        #    get_index_author_data().
                         pass
                     
                     #-- END check to see if we have author info --#
@@ -1051,7 +975,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
     #-- END method update_author_shared_sources() --#
 
 
-    def update_source_info( self, author_person_IN, source_person_IN, coder_user_IN ):
+    def update_source_info( self, author_person_IN, source_person_IN, index_IN ):
         
         # return reference
         status_OUT = ""
@@ -1060,7 +984,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         me = "update_source_info"
         author_person_id = None
         source_person_id = None
-        coder_source_data_dict = None
+        index_source_data_dict = None
         source_info_dict = None
         source_author_list = None
         
@@ -1076,17 +1000,17 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                 # get ID
                 source_person_id = source_person_IN.id
             
-                # ...and a coder.
-                if ( coder_user_IN is not None ):
-                
+                # ...and an index.
+                if ( ( index_IN is not None ) and ( index_IN > 0 ) ):
+                                
                     # got everything we need.  Get data for the current coder.
-                    coder_source_data_dict = self.get_coder_source_data( coder_user_IN )
+                    index_source_data_dict = self.get_index_source_data( index_IN )
                     
                     # got something back?
-                    if ( coder_source_data_dict is not None ):
+                    if ( index_source_data_dict is not None ):
 
                         # yes.  Get source info.
-                        source_info_dict = coder_source_data_dict.get( source_person_id, None )
+                        source_info_dict = index_source_data_dict.get( source_person_id, None )
                         
                         # got any?
                         if ( source_info_dict is None ):
@@ -1094,7 +1018,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                             # no.  Add some.
                             source_info_dict = {}
                             source_info_dict[ self.PROP_SOURCE_AUTHOR_LIST ] = []
-                            coder_source_data_dict[ source_person_id ] = source_info_dict
+                            index_source_data_dict[ source_person_id ] = source_info_dict
                             
                         #-- END check to see if source info present. --#
                         
@@ -1122,7 +1046,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                     else:
                     
                         # error.  Should always have source info after calling
-                        #    get_coder_source_data().
+                        #    get_index_source_data().
                         pass
                     
                     #-- END check to see if we have source info --#

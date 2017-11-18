@@ -445,7 +445,7 @@ class ReliabilityNamesBuilder( object ):
         my_index_helper = self.get_index_helper()
         
         # call helper method
-        coder_list_OUT = my_index_helper.get_coders_for_index()
+        coder_list_OUT = my_index_helper.get_coders_for_index( index_IN )
                 
         return coder_list_OUT        
         

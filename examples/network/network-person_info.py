@@ -7,69 +7,90 @@ import six
 from django.contrib.auth.models import User
 
 # sourcenet imports
-from sourcenet.models import Analysis_Reliability_Ties
 from sourcenet.models import Article
 from sourcenet.models import Article_Data
 from sourcenet.models import Person
 
 # sourcenet_analysis imports
+from sourcenet_analysis.models import Reliability_Ties
 from sourcenet_analysis.network.network_person_info import NetworkPersonInfo
 
 # declare variables
-my_analysis_instance = None
-coder_rs = None
-current_coder = None
-current_coder_id = -1
-coder_index = -1
-coder_id_to_index_dict = {}
-coder_id_to_instance_dict = {}
+my_info_instance = None
 tag_list = None
 label = ""
 
-# get coders we want to include in analysis.
-coder_rs = User.objects.filter( id__in = [ 2, 4, 6 ] )
+# declare variables - user setup
+current_coder = None
+current_coder_id = -1
+current_index = -1
+current_priority = -1
 
-# set up coder maps.
-coder_index = 0
-for current_coder in coder_rs:
+# declare variables - Article_Data filtering.
+coder_type = ""
 
-    # increment coder index
-    coder_index = coder_index + 1
+# make info instance
+my_info_instance = NetworkPersonInfo()
 
-    # get coder's user id
-    current_coder_id = current_coder.id
-    
-    # add to ID-to-instance map
-    coder_id_to_instance_dict[ current_coder_id ] = current_coder
-    
-    # add to ID-to-index map
-    coder_id_to_index_dict[ current_coder_id ] = coder_index
+#===============================================================================
+# configure
+#===============================================================================
 
-#-- END loop over coders --#
+# list of tags of articles we want to process.
+tag_list = [ "grp_month", ]
 
-# manually set up the ID to index map so the humans both map to 1, automated
-#    maps to 2.
-coder_id_to_index_dict[ 6 ] = 1
-coder_id_to_index_dict[ 4 ] = 1
-coder_id_to_index_dict[ 2 ] = 2
+# label to associate with results, for subsequent lookup.
+label = "prelim_month"
 
-# make reliability instance
-my_analysis_instance = NetworkPersonInfo()
+# ! ====> map coders to indices
 
-# place dictionaries in instance.
-my_analysis_instance.coder_id_to_instance_map = coder_id_to_instance_dict
-my_analysis_instance.coder_id_to_index_map = coder_id_to_index_dict
+# set it up so that...
+
+# ...the ground truth user has highest priority (4) for index 1...
+current_coder = SourcenetBase.get_ground_truth_coding_user()
+current_coder_id = current_coder.id
+current_index = 1
+current_priority = 4
+my_info_instance.add_coder_at_index( current_coder_id, current_index, priority_IN = current_priority )
+
+# ...coder ID 8 is priority 3 for index 1...
+current_coder_id = 8
+current_index = 1
+current_priority = 3
+my_info_instance.add_coder_at_index( current_coder_id, current_index, priority_IN = current_priority )
+
+# ...coder ID 9 is priority 2 for index 1...
+current_coder_id = 9
+current_index = 1
+current_priority = 2
+my_info_instance.add_coder_at_index( current_coder_id, current_index, priority_IN = current_priority )
+
+# ...coder ID 10 is priority 1 for index 1...
+current_coder_id = 10
+current_index = 1
+current_priority = 1
+my_info_instance.add_coder_at_index( current_coder_id, current_index, priority_IN = current_priority )
+
+# ...and automated coder (2) is index 2
+current_coder = SourcenetBase.get_automated_coding_user()
+current_coder_id = current_coder.id
+current_index = 2
+current_priority = 1
+my_info_instance.add_coder_at_index( current_coder_id, current_index, priority_IN = current_priority )
+
+# and only look at coding by those users.  And...
 
 # configure so that it limits to automated coder_type of OpenCalais_REST_API_v2.
-my_reliability_instance.limit_to_automated_coder_type = "OpenCalais_REST_API_v2"
+coder_type = "OpenCalais_REST_API_v2"
+#my_reliability_instance.limit_to_automated_coder_type = "OpenCalais_REST_API_v2"
+my_info_instance.automated_coder_type_include_list.append( coder_type )
 
-# label for reliability rows created and used in this session.
-label = "prelim_network_fixed_authors"
-my_analysis_instance.reliability_row_label = label
+#===============================================================================
+# process articles
+#===============================================================================
 
 # process articles
-tag_list = [ "prelim_network", ]
-my_analysis_instance.process_articles( tag_list )
+my_info_instance.process_articles( tag_list )
 
 #output lists of counts of sources and shared source by author
 
@@ -91,8 +112,8 @@ temp_source_count_list = []
 temp_shared_count_list = []
 temp_article_count_list = []
 
-# for each coder, get authors.
-coder_index_to_data_dict = my_analysis_instance.coder_index_to_data_map
+# for each index, get authors.
+coder_index_to_data_dict = my_info_instance.coder_index_to_data_map
         
 # loop over the dictionary to process each index.
 for coder_index, coder_data_dict in six.iteritems( coder_index_to_data_dict ):
