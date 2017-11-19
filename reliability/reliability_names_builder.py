@@ -1578,6 +1578,29 @@ class ReliabilityNamesBuilder( object ):
     #-- END method process_person_qs() --#
     
     
+    def set_index_helper( self, instance_IN ):
+        
+        '''
+        Accepts IndexHelper instance, stores it internally.
+        '''
+        
+        # return reference
+        status_OUT = StatusContainer()
+        
+        # declare variables
+        me = "set_index_to_info_map"
+        
+        # init status
+        status_OUT.set_status_code( StatusContainer.STATUS_CODE_SUCCESS )
+        
+        # store whatever is passed in.
+        self.m_index_helper = instance_IN
+        
+        return status_OUT
+
+    #-- END function set_index_helper() --#
+
+
     def set_index_to_info_map( self, map_IN, *args, **kwargs ):
         
         '''

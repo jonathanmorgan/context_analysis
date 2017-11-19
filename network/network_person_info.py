@@ -344,12 +344,10 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         
         # declare variables - compiling information for articles.
         article_id = -1
-        author_to_source_info_dict = None
         current_article_data = None
+        temp_index = -1
         coder_index = -1
-        coder_1_article_data = None
-        coder_2_article_data = None
-        coder_3_article_data = None
+        coder_article_data = None
 
         #-------------------------------------------------------------------------------
         # process articles to build data
@@ -372,12 +370,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         for current_article in article_qs:
         
             # initialize variables
-            article_coder_id_list = []
-            author_info_dict = {}
-            source_info_dict = {}
-            coder_1_article_data = None
-            coder_2_article_data = None
-            coder_3_article_data = None
+            coder_article_data = None
         
             # get article_id
             article_id = current_article.id
@@ -396,57 +389,38 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
                 print( "- In " + me + ": Article ID = " + str( current_article.id ) + "; Article_Data count = " + str( article_data_count ) )
             #-- END DEBUG --#
             
-            # for each article, make or update row in reliability table that
-            #     matches the author and source, and label if one is specified
-            #     in this object's instance (self.reliability_row_label).
+            # for each article, loop over possible coder indexes.  For each,
+            #     see if there is Article_Data for that index given the coders
+            #     and priorities for each index.  If so, process it.
             
-            # get Article_Data for index 1
-            coder_1_article_data = self.get_article_data_for_index( 1, article_data_qs )
+            # loop over indexes, from 1 to self.TABLE_MAX_CODERS
+            temp_index = -1
+            coder_index = -1
+            for temp_index in range( self.TABLE_MAX_CODERS ):
             
-            # get Article_Data for index 2
-            coder_2_article_data = self.get_article_data_for_index( 2, article_data_qs )
-            
-            # get Article_Data for index 3
-            coder_3_article_data = self.get_article_data_for_index( 3, article_data_qs )
-            
-            # compile information.
-            
-            # call process_relations for coder 1 if instance.
-            if ( coder_1_article_data is not None ):
+                # add 1, since we are 1-indexed, not 0-indexed.
+                coder_index = temp_index + 1
 
-                if ( self.DEBUG == True ):
-                    print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index 1\n" )
-                #-- END DEBUG --#
-
-                # call process_relations for index 1.
-                self.process_relations( 1, coder_1_article_data )
-                
-            #-- END check to see if coder_1_article_data --#
+                # get Article_Data for index 1
+                coder_article_data = self.get_article_data_for_index( coder_index, article_data_qs )
             
-            # call process_relations for coder 2 if instance.
-            if ( coder_2_article_data is not None ):
-            
-                if ( self.DEBUG == True ):
-                    print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index 2\n" )
-                #-- END DEBUG --#
-            
-                # call process_relations for index 2.
-                self.process_relations( 2, coder_2_article_data )
-                
-            #-- END check to see if coder_2_article_data --#
-                        
-            # call process_relations for coder 2 if instance.
-            if ( coder_3_article_data is not None ):
-
-                if ( self.DEBUG == True ):
-                    print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index 3\n" )
-                #-- END DEBUG --#
-
-                # call process_relations for index 3.
-                self.process_relations( 3, coder_3_article_data )
-            
-            #-- END check to see if coder_3_article_data --#
-        
+                # call process_relations if instance.
+                if ( coder_article_data is not None ):
+    
+                    if ( self.DEBUG == True ):
+                        print( "\n\nIn " + me + ": article " + str( article_id ) + ", processing index " + str( coder_index ) + " - Article_Data: " + str( coder_article_data ) + "\n" )
+                    #-- END DEBUG --#
+    
+                    # call process_relations for current index.
+                    self.process_relations( coder_index, coder_article_data )
+                    
+                    # increment article_data_counter
+                    article_data_counter += 1
+                    
+                #-- END check to see if coder_1_article_data --#
+    
+            #-- END loop over indices to find and process article's coding. --#
+                    
         #-- END loop over articles. --#
         
         # now, look over all the resulting data to update each coder's author
@@ -488,7 +462,6 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
         article_source_qs = None
         current_author = None
         author_person = None
-        author_info_dict = None
         current_source = None
         source_person = None
         
