@@ -38,7 +38,7 @@ from django.contrib.auth.decorators import login_required
 #from django.conf import settings
 
 # django core imports
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 # Django query object for OR-ing selection criteria together.
 from django.db.models import Q
