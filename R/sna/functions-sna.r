@@ -130,3 +130,42 @@ calculateListMean <- function( listIN, minValueToIncludeIN = NULL, excludeNaNIN 
     return( valueOUT )
 
 } #-- END function calculateListMean
+
+
+calculateListMax <- function( listIN, excludeNaNIN = TRUE ) {
+
+    # Function: calculateListMean()
+    #
+    # Accepts column/vector to get max value from.  Filters column/vector to
+    #    just contain values that meet filter criteria, then call max().
+    #
+    # Returns the mean.
+
+    # return reference
+    valueOUT <- NULL
+
+    # declare variables
+    workingList <- NULL
+    listLength <- -1
+    
+    # no minimum value.  Just use column/vector passed in.
+    workingList <- as.vector( listIN, mode = "numeric" )
+
+    # anything in list?
+    listLength <- length( workingList )
+    if ( listLength > 0 ) {
+
+        # yes. calculate max on working list.
+        valueOUT <- max( workingList, na.rm = excludeNaNIN )
+
+    } else {
+
+        # no - return...?
+        valueOUT <- 0
+
+    }
+
+    # return value
+    return( valueOUT )
+
+} #-- END function calculateListMax
