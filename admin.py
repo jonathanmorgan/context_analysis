@@ -114,7 +114,14 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             None,
             {
-                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_not_hard_news', 'label', 'tags' ]
+                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'label', 'tags' ]
+            }
+        ),
+        (
+            "Meta-Data",
+            {
+                'fields' : [ 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_not_hard_news', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_ground_truth_fixed', 'is_missed', 'is_skipped', 'is_author_shb_source', 'is_source_shb_author', 'is_wrong_text_captured', 'is_duplicate', 'is_not_a_person', 'is_a_company', 'is_a_place', 'is_to_do', 'work_status' ],
+                'classes' : ( "collapse", )
             }
         ),
         (
