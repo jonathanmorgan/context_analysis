@@ -1491,6 +1491,7 @@ class Reliability_Names_Evaluation( models.Model ):
     # model fields
     #----------------------------------------------------------------------
 
+    event_type = models.CharField( max_length = 255, blank = True, null = True, choices = EVENT_TYPE_CHOICES )
     label = models.CharField( max_length = 255, blank = True, null = True )
     reliability_names = models.ForeignKey( Reliability_Names, on_delete = models.SET_NULL, blank = True, null = True )
     original_reliability_names_id = models.IntegerField( blank = True, null = True )
@@ -1501,6 +1502,8 @@ class Reliability_Names_Evaluation( models.Model ):
     status = models.CharField( max_length = 255, blank = True, null = True, choices = STATUS_CHOICES )
     status_message = models.TextField( blank = True, null = True )
     notes = models.TextField( blank = True, null = True )
+    
+    # More precise meta-data.
     is_ground_truth_fixed = models.BooleanField( default = False )
     is_deleted = models.BooleanField( default = False )
     is_automated_error = models.BooleanField( default = False )
@@ -1509,7 +1512,17 @@ class Reliability_Names_Evaluation( models.Model ):
     is_quoted_shb_mentioned = models.BooleanField( default = False )
     is_mentioned_shb_quoted = models.BooleanField( default = False )
     is_not_hard_news = models.BooleanField( default = False )
-    event_type = models.CharField( max_length = 255, blank = True, null = True, choices = EVENT_TYPE_CHOICES )
+    is_missed = models.BooleanField( default = False )
+    is_skipped = models.BooleanField( default = False )
+    is_author_shb_source = models.BooleanField( default = False )
+    is_source_shb_author = models.BooleanField( default = False )
+    is_wrong_text_captured = models.BooleanField( default = False )
+    is_duplicate = models.BooleanField( default = False )
+    is_not_a_person = models.BooleanField( default = False )
+    is_a_company = models.BooleanField( default = False )
+    is_a_place = models.BooleanField( default = False )
+    is_to_do = models.BooleanField( default = False )
+    work_status = models.CharField( max_length = 255, blank = True, null = True )
     
     # need to add fields for merge from/to Reliability_Names ID and Article_Data.
     merged_from_reliability_names_id = models.IntegerField( blank = True, null = True )
