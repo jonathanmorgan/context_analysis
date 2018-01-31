@@ -135,8 +135,8 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
 
     list_display = ( 'id', 'last_modified', 'event_type', 'person_name', 'original_reliability_names_id', 'status', 'status_message', 'label', 'article' )
     list_display_links = ( 'id', 'event_type', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label' )
-    list_filter = [ 'label', 'event_type', 'is_ground_truth_fixed', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_not_hard_news', 'status' ]
-    search_fields = [ 'person_name', 'status', 'status_message', 'notes', 'event_type' ]
+    list_filter = [ 'label', 'event_type', 'status', 'is_deleted', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_not_hard_news', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_ground_truth_fixed', 'is_missed', 'is_skipped', 'is_author_shb_source', 'is_source_shb_author', 'is_wrong_text_captured', 'is_duplicate', 'is_not_a_person', 'is_a_company', 'is_a_place', 'is_to_do', 'work_status' ]
+    search_fields = [ 'person_name', 'status', 'status_message', 'notes', 'event_type', 'work_status', 'label' ]
     date_hierarchy = 'create_date'
     
 #-- END admin class Reliability_Names_EvaluationAdmin --#
