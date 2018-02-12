@@ -114,13 +114,38 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             None,
             {
-                'fields' : [ 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'label', 'tags' ]
+                'fields' : [ 'label', 'event_type', 'person_name', 'persons', 'article', 'reliability_names', 'original_reliability_names_id', 'article_datas', 'status', 'status_message', 'notes', 'tags' ]
             }
         ),
         (
-            "Meta-Data",
+            "Article Information",
             {
-                'fields' : [ 'is_deleted', 'is_human_error', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_not_hard_news', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_ground_truth_fixed', 'is_missed_author', 'is_missed_subject', 'is_skipped', 'is_author_shb_subject', 'is_subject_shb_author', 'is_wrong_text_captured', 'is_duplicate', 'is_not_a_person', 'is_a_company', 'is_a_place', 'is_to_do', 'work_status' ],
+                'fields' : [ 'is_not_hard_news', 'is_list', 'is_sports',  ],
+            }
+        ),
+        (
+            "Work columns",
+            {
+                'fields' : [ 'is_to_do', 'work_status', 'is_skipped', 'is_ground_truth_fixed', 'is_single_name', 'is_duplicate', 'is_deleted' ]
+            }
+        ),
+        (
+            "Basic Error Codes",
+            {
+                'fields' : [ 'is_error', 'is_human_error', 'is_automated_error' ],
+            }
+        ),
+        (
+            "Basic Error Meta-Data",
+            {
+                'fields' : [ 'is_missed_author', 'is_missed_subject', 'is_author_shb_subject', 'is_subject_shb_author', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_wrong_text_captured', 'is_not_a_person', 'is_a_company', 'is_a_place', 'is_complex', 'is_interesting' ],
+                'classes' : ( "collapse", )
+            }
+        ),
+        (
+            "Detailed Error Meta-Data",
+            {
+                'fields' : [ 'is_ambiguous', 'is_attribution_compound', 'is_attribution_follow_on', 'is_attribution_pronoun', 'is_attribution_second_hand', 'is_compound_names', 'is_contributed_to', 'is_dictionary_error', 'is_disambiguation', 'is_editing_error', 'is_foreign_names', 'is_gender_confusion', 'is_initials_error', 'is_layout_or_design', 'is_lookup_error', 'is_no_html', 'is_possessive', 'is_pronouns', 'is_proper_noun', 'is_quote_distance', 'is_said_verb', 'is_short_n_gram', 'is_software_error', 'is_spanish', 'is_straightforward', 'is_title', 'is_title_complex', 'is_title_prefix' ],
                 'classes' : ( "collapse", )
             }
         ),
@@ -135,7 +160,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
 
     list_display = ( 'id', 'last_modified', 'event_type', 'person_name', 'original_reliability_names_id', 'status', 'status_message', 'label', 'article' )
     list_display_links = ( 'id', 'event_type', 'original_reliability_names_id', 'person_name', 'status', 'status_message', 'label' )
-    list_filter = [ 'label', 'event_type', 'status', 'is_to_do', 'work_status', 'is_deleted', 'is_human_error', 'is_automated_error', 'is_single_name', 'is_ambiguous', 'is_not_hard_news', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_ground_truth_fixed', 'is_missed_author', 'is_missed_subject', 'is_skipped', 'is_author_shb_subject', 'is_subject_shb_author', 'is_wrong_text_captured', 'is_duplicate', 'is_not_a_person', 'is_a_company', 'is_a_place',  ]
+    list_filter = [ 'label', 'event_type', 'status', 'is_not_hard_news', 'is_list', 'is_sports', 'is_to_do', 'work_status', 'is_skipped', 'is_ground_truth_fixed', 'is_single_name', 'is_duplicate', 'is_deleted', 'is_error', 'is_human_error', 'is_automated_error', 'is_missed_author', 'is_missed_subject', 'is_author_shb_subject', 'is_subject_shb_author', 'is_quoted_shb_mentioned', 'is_mentioned_shb_quoted', 'is_wrong_text_captured', 'is_not_a_person', 'is_a_company', 'is_a_place', 'is_complex', 'is_interesting', 'is_ambiguous', 'is_attribution_compound', 'is_attribution_follow_on', 'is_attribution_pronoun', 'is_attribution_second_hand', 'is_compound_names', 'is_contributed_to', 'is_dictionary_error', 'is_disambiguation', 'is_editing_error', 'is_foreign_names', 'is_gender_confusion', 'is_initials_error', 'is_layout_or_design', 'is_lookup_error', 'is_no_html', 'is_possessive', 'is_pronouns', 'is_proper_noun', 'is_quote_distance', 'is_said_verb', 'is_short_n_gram', 'is_software_error', 'is_spanish', 'is_straightforward', 'is_title', 'is_title_complex', 'is_title_prefix' ]
     search_fields = [ 'person_name', 'status', 'status_message', 'notes', 'event_type', 'work_status', 'label' ]
     date_hierarchy = 'create_date'
     
