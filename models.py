@@ -1544,7 +1544,7 @@ class Reliability_Names_Evaluation( models.Model ):
     is_list = models.BooleanField( default = False )
     is_lookup_error = models.BooleanField( default = False )
     is_no_html = models.BooleanField( default = False )
-    is_non_news = models.BooleanField( default = False )
+    #is_non_news = models.BooleanField( default = False )
     is_possessive = models.BooleanField( default = False )
     is_pronouns = models.BooleanField( default = False )
     is_proper_noun = models.BooleanField( default = False )
