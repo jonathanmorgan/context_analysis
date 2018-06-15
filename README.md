@@ -208,7 +208,7 @@ Next, we run migrations for sourcenet_analysis using `python manage.py migrate.
 
 - test by going to the URL:
 
-        http://<your_server>/sourcenet/sourcenet/analysis/index
+        http://<your_server>/research/sourcenet/analysis/index
 
 # Testing
 
