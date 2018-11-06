@@ -114,7 +114,15 @@ def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_I
 @register( "reliability_names" )
 class Reliability_NamesLookup( sourcenet.lookups.LookupParent ):
 
-    my_class = Reliability_Names	
+    def __init__( self, *args, **kwargs ):
+        
+        # call parent's __init__()
+        super( Reliability_NamesLookup, self ).__init__()
+        
+        # initialize variables
+        self.my_class = Reliability_Names
+        
+    #-- END method __init__() --#
 
     def get_query( self, q, request ):
 
