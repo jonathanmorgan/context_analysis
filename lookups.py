@@ -27,13 +27,16 @@ import logging
 from django.db.models import Q
 
 # context_text imports
-import context_text.lookups
+#import context_text.lookups
 
 # context_analysis imports
 from context_analysis.models import Reliability_Names
 
 # python_utilities - logging
 from python_utilities.logging.logging_helper import LoggingHelper
+
+# python_utilities - django_ajax_selects_lookup_helper
+from python_utilities.django_utils.django_ajax_selects_lookup_helper import LookupParent
 
 # ajax_select imports
 from ajax_select import register, LookupChannel
@@ -112,7 +115,7 @@ def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_I
 
 
 @register( "reliability_names" )
-class Reliability_NamesLookup( context_text.lookups.LookupParent ):
+class Reliability_NamesLookup( LookupParent ):
 
     def __init__( self, *args, **kwargs ):
         
