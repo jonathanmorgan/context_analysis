@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='reliability_names_evaluation',
             name='persons',
-            field=models.ManyToManyField(blank=True, to='sourcenet.Person'),
+            field=models.ManyToManyField(blank=True, to='context_text.Person'),
         ),
         migrations.AlterField(
             model_name='reliability_names_evaluation',

@@ -29,10 +29,10 @@ my_analysis_instance = ReliabilityNamesAnalyzer()
 my_analysis_instance.db_username = ""
 my_analysis_instance.db_password = ""
 my_analysis_instance.db_host = "localhost"
-my_analysis_instance.db_name = "sourcenet"
+my_analysis_instance.db_name = "context_text"
 
 # Or set up the following properties in Django_Config, inside the django admins.
-#     All have application of: "sourcenet-db-admin":
+#     All have application of: "context_text-db-admin":
 #     - db_username
 #     - db_password
 #     - db_host

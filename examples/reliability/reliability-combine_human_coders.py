@@ -9,10 +9,10 @@ import six
 # django imports
 from django.contrib.auth.models import User
 
-# sourcenet imports
-from sourcenet.models import Analysis_Reliability_Names
-from sourcenet.models import Article
-from sourcenet.models import Person
+# context_text imports
+from context_text.models import Analysis_Reliability_Names
+from context_text.models import Article
+from context_text.models import Person
 
 # declare variables
 coder_rs = None

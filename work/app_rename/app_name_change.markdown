@@ -12,7 +12,7 @@
                 label = "<new_name>"
                 verbose_name = "<new_name>"
 
-    Key among these is label which is going to change things.  Also, you don't need to have all of these.  If you just set label, the others will default to that value as well.
+    Key among these is name which is going to change things.  Also, you don't need to have all of these.  If you just set name, the others will default to that value as well.
 
 3. In __init__.py in the <new_name> sub-directory, put:
 
@@ -86,10 +86,10 @@
         - Inside fixtures, you should be able to do a replace of all "<old_name>\." with "<new_name>\.", then see what is left.
 
                 cd migrations
-                grep -r -i -l "sourcenet_analysis." .
-                grep -r -i -n "sourcenet_analysis." .
-                # pattern - grep -r -i -l "<old_name>." . | xargs sed -i 's/<old_name>\./<new_name>\./g'
-                grep -r -i -l "sourcenet_analysis." . | xargs sed -i 's/sourcenet_analysis\./context_analysis\./g'
+                grep -r -i -l "sourcenet_analysis\." .
+                grep -r -i -n "sourcenet_analysis\." .
+                # pattern - grep -r -i -l "<old_name>\." . | xargs sed -i 's/<old_name>\./<new_name>\./g'
+                grep -r -i -l "sourcenet_analysis\." . | xargs sed -i 's/sourcenet_analysis\./context_analysis\./g'
 
 8. For the next 4 steps (7, 8, 9 and 10), I built update_database.pg.sql and added it to the `work/app_rename` sub-directory. It's not a standard django thing, but each test copy and each production copy of the database was going to need the same set of steps.
 9. `UPDATE django_content_type SET app_label='<new_name>' WHERE app_label='<old_name>';`

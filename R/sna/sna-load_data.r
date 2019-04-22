@@ -4,7 +4,7 @@
 # imports
 #==============================================================================#
 
-# load in "sourcenet/R/functions-sna.r"
+# load in "context_analysis/R/sna/functions-sna.r"
 source( "functions-sna.r" )
 
 # includes:

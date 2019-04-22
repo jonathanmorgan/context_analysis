@@ -43,15 +43,16 @@ from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.status.status_container import StatusContainer
 from python_utilities.strings.string_helper import StringHelper
 
-# sourcenet imports
-from sourcenet.models import Article
-from sourcenet.models import Article_Author
-from sourcenet.models import Article_Data
-from sourcenet.models import Article_Person
-from sourcenet.models import Article_Subject
-from sourcenet.models import Person
-from sourcenet.shared.person_details import PersonDetails
+# context imports
+from context.shared.person_details import PersonDetails
 
+# context_text imports
+from context_text.models import Article
+from context_text.models import Article_Author
+from context_text.models import Article_Data
+from context_text.models import Article_Person
+from context_text.models import Article_Subject
+from context_text.models import Person
 
 # Debugging code, shared across all models.
 
@@ -96,7 +97,7 @@ def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_I
             #print( my_message )
             
             # got a logger name?
-            my_logger_name = "sourcenet.models"
+            my_logger_name = "context_text.models"
             if ( ( logger_name_IN is not None ) and ( logger_name_IN != "" ) ):
             
                 # use logger name passed in.
@@ -1601,7 +1602,7 @@ class Reliability_Names_Evaluation( models.Model ):
                                         default_status_IN = "CORRECT",
                                         protocol_IN = "http",
                                         host_IN = "research.local",
-                                        app_path_IN = "sourcenet/",
+                                        app_path_IN = "research/",
                                         rne_instance_IN = None ):
     
         '''
@@ -1717,7 +1718,7 @@ class Reliability_Names_Evaluation( models.Model ):
                     if ( rne_instance is not None ):
 
                         # make it a link
-                        # example: http://research.local/sourcenet/admin/context_analysis/reliability_names_evaluation/6/change/
+                        # example: http://research.local/research/admin/context_analysis/reliability_names_evaluation/6/change/
                         detail_string += "<a href=\""
                         detail_string += str( protocol_IN ) + "://"
                         detail_string += str( host_IN ) + "/" + str( app_path_IN )
@@ -1739,7 +1740,7 @@ class Reliability_Names_Evaluation( models.Model ):
                     # ==> Article ID and link
                     detail_string += "Article ["
                     detail_string += str( article_id )
-                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
+                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "context/text/article/article_data/view_with_text/?article_id="
                     detail_string += str( article_id )
                     detail_string += ")"
                     detail_string += " " + delimiter_IN + " "
@@ -1747,7 +1748,7 @@ class Reliability_Names_Evaluation( models.Model ):
                     # ==> Article_Data ID and link
                     detail_string += "Article_Data ["
                     detail_string += str( article_data_id )
-                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
+                    detail_string += "](" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "context/text/article/article_data/view/?article_id="
                     detail_string += str( article_id )
                     detail_string += "&article_data_id_select="
                     detail_string += str( article_data_id )
@@ -1818,7 +1819,7 @@ class Reliability_Names_Evaluation( models.Model ):
                                          default_status_IN = "CORRECT",
                                          protocol_IN = "http",
                                          host_IN = "research.local",
-                                         app_path_IN = "sourcenet/",
+                                         app_path_IN = "research/",
                                          default_error_IN = "MISSED",
                                          rne_instance_IN = None ):
         
@@ -1940,7 +1941,7 @@ class Reliability_Names_Evaluation( models.Model ):
                     
                     # create link (very basic for now):
                     article_data_link = "[" + str( article_data_id ) + " (coder=" + str( article_data_coder_id ) + ")]"
-                    article_data_link += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view/?article_id="
+                    article_data_link += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "context/text/article/article_data/view/?article_id="
                     article_data_link += str( article_id )
                     article_data_link += "&article_data_id_select="
                     article_data_link += str( article_data_id )
@@ -1960,7 +1961,7 @@ class Reliability_Names_Evaluation( models.Model ):
             if ( rne_instance is not None ):
 
                 # make it a link
-                # example: http://research.local/sourcenet/admin/context_analysis/reliability_names_evaluation/6/change/
+                # example: http://research.local/research/admin/context_analysis/reliability_names_evaluation/6/change/
                 detail_string += "<a href=\""
                 detail_string += str( protocol_IN ) + "://"
                 detail_string += str( host_IN ) + "/" + str( app_path_IN )
@@ -1988,7 +1989,7 @@ class Reliability_Names_Evaluation( models.Model ):
             # ==> Article ID and link
             detail_string += "Article "
             detail_string += "[" + str( article_id ) + "]"
-            detail_string += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "sourcenet/article/article_data/view_with_text/?article_id="
+            detail_string += "(" + str( protocol_IN ) + "://" + str( host_IN ) + "/" + str( app_path_IN ) + "context/text/article/article_data/view_with_text/?article_id="
             detail_string += str( article_id )
             detail_string += ")"
             
@@ -2498,7 +2499,7 @@ class Reliability_Names_Evaluation( models.Model ):
                              default_status_IN = "CORRECT",
                              protocol_IN = "http",
                              host_IN = "research.local",
-                             app_path_IN = "sourcenet/" ):
+                             app_path_IN = "research/" ):
     
         '''
         Accepts Reliability_Names (from self), and optional delimiter, prefix,
@@ -2550,7 +2551,7 @@ class Reliability_Names_Evaluation( models.Model ):
                               default_status_IN = "CORRECT",
                               protocol_IN = "http",
                               host_IN = "research.local",
-                              app_path_IN = "sourcenet/",
+                              app_path_IN = "research/",
                               default_error_IN = "MISSED" ):
         
         '''

@@ -6,10 +6,10 @@ import six
 # django imports
 from django.contrib.auth.models import User
 
-# sourcenet imports
-from sourcenet.models import Article
-from sourcenet.models import Article_Data
-from sourcenet.models import Person
+# context_text imports
+from context_text.models import Article
+from context_text.models import Article_Data
+from context_text.models import Person
 
 # context_analysis imports
 from context_analysis.models import Reliability_Ties

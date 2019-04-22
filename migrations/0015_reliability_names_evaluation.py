@@ -10,7 +10,7 @@ import taggit.managers
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sourcenet', '0018_auto_20160924_1704'),
+        ('context_text', '0018_auto_20160924_1704'),
         ('taggit', '0002_auto_20150616_2121'),
         ('context_analysis', '0014_reliability_names_tags'),
     ]
@@ -28,9 +28,9 @@ class Migration(migrations.Migration):
                 ('notes', models.TextField(blank=True, null=True)),
                 ('create_date', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
-                ('article', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='sourcenet.Article')),
-                ('article_datas', models.ManyToManyField(to='sourcenet.Article_Data')),
-                ('persons', models.ManyToManyField(to='sourcenet.Person')),
+                ('article', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='context_text.Article')),
+                ('article_datas', models.ManyToManyField(to='context_text.Article_Data')),
+                ('persons', models.ManyToManyField(to='context_text.Person')),
                 ('reliability_names', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='context_analysis.Reliability_Names')),
                 ('tags', taggit.managers.TaggableManager(blank=True, help_text='A comma-separated list of tags.', through='taggit.TaggedItem', to='taggit.Tag', verbose_name='Tags')),
             ],

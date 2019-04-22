@@ -2,15 +2,15 @@
 
 <!-- TOC -->
 
-sourcenet is a django application for capturing and analyzing networks of news based on articles.  In order for database migrations to work, you need to use django 1.7 or greater.  south_migrations are present, but they won't be updated going forward.
+context_text is a django application for capturing and analyzing networks of news based on articles.  In order for database migrations to work, you need to use django 1.7 or greater.  south_migrations are present, but they won't be updated going forward.
 
 # Installation and configuration
 
-This Django application is dependent on the sourcenet application.
+This Django application is dependent on the context_text application.
 
-Before you can use this, you need to install and configure sourcenet.
+Before you can use this, you need to install and configure context_text.
 
-For instructions on installing and configuring sourcenet, see [https://github.com/jonathanmorgan/sourcenet](https://github.com/jonathanmorgan/sourcenet).
+For instructions on installing and configuring context_text, see [https://github.com/jonathanmorgan/context_text](https://github.com/jonathanmorgan/context_text).
 
 ## OS packages
 
@@ -38,7 +38,7 @@ Then, you'll need to load those packages and start an rserve daemon.  The comman
 
 ## virtualenv and virtualenvwrapper
 
-if you are on a shared or complicated server (and who isn't, really?), using virtualenv and virtualenvwrapper to create isolated python environments for specific applications can save lots of headaches.  this application isn't stand-alone, so for now I've reproduced the instructions you'll have followed when you installed sourcenet.  For more details, see the sourcenet README.md file ( [https://github.com/jonathanmorgan/sourcenet](https://github.com/jonathanmorgan/sourcenet) ).
+if you are on a shared or complicated server (and who isn't, really?), using virtualenv and virtualenvwrapper to create isolated python environments for specific applications can save lots of headaches.  this application isn't stand-alone, so for now I've reproduced the instructions you'll have followed when you installed context_text.  For more details, see the context_text README.md file ( [https://github.com/jonathanmorgan/context_text](https://github.com/jonathanmorgan/context_text) ).
 
 More details:
 
@@ -57,46 +57,46 @@ More details:
 
 - restart your shell so these settings take effect.
 
-- use virtualenvwrapper to create a virtualenv for sourcenet:
+- use virtualenvwrapper to create a virtualenv for context_text:
 
         # for system python:
-        mkvirtualenv sourcenet --no-site-packages
+        mkvirtualenv context_text --no-site-packages
 
-        # if your system python is python 3, and you want to use python 2 (since sourcenet is python 2 at the moment):
-        mkvirtualenv sourcenet --no-site-packages -p /usr/bin/python2.7
+        # if your system python is python 3, and you want to use python 2 (since context_text is python 2 at the moment):
+        mkvirtualenv context_text --no-site-packages -p /usr/bin/python2.7
 
 - activate the virtualenv
 
-        workon sourcenet
+        workon context_text
         
 - now you are in a virtual python environment independent of the system's.  If you do this, in the examples below, you don't need to use `sudo` when you use pip, etc.
 
 ## Get context_analysis from github
 
-First step is to clone context_analysis into the django project folder where you installed sourcenet:
+First step is to clone context_analysis into the django project folder where you installed context_text:
 
     cd <project_directory>
     git clone https://github.com/jonathanmorgan/context_analysis.git
 
 ## Other things to install
 
-These are installed with sourcenet, but just so you know they are dependencies:
+These are installed with context_text, but just so you know they are dependencies:
 
-- You'll also need python\_utilities.  Clone python\_utilities into the research folder alongside sourcenet:
+- You'll also need python\_utilities.  Clone python\_utilities into the research folder alongside context_text:
 
         git clone https://github.com/jonathanmorgan/python_utilities.git
 
-- And you'll need django\_config.  Clone django\_config into the research folder alongside sourcenet:
+- And you'll need django\_config.  Clone django\_config into the research folder alongside context_text:
 
         git clone https://github.com/jonathanmorgan/django_config.git
 
 ## Python packages
 
-- first, install all the packages required by sourcenet, including one for connecting to and interacting with your database of choice (but you should really choose postgresql, or sqlite if you want something simpler, rather than mysql - mysql struggles with large databases).  Inside the sourcenet project, requirements.txt contains all of these things, assumes you will use postgresql and so includes psycopg2.  To install requirements using requirements.txt from the sourcenet repository:
+- first, install all the packages required by context_text, including one for connecting to and interacting with your database of choice (but you should really choose postgresql, or sqlite if you want something simpler, rather than mysql - mysql struggles with large databases).  Inside the context_text project, requirements.txt contains all of these things, assumes you will use postgresql and so includes psycopg2.  To install requirements using requirements.txt from the context_text repository:
 
         - cd into your project directory.
         - install django now using pip: `(sudo) pip install django`
-        - `(sudo) pip install -r sourcenet/requirements.txt`
+        - `(sudo) pip install -r context_text/requirements.txt`
 
 - python packages that I find helpful:
 
@@ -109,7 +109,7 @@ These are installed with sourcenet, but just so you know they are dependencies:
 
 ## settings.py - Configure logging, database, applications:
 
-In addition to the configuration you'll need to do for sourcenet in `settings.py`, you'll also need to do the following:
+In addition to the configuration you'll need to do for context_text in `settings.py`, you'll also need to do the following:
 
 ### applications
 
@@ -126,7 +126,7 @@ Edit the `research/research/settings.py` file and add 'context_analysis' to your
             'django.contrib.admin',
             # Uncomment the next line to enable admin documentation:
             # 'django.contrib.admindocs',
-            'sourcenet.apps.SourcenetConfig',
+            'context_text.apps.Context_TextConfig',
             'django_config.apps.Django_ConfigConfig',
             'taggit',
             'context_analysis.apps.Context_AnalysisConfig',
@@ -148,14 +148,14 @@ Next, we run migrations for context_analysis using `python manage.py migrate.
 
 ## Enable context_analysis pages
 
-- get the built-in django admins and sourcenet pages working.
+- get the built-in django admins and context_text pages working.
 
 - add a line to resesarch/urls.py to enable the context_analysis URLs (in `context_analysis.urls`) to the urlpatterns structure.
 
     - Add:
 
             # context_analysis URLs:
-            url( r'^sourcenet/analysis/', include( 'context_analysis.urls' ) ),
+            url( r'^context/analysis/', include( 'context_analysis.urls' ) ),
 
     - Result:
 
@@ -188,16 +188,16 @@ Next, we run migrations for context_analysis using `python manage.py migrate.
                 # django-ajax-select URLs
                 url( r'^admin/lookups/', include( ajax_select_urls ) ),
 
-                # sourcenet URLs:
-                url( r'^sourcenet/', include( 'sourcenet.urls' ) ),
+                # context_text URLs:
+                url( r'^context/text/', include( 'context_text.urls' ) ),
                 
                 # context_analysis URLs:
-                url( r'^sourcenet/analysis/', include( 'context_analysis.urls' ) ),
+                url( r'^context/analysis/', include( 'context_analysis.urls' ) ),
             ]
             
 ### Test!
 
-- make sure everything is reloaded by updating the modified stamp on research/wsgi.py (assuming you named your django project "research" per the sourcenet documentation).
+- make sure everything is reloaded by updating the modified stamp on research/wsgi.py (assuming you named your django project "research" per the context_text documentation).
 
         cd <django_project_directory>
         # touch <django_project_name>/wsgi.py
@@ -208,7 +208,7 @@ Next, we run migrations for context_analysis using `python manage.py migrate.
 
 - test by going to the URL:
 
-        http://<your_server>/research/sourcenet/analysis/index
+        http://<your_server>/research/context/text/analysis/index
 
 # Testing
 
@@ -243,12 +243,12 @@ There is a set of test data stored in the `fixtures` folder inside this django a
 
 ### Using unittest data for development
 
-First, follow the instructions to set up sourcenet test data in the sourcenet readme: [https://github.com/jonathanmorgan/sourcenet](https://github.com/jonathanmorgan/sourcenet).
+First, follow the instructions to set up context_text test data in the context_text readme: [https://github.com/jonathanmorgan/context_text](https://github.com/jonathanmorgan/context_text).
 
 - cd into your django application's home directory, activate your virtualenv if you created one, then run "`python manage.py migrate`" to create all the tables in the database.
 
         cd <django_app_directory>
-        workon sourcenet
+        workon context_text
         python manage.py migrate
 
 - load the unit test fixtures into the database:
@@ -270,12 +270,12 @@ Copyright 2010-present (2016) Jonathan Morgan
 
 This file is part of [http://github.com/jonathanmorgan/context_analysis](http://github.com/jonathanmorgan/context_analysis).
 
-sourcenet\_analysis is free software: you can redistribute it and/or modify
+context\_analysis is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-sourcenet\_analysis is distributed in the hope that it will be useful,
+context\_analysis is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.

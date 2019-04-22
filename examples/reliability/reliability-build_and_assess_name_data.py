@@ -66,7 +66,7 @@ my_analysis_instance = ReliabilityNamesAnalyzer()
 my_analysis_instance.db_username = ""
 my_analysis_instance.db_password = ""
 my_analysis_instance.db_host = "localhost"
-my_analysis_instance.db_name = "sourcenet"
+my_analysis_instance.db_name = "context_text"
 
 # run the analyze method, see what happens.
 label = shared_identifier

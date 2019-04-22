@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 # django imports
 from django.contrib.auth.models import User
 
-# sourcenet imports
-from sourcenet.shared.sourcenet_base import SourcenetBase
+# context_text imports
+from context_text.shared.context_text_base import ContextTextBase
 
 # context_analysis imports
 from context_analysis.reliability.reliability_names_builder import ReliabilityNamesBuilder
@@ -59,7 +59,7 @@ current_index = 3
 my_reliability_instance.add_coder_at_index( current_coder_id, current_index )
 
 # ...and automated coder (2) is index 4
-current_coder = SourcenetBase.get_automated_coding_user()
+current_coder = ContextTextBase.get_automated_coding_user()
 current_coder_id = current_coder.id
 current_index = 4
 my_reliability_instance.add_coder_at_index( current_coder_id, current_index )

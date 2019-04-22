@@ -4,13 +4,13 @@ from __future__ import division
 '''
 Copyright 2016 Jonathan Morgan
 
-This file is part of http://github.com/jonathanmorgan/sourcenet.
+This file is part of http://github.com/jonathanmorgan/context_analysis.
 
-sourcenet is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+context_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-sourcenet is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
+You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/context_analysis. If not, see http://www.gnu.org/licenses/.
 '''
 
 #===============================================================================
@@ -68,10 +68,10 @@ from python_utilities.lists.list_helper import ListHelper
 #from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.strings.string_helper import StringHelper
 
-# sourcenet imports
-from sourcenet.models import Article_Author
-from sourcenet.models import Article_Data
-from sourcenet.models import Article_Subject
+# context_text imports
+from context_text.models import Article_Author
+from context_text.models import Article_Data
+from context_text.models import Article_Subject
 
 # Import form classes
 from context_analysis.forms import ReliabilityNamesActionForm
@@ -87,6 +87,8 @@ from context_analysis.models import Reliability_Names_Results
 # ! ==> Shared variables and functions
 #================================================================================
 
+
+DEFAULT_APP_PATH = "research/"
 
 '''
 debugging code, shared across all models.
@@ -147,7 +149,7 @@ def build_reliability_name_detail_string( reliability_names_id_IN,
                                           default_status_IN = "CORRECT",
                                           protocol_IN = "http",
                                           host_IN = "research.local",
-                                          app_path_IN = "sourcenet/" ):
+                                          app_path_IN = DEFAULT_APP_PATH ):
     
     '''
     Accepts Reliability_Names ID, and optional delimiter, prefix, and
@@ -198,7 +200,7 @@ def build_reliability_name_summary_string( reliability_names_id_IN,
                                            default_status_IN = "CORRECT",
                                            protocol_IN = "http",
                                            host_IN = "research.local",
-                                           app_path_IN = "sourcenet/",
+                                           app_path_IN = DEFAULT_APP_PATH,
                                            default_error_IN = "MISSED" ):
     
         '''

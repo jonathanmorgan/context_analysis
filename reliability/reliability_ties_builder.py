@@ -9,7 +9,7 @@ context_analysis is free software: you can redistribute it and/or modify it unde
 
 context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
+You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/context_analysis. If not, see http://www.gnu.org/licenses/.
 '''
 
 # python package imports
@@ -18,10 +18,10 @@ import six
 # django imports
 from django.contrib.auth.models import User
 
-# sourcenet imports
-from sourcenet.models import Article
-from sourcenet.models import Article_Data
-from sourcenet.models import Person
+# context_text imports
+from context_text.models import Article
+from context_text.models import Article_Data
+from context_text.models import Person
 
 # context_analysis imports
 from context_analysis.models import Reliability_Ties

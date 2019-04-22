@@ -6,10 +6,12 @@ import six
 # django imports
 from django.contrib.auth.models import User
 
-# sourcenet imports
-from sourcenet.models import Article
-from sourcenet.models import Article_Data
-from sourcenet.models import Person
+# context_text imports
+from context_text.models import Article
+from context_text.models import Article_Data
+from context_text.models import Person
+from context_text.shared.context_text_base import ContextTextBase
+
 
 # context_analysis imports
 from context_analysis.models import Reliability_Ties
@@ -47,7 +49,7 @@ label = "prelim_month"
 # set it up so that...
 
 # ...the ground truth user has highest priority (4) for index 1...
-current_coder = SourcenetBase.get_ground_truth_coding_user()
+current_coder = ContextTextBase.get_ground_truth_coding_user()
 current_coder_id = current_coder.id
 current_index = 1
 current_priority = 4
@@ -72,7 +74,7 @@ current_priority = 1
 my_info_instance.add_coder_at_index( current_coder_id, current_index, priority_IN = current_priority )
 
 # ...and automated coder (2) is index 2
-current_coder = SourcenetBase.get_automated_coding_user()
+current_coder = ContextTextBase.get_automated_coding_user()
 current_coder_id = current_coder.id
 current_index = 2
 current_priority = 1

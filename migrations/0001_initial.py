@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sourcenet', '0012_auto_20160225_2302'),
+        ('context_text', '0012_auto_20160225_2302'),
     ]
 
     operations = [
@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
                 ('notes', models.TextField(blank=True, null=True)),
                 ('create_date', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
-                ('article', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='sourcenet.Article')),
+                ('article', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='context_text.Article')),
                 ('coder1', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_names_coder1_set', to=settings.AUTH_USER_MODEL)),
                 ('coder10', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_names_coder10_set', to=settings.AUTH_USER_MODEL)),
                 ('coder2', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_names_coder2_set', to=settings.AUTH_USER_MODEL)),
@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
                 ('coder7', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_names_coder7_set', to=settings.AUTH_USER_MODEL)),
                 ('coder8', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_names_coder8_set', to=settings.AUTH_USER_MODEL)),
                 ('coder9', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_names_coder9_set', to=settings.AUTH_USER_MODEL)),
-                ('person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='sourcenet.Person')),
+                ('person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='context_text.Person')),
             ],
             options={
                 'ordering': ['article', 'person_type', 'person'],
@@ -157,8 +157,8 @@ class Migration(migrations.Migration):
                 ('coder7', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_coder7_set', to=settings.AUTH_USER_MODEL)),
                 ('coder8', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_coder8_set', to=settings.AUTH_USER_MODEL)),
                 ('coder9', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_coder9_set', to=settings.AUTH_USER_MODEL)),
-                ('person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_from_set', to='sourcenet.Person')),
-                ('relation_person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_to_set', to='sourcenet.Person')),
+                ('person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_from_set', to='context_text.Person')),
+                ('relation_person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='reliability_ties_to_set', to='context_text.Person')),
             ],
             options={
                 'ordering': ['person_type', 'person', 'relation_person'],

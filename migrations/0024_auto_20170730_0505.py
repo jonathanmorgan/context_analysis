@@ -15,16 +15,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='reliability_names_evaluation',
             name='article_datas',
-            field=models.ManyToManyField(blank=True, related_name='rne_article_data', to='sourcenet.Article_Data'),
+            field=models.ManyToManyField(blank=True, related_name='rne_article_data', to='context_text.Article_Data'),
         ),
         migrations.AlterField(
             model_name='reliability_names_evaluation',
             name='merged_from_article_datas',
-            field=models.ManyToManyField(blank=True, related_name='rne_merged_from_article_data', to='sourcenet.Article_Data'),
+            field=models.ManyToManyField(blank=True, related_name='rne_merged_from_article_data', to='context_text.Article_Data'),
         ),
         migrations.AlterField(
             model_name='reliability_names_evaluation',
             name='merged_to_article_datas',
-            field=models.ManyToManyField(blank=True, related_name='rne_merged_to_article_data', to='sourcenet.Article_Data'),
+            field=models.ManyToManyField(blank=True, related_name='rne_merged_to_article_data', to='context_text.Article_Data'),
         ),
     ]

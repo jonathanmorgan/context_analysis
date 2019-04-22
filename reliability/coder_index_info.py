@@ -10,7 +10,7 @@ context_analysis is free software: you can redistribute it and/or modify it unde
 
 context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
+You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/context_analysis. If not, see http://www.gnu.org/licenses/.
 '''
 
 # python built-in libraries
@@ -28,7 +28,7 @@ from python_utilities.exceptions.exception_helper import ExceptionHelper
 from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.status.status_container import StatusContainer
 
-# sourcenet imports
+# context_text imports
 
 # context_analysis imports
 

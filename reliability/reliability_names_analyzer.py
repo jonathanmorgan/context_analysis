@@ -11,7 +11,7 @@ context_analysis is free software: you can redistribute it and/or modify it unde
 
 context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
+You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/context_analysis. If not, see http://www.gnu.org/licenses/.
 '''
 
 #==============================================================================#
@@ -62,9 +62,9 @@ from python_utilities.exceptions.exception_helper import ExceptionHelper
 from python_utilities.logging.logging_helper import LoggingHelper
 from python_utilities.R.rserve_helper import RserveHelper
 
-# sourcenet imports
-from sourcenet.article_coding.manual_coding.manual_article_coder import ManualArticleCoder
-from sourcenet.shared.sourcenet_base import SourcenetBase
+# context_text imports
+from context_text.article_coding.manual_coding.manual_article_coder import ManualArticleCoder
+from context_text.shared.context_text_base import ContextTextBase
 
 # context_analysis imports
 from context_analysis.models import Reliability_Names
@@ -272,24 +272,24 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         
         # database credentials - try reading from config.
         self.db_username = Config_Property.get_property_value(
-            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
-            SourcenetBase.DJANGO_CONFIG_PROP_DB_USERNAME,
+            ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
+            ContextTextBase.DJANGO_CONFIG_PROP_DB_USERNAME,
             None )
         self.db_password = Config_Property.get_property_value(
-            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
-            SourcenetBase.DJANGO_CONFIG_PROP_DB_PASSWORD,
+            ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
+            ContextTextBase.DJANGO_CONFIG_PROP_DB_PASSWORD,
             None )
         self.db_host = Config_Property.get_property_value(
-            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
-            SourcenetBase.DJANGO_CONFIG_PROP_DB_HOST,
+            ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
+            ContextTextBase.DJANGO_CONFIG_PROP_DB_HOST,
             None )
         self.db_port = Config_Property.get_property_int_value(
-            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
-            SourcenetBase.DJANGO_CONFIG_PROP_DB_PORT,
+            ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
+            ContextTextBase.DJANGO_CONFIG_PROP_DB_PORT,
             -1 )
         self.db_name = Config_Property.get_property_value(
-            SourcenetBase.DJANGO_CONFIG_APPLICATION_SOURCENET_DB_ADMIN,
-            SourcenetBase.DJANGO_CONFIG_PROP_DB_NAME,
+            ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
+            ContextTextBase.DJANGO_CONFIG_PROP_DB_NAME,
             None )
         
     #-- END method __init__() --#

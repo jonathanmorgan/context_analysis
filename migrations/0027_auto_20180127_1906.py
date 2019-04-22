@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='reliability_names',
             name='article',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='sourcenet.Article'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='context_text.Article'),
         ),
         migrations.AlterField(
             model_name='reliability_names',
@@ -125,7 +125,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='reliability_names',
             name='person',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='sourcenet.Person'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='context_text.Person'),
         ),
         migrations.AlterField(
             model_name='reliability_names_coder_data',
@@ -195,11 +195,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='reliability_ties',
             name='person',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='reliability_ties_from_set', to='sourcenet.Person'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='reliability_ties_from_set', to='context_text.Person'),
         ),
         migrations.AlterField(
             model_name='reliability_ties',
             name='relation_person',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='reliability_ties_to_set', to='sourcenet.Person'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='reliability_ties_to_set', to='context_text.Person'),
         ),
     ]

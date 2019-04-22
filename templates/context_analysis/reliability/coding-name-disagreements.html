@@ -19,7 +19,7 @@
     <h1>View reliability name information</h1>
     
     {# include standard status message output #}
-    {% include "sourcenet/shared/output_status_message.html" %}
+    {% include "context_text/shared/output_status_message.html" %}
     
     <table>
         <tr>
@@ -124,7 +124,7 @@
                                                     None
                                                 {% endif %}
                                             </td>
-                                            <td><a href="{% url 'sourcenet-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
+                                            <td><a href="{% url 'context_text-article_view_article_data_with_text' %}?article_id={{ names_instance.article_id }}">{{ names_instance.article_id }}</a></td>
                                             <td>{{ names_instance.person_type }}</td>
                                             <td>{{ names_instance.person_last_name }}, {{ names_instance.person_first_name }}</td>
                                             <td>{{ names_instance.person_name }}</td>

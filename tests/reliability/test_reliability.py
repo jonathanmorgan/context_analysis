@@ -8,8 +8,8 @@ Functions tested:
 # django imports
 import django.test
 
-# sourcenet imports
-from sourcenet.tests.test_helper import TestHelper
+# context_text imports
+from context_text.tests.test_helper import TestHelper
 
 
 class ReliabilityTest( django.test.TestCase ):

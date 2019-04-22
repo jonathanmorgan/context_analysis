@@ -27,9 +27,9 @@ import context_analysis.views
 # !tastypie API
 # import tastypie stuff, so we can make REST-ful API
 from tastypie.api import Api
-from sourcenet.tastypie_api.sourcenet_api import ArticleResource
+from context_text.tastypie_api.context_text_api import ArticleResource
 
-# initialize sourcenet API, v1
+# initialize context_text API, v1
 v1_api = Api( api_name='v1' )
 
 # register resources
