@@ -4,11 +4,11 @@ from __future__ import division
 '''
 Copyright 2017 Jonathan Morgan
 
-This file is part of http://github.com/jonathanmorgan/sourcenet_analysis.
+This file is part of http://github.com/jonathanmorgan/context_analysis.
 
-sourcenet_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+context_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-sourcenet_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
 '''
@@ -30,7 +30,7 @@ from python_utilities.status.status_container import StatusContainer
 
 # sourcenet imports
 
-# sourcenet_analysis imports
+# context_analysis imports
 
 #-------------------------------------------------------------------------------
 # class definitions
@@ -46,7 +46,7 @@ class CoderIndexInfo( object ):
 
 
     # Logger name
-    LOGGER_NAME = "sourcenet_analysis.reliability.coder_index_info"
+    LOGGER_NAME = "context_analysis.reliability.coder_index_info"
         
     
     #----------------------------------------------------------------------------

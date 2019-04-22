@@ -5,20 +5,20 @@ from __future__ import division
 '''
 Copyright 2016 Jonathan Morgan
 
-This file is part of http://github.com/jonathanmorgan/sourcenet_analysis.
+This file is part of http://github.com/jonathanmorgan/context_analysis.
 
-sourcenet_analysis is free software: you can redistribute it and/or modify
+context_analysis is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-sourcenet_analysis is distributed in the hope that it will be useful,
+context_analysis is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with http://github.com/jonathanmorgan/sourcenet_analysis.  If not, see
+along with http://github.com/jonathanmorgan/context_analysis.  If not, see
 <http://www.gnu.org/licenses/>.
 '''
 
@@ -131,7 +131,7 @@ class Reliability_Names( models.Model ):
         be read or exported for use by statistical analysis packages (numpy, R, 
         etc.).  Example of how to populate this table:
         
-        sourcenet_analysis/examples/reliability/reliability-build_name_data.py
+        context_analysis/examples/reliability/reliability-build_name_data.py
        
         Examples of calculating reliability TK.
        
@@ -145,7 +145,7 @@ class Reliability_Names( models.Model ):
 
 
     # logging
-    LOGGER_NAME = "sourcenet_analysis.models.Reliability_Names"
+    LOGGER_NAME = "context_analysis.models.Reliability_Names"
 
     # maximum index value
     MAX_INDEX = 10
@@ -641,7 +641,7 @@ class Reliability_Names( models.Model ):
         #-- END loop over coders to compare --#
         
         # build SQL string
-        sql_string = "SELECT * FROM sourcenet_analysis_reliability_names WHERE "
+        sql_string = "SELECT * FROM context_analysis_reliability_names WHERE "
         
         # got a label?
         if ( ( my_label is not None ) and ( my_label != "" ) ):
@@ -1717,11 +1717,11 @@ class Reliability_Names_Evaluation( models.Model ):
                     if ( rne_instance is not None ):
 
                         # make it a link
-                        # example: http://research.local/sourcenet/admin/sourcenet_analysis/reliability_names_evaluation/6/change/
+                        # example: http://research.local/sourcenet/admin/context_analysis/reliability_names_evaluation/6/change/
                         detail_string += "<a href=\""
                         detail_string += str( protocol_IN ) + "://"
                         detail_string += str( host_IN ) + "/" + str( app_path_IN )
-                        detail_string += "admin/sourcenet_analysis/reliability_names_evaluation/"
+                        detail_string += "admin/context_analysis/reliability_names_evaluation/"
                         detail_string += str( rne_instance.id )
                         detail_string += "/change/\">"
                         detail_string += str( rne_instance.id )
@@ -1960,11 +1960,11 @@ class Reliability_Names_Evaluation( models.Model ):
             if ( rne_instance is not None ):
 
                 # make it a link
-                # example: http://research.local/sourcenet/admin/sourcenet_analysis/reliability_names_evaluation/6/change/
+                # example: http://research.local/sourcenet/admin/context_analysis/reliability_names_evaluation/6/change/
                 detail_string += "<a href=\""
                 detail_string += str( protocol_IN ) + "://"
                 detail_string += str( host_IN ) + "/" + str( app_path_IN )
-                detail_string += "admin/sourcenet_analysis/reliability_names_evaluation/"
+                detail_string += "admin/context_analysis/reliability_names_evaluation/"
                 detail_string += str( rne_instance.id )
                 detail_string += "/change/\">"
                 detail_string += str( rne_instance.id )
@@ -2608,7 +2608,7 @@ class Reliability_Ties( models.Model ):
         be read or exported for use by statistical analysis packages (numpy, R, 
         etc.).  Example of how to populate this table:
        
-        sourcenet_analysis/examples/reliability/reliability-build_relation_data.py
+        context_analysis/examples/reliability/reliability-build_relation_data.py
        
         Examples of calculating reliability TK.
        
@@ -3118,7 +3118,7 @@ class Reliability_Names_Results( models.Model ):
         almost no 0s, for example) - this is only implemented for author and
         subject detect (1 or 0), and subject type (0 through 3).
 
-        sourcenet_analysis/examples/reliability/reliability-assess_name_data.py
+        context_analysis/examples/reliability/reliability-assess_name_data.py
     '''
 
     #----------------------------------------------------------------------

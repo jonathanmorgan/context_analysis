@@ -10,9 +10,9 @@ from ajax_select import make_ajax_form
 from ajax_select.admin import AjaxSelectAdmin
 
 # Import models
-from sourcenet_analysis.models import Reliability_Names
-from sourcenet_analysis.models import Reliability_Names_Evaluation
-from sourcenet_analysis.models import Reliability_Ties
+from context_analysis.models import Reliability_Names
+from context_analysis.models import Reliability_Names_Evaluation
+from context_analysis.models import Reliability_Ties
 
 #admin.site.register( Reliability_Names )
 #admin.site.register( Reliability_Names_Evaluation )
@@ -30,7 +30,7 @@ class Reliability_NamesAdmin( admin.ModelAdmin ):
     #     around them) mapped to lookup channels used to service them (lookup
     #     channels are defined in settings.py, implemented in a separate module -
     #     in this case, implemented in sourcenet/lookups.py and
-    #     sourcenet_analysis/lookups.py
+    #     context_analysis/lookups.py
     form = make_ajax_form( Reliability_Names, dict( person = 'person', article = 'article' ) )
 
     fieldsets = [
@@ -107,7 +107,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
     #     around them) mapped to lookup channels used to service them (lookup
     #     channels are defined in settings.py, implemented in a separate module -
     #     in this case, implemented in sourcenet/lookups.py and
-    #     sourcenet_analysis/lookups.py
+    #     context_analysis/lookups.py
     form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data', merged_from_article_datas = 'article_data', merged_to_article_datas = 'article_data' ) )
 
     fieldsets = [

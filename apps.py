@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from django.apps import AppConfig
 
 
-class Sourcenet_AnalysisConfig( AppConfig ):
+class Context_AnalysisConfig( AppConfig ):
 
-    name = 'sourcenet_analysis'
+    name = 'context_analysis'
 
-#-- END class Sourcenet_AnalysisConfig
+#-- END class Context_AnalysisConfig --#

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
-# sourcenet_analysis imports
-from sourcenet_analysis.models import Reliability_Names
+# context_analysis imports
+from context_analysis.models import Reliability_Names
 
 # declare variables
 reliability_names_qs = None
@@ -66,6 +66,6 @@ else:
 
 # Once you are done, you can use this SQL as a template for resetting the next
 #     automatically generated ID should you care about such things.
-# ALTER SEQUENCE sourcenet_analysis_reliability_names_id_seq RESTART WITH 2076;
+# ALTER SEQUENCE context_analysis_reliability_names_id_seq RESTART WITH 2076;
 print( "Once you are done, you can use this SQL as a template for resetting the next automatically generated ID should you care about such things." )
-print( "ALTER SEQUENCE sourcenet_analysis_reliability_names_id_seq RESTART WITH 2076;" )
+print( "ALTER SEQUENCE context_analysis_reliability_names_id_seq RESTART WITH 2076;" )

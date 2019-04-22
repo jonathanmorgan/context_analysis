@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 # sourcenet imports
 from sourcenet.shared.sourcenet_base import SourcenetBase
 
-# sourcenet_analysis imports
-from sourcenet_analysis.reliability.reliability_names_builder import ReliabilityNamesBuilder
+# context_analysis imports
+from context_analysis.reliability.reliability_names_builder import ReliabilityNamesBuilder
 
 # declare variables
 my_reliability_instance = None

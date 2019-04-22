@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sourcenet_analysis', '0008_auto_20160314_1639'),
+        ('context_analysis', '0008_auto_20160314_1639'),
     ]
 
     operations = [
@@ -191,6 +191,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='reliability_names_coder_data',
             name='reliability_names',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='sourcenet_analysis.Reliability_Names'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='context_analysis.Reliability_Names'),
         ),
     ]

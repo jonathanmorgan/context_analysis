@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sourcenet_analysis', '0030_reliability_names_evaluation_is_human_error'),
+        ('context_analysis', '0030_reliability_names_evaluation_is_human_error'),
     ]
 
     operations = [

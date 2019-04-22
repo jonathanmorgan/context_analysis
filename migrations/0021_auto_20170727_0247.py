@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sourcenet_analysis', '0020_reliability_names_evaluation_is_single_name'),
+        ('context_analysis', '0020_reliability_names_evaluation_is_single_name'),
     ]
 
     operations = [
@@ -21,6 +21,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='reliability_names_evaluation',
             name='reliability_names',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='sourcenet_analysis.Reliability_Names'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='context_analysis.Reliability_Names'),
         ),
     ]

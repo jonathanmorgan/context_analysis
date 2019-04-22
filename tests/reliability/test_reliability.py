@@ -1,5 +1,5 @@
 """
-This file contains tests of the sourcenet_analysis.reliability classes.
+This file contains tests of the context_analysis.reliability classes.
 
 Functions tested:
 - Person.look_up_person_from_name()

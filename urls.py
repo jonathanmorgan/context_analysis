@@ -3,13 +3,13 @@ from __future__ import unicode_literals
 '''
 Copyright 2010-2016 Jonathan Morgan
 
-This file is part of http://github.com/jonathanmorgan/sourcenet_analysis.
+This file is part of http://github.com/jonathanmorgan/context_analysis.
 
-sourcenet_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+context_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-sourcenet_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet_analysis. If not, see http://www.gnu.org/licenses/.
+You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/context_analysis. If not, see http://www.gnu.org/licenses/.
 '''
 
 # import djanfgo.conf.urls.defaults stuff.
@@ -21,7 +21,7 @@ from django.conf.urls import url
 from django.contrib.auth import views as auth_views
 
 # import sourcent_analysis views
-import sourcenet_analysis.views
+import context_analysis.views
 
 '''
 # !tastypie API
@@ -40,11 +40,11 @@ v1_api.register( ArticleResource() )
 urlpatterns = [
 
     # index page
-    url( r'^index$', sourcenet_analysis.views.index, name = "sourcenet_analysis-index" ),
+    url( r'^index$', context_analysis.views.index, name = "context_analysis-index" ),
 
     # view disagreements
-    url( r'^reliability/names/disagreement/view$', sourcenet_analysis.views.reliability_names_disagreement_view, name = "sourcenet_analysis-reliability-names-disagreement-view" ),
+    url( r'^reliability/names/disagreement/view$', context_analysis.views.reliability_names_disagreement_view, name = "context_analysis-reliability-names-disagreement-view" ),
 
     # view reliability results
-    url( r'^reliability/names/results/view$', sourcenet_analysis.views.reliability_names_results_view, name = "sourcenet_analysis-reliability-names-results-view" ),
+    url( r'^reliability/names/results/view$', context_analysis.views.reliability_names_results_view, name = "context_analysis-reliability-names-results-view" ),
 ]

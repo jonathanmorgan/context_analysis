@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('sourcenet', '0018_auto_20160924_1704'),
         ('taggit', '0002_auto_20150616_2121'),
-        ('sourcenet_analysis', '0014_reliability_names_tags'),
+        ('context_analysis', '0014_reliability_names_tags'),
     ]
 
     operations = [
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('article', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='sourcenet.Article')),
                 ('article_datas', models.ManyToManyField(to='sourcenet.Article_Data')),
                 ('persons', models.ManyToManyField(to='sourcenet.Person')),
-                ('reliability_names', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='sourcenet_analysis.Reliability_Names')),
+                ('reliability_names', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='context_analysis.Reliability_Names')),
                 ('tags', taggit.managers.TaggableManager(blank=True, help_text='A comma-separated list of tags.', through='taggit.TaggedItem', to='taggit.Tag', verbose_name='Tags')),
             ],
             options={

@@ -6,8 +6,8 @@ import six
 # django imports
 from django.contrib.auth.models import User
 
-# sourcenet_analysis imports
-from sourcenet_analysis.reliability import ReliabilityTiesBuilder
+# context_analysis imports
+from context_analysis.reliability import ReliabilityTiesBuilder
 
 # declare variables
 my_reliability_instance = None

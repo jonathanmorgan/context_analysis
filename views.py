@@ -74,14 +74,14 @@ from sourcenet.models import Article_Data
 from sourcenet.models import Article_Subject
 
 # Import form classes
-from sourcenet_analysis.forms import ReliabilityNamesActionForm
-from sourcenet_analysis.forms import ReliabilityNamesFilterForm
-from sourcenet_analysis.forms import ReliabilityNamesResultsForm
+from context_analysis.forms import ReliabilityNamesActionForm
+from context_analysis.forms import ReliabilityNamesFilterForm
+from context_analysis.forms import ReliabilityNamesResultsForm
 
 # import models
-from sourcenet_analysis.models import Reliability_Names
-from sourcenet_analysis.models import Reliability_Names_Evaluation
-from sourcenet_analysis.models import Reliability_Names_Results
+from context_analysis.models import Reliability_Names
+from context_analysis.models import Reliability_Names_Evaluation
+from context_analysis.models import Reliability_Names_Results
 
 #================================================================================
 # ! ==> Shared variables and functions
@@ -93,7 +93,7 @@ debugging code, shared across all models.
 '''
 
 DEBUG = False
-LOGGER_NAME = "sourcenet_analysis.views"
+LOGGER_NAME = "context_analysis.views"
 
 def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_IN = "" ):
     
@@ -262,7 +262,7 @@ def index( request_IN ):
     response_dictionary.update( csrf( request_IN ) )
 
     # set my default rendering template
-    default_template = 'sourcenet_analysis/index.html'
+    default_template = 'context_analysis/index.html'
 
     # add on the "me" property.
     response_dictionary[ 'current_view' ] = me        
@@ -373,7 +373,7 @@ def reliability_names_disagreement_view( request_IN ):
     response_dictionary.update( csrf( request_IN ) )
 
     # set my default rendering template
-    default_template = 'sourcenet_analysis/reliability/coding-name-disagreements.html'
+    default_template = 'context_analysis/reliability/coding-name-disagreements.html'
 
     # add a few CONSTANTS-ISH for rendering.
     response_dictionary[ "input_name_select_prefix" ] = ReliabilityNamesActionForm.INPUT_NAME_SELECT_PREFIX
@@ -1101,7 +1101,7 @@ def reliability_names_results_view( request_IN ):
     response_dictionary.update( csrf( request_IN ) )
 
     # set my default rendering template
-    default_template = 'sourcenet_analysis/reliability/coding-name-reliability-results.html'
+    default_template = 'context_analysis/reliability/coding-name-reliability-results.html'
 
     # get request inputs
     request_inputs = DjangoViewHelper.get_request_data( request_IN )

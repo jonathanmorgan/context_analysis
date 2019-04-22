@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sourcenet_analysis', '0019_reliability_names_evaluation_is_automated_error'),
+        ('context_analysis', '0019_reliability_names_evaluation_is_automated_error'),
     ]
 
     operations = [

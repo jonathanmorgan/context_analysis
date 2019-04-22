@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('sourcenet', '0018_auto_20160924_1704'),
-        ('sourcenet_analysis', '0022_auto_20170728_2242'),
+        ('context_analysis', '0022_auto_20170728_2242'),
     ]
 
     operations = [

@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sourcenet_analysis', '0026_reliability_names_evaluation_is_not_hard_news'),
+        ('context_analysis', '0026_reliability_names_evaluation_is_not_hard_news'),
     ]
 
     operations = [

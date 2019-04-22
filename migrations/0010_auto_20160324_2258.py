@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('taggit', '0002_auto_20150616_2121'),
-        ('sourcenet_analysis', '0009_auto_20160323_2232'),
+        ('context_analysis', '0009_auto_20160323_2232'),
     ]
 
     operations = [
@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('value', models.CharField(max_length=255)),
-                ('field_spec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sourcenet_analysis.Field_Spec')),
+                ('field_spec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='context_analysis.Field_Spec')),
             ],
         ),
         migrations.CreateModel(
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ('notes', models.TextField(blank=True, null=True)),
                 ('create_date', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
-                ('field_spec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sourcenet_analysis.Field_Spec')),
+                ('field_spec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='context_analysis.Field_Spec')),
             ],
         ),
         migrations.AddField(
@@ -116,6 +116,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='reliability_result_details',
             name='reliability_names_results',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sourcenet_analysis.Reliability_Names_Results'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='context_analysis.Reliability_Names_Results'),
         ),
     ]

@@ -11,9 +11,9 @@ from sourcenet.models import Article
 from sourcenet.models import Article_Data
 from sourcenet.models import Person
 
-# sourcenet_analysis imports
-from sourcenet_analysis.models import Reliability_Ties
-from sourcenet_analysis.reliability.reliability_names_builder import ReliabilityNamesBuilder
+# context_analysis imports
+from context_analysis.models import Reliability_Ties
+from context_analysis.reliability.reliability_names_builder import ReliabilityNamesBuilder
 
 #-------------------------------------------------------------------------------
 # class definitions
@@ -55,7 +55,7 @@ class NetworkPersonInfo( ReliabilityNamesBuilder ):
 
     
     # Logger name
-    LOGGER_NAME = "sourcenet_analysis.network.network_person_info"
+    LOGGER_NAME = "context_analysis.network.network_person_info"
 
     # retrieving reliability row fields by name
     COLUMN_NAME_PREFIX_CODER = "coder"

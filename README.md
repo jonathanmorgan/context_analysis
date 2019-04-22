@@ -1,4 +1,4 @@
-# sourcenet_analysis
+# context_analysis
 
 <!-- TOC -->
 
@@ -71,12 +71,12 @@ More details:
         
 - now you are in a virtual python environment independent of the system's.  If you do this, in the examples below, you don't need to use `sudo` when you use pip, etc.
 
-## Get sourcenet_analysis from github
+## Get context_analysis from github
 
-First step is to clone sourcenet_analysis into the django project folder where you installed sourcenet:
+First step is to clone context_analysis into the django project folder where you installed sourcenet:
 
     cd <project_directory>
-    git clone https://github.com/jonathanmorgan/sourcenet_analysis.git
+    git clone https://github.com/jonathanmorgan/context_analysis.git
 
 ## Other things to install
 
@@ -102,10 +102,10 @@ These are installed with sourcenet, but just so you know they are dependencies:
 
     - ipython - `(sudo) pip install ipython`
 
-- next, install all the required packages for sourcenet_analysis using the requirements.txt file in sourcenet_analysis:
+- next, install all the required packages for context_analysis using the requirements.txt file in context_analysis:
 
     - cd into your django project directory.
-    - `(sudo) pip install -r sourcenet_analysis/requirements.txt`
+    - `(sudo) pip install -r context_analysis/requirements.txt`
 
 ## settings.py - Configure logging, database, applications:
 
@@ -113,7 +113,7 @@ In addition to the configuration you'll need to do for sourcenet in `settings.py
 
 ### applications
 
-Edit the `research/research/settings.py` file and add 'sourcenet_analysis' to your list of `INSTALLED_APPS` using the new django Config classes (stored by default in apps.py in the root of the application), rather than the app name:
+Edit the `research/research/settings.py` file and add 'context_analysis' to your list of `INSTALLED_APPS` using the new django Config classes (stored by default in apps.py in the root of the application), rather than the app name:
 
         INSTALLED_APPS = (
             'django.contrib.auth',
@@ -129,7 +129,7 @@ Edit the `research/research/settings.py` file and add 'sourcenet_analysis' to yo
             'sourcenet.apps.SourcenetConfig',
             'django_config.apps.Django_ConfigConfig',
             'taggit',
-            'sourcenet_analysis.apps.Sourcenet_AnalysisConfig',
+            'context_analysis.apps.Context_AnalysisConfig',
         )
 
 - save the file.
@@ -138,24 +138,24 @@ Edit the `research/research/settings.py` file and add 'sourcenet_analysis' to yo
 
 Once you've made the changes above, save the `settings.py` file, then go into the `research` directory where manage.py is installed.
 
-First, we'll just list out the pending migrations, so we make sure the `sourcenet_analysis` migrations are there and running migrate won't cause other changes we don't intend.
+First, we'll just list out the pending migrations, so we make sure the `context_analysis` migrations are there and running migrate won't cause other changes we don't intend.
 
     python manage.py showmigrations
 
-Next, we run migrations for sourcenet_analysis using `python manage.py migrate.
+Next, we run migrations for context_analysis using `python manage.py migrate.
 
-    python manage.py migrate sourcenet_analysis
+    python manage.py migrate context_analysis
 
-## Enable sourcenet_analysis pages
+## Enable context_analysis pages
 
 - get the built-in django admins and sourcenet pages working.
 
-- add a line to resesarch/urls.py to enable the sourcenet_analysis URLs (in `sourcenet_analysis.urls`) to the urlpatterns structure.
+- add a line to resesarch/urls.py to enable the context_analysis URLs (in `context_analysis.urls`) to the urlpatterns structure.
 
     - Add:
 
-            # sourcenet_analysis URLs:
-            url( r'^sourcenet/analysis/', include( 'sourcenet_analysis.urls' ) ),
+            # context_analysis URLs:
+            url( r'^sourcenet/analysis/', include( 'context_analysis.urls' ) ),
 
     - Result:
 
@@ -191,8 +191,8 @@ Next, we run migrations for sourcenet_analysis using `python manage.py migrate.
                 # sourcenet URLs:
                 url( r'^sourcenet/', include( 'sourcenet.urls' ) ),
                 
-                # sourcenet_analysis URLs:
-                url( r'^sourcenet/analysis/', include( 'sourcenet_analysis.urls' ) ),
+                # context_analysis URLs:
+                url( r'^sourcenet/analysis/', include( 'context_analysis.urls' ) ),
             ]
             
 ### Test!
@@ -212,7 +212,7 @@ Next, we run migrations for sourcenet_analysis using `python manage.py migrate.
 
 # Testing
 
-The sourcenet_analysis project has a small but growing set of unit tests that one can auto-run.  These tests use django's testing framework, based on the Python `unittest` package.
+The context_analysis project has a small but growing set of unit tests that one can auto-run.  These tests use django's testing framework, based on the Python `unittest` package.
 
 ## Unit Tests
 
@@ -227,7 +227,7 @@ In order to run unit tests, your database configuration in `settings.py` will ne
 
 To run unit tests, at the command line in your django project/site folder (where `manage.py` lives):
 
-    python manage.py test sourcenet_analysis.tests
+    python manage.py test context_analysis.tests
     
 Specific sets of tests:
 
@@ -237,8 +237,8 @@ Specific sets of tests:
 
 There is a set of test data stored in the `fixtures` folder inside this django application.  The files:
 
-- **_`sourcenet_analysis_reliability_names.json`_** - Reliability data related to detecting and categorizing names.
-- **_`sourcenet_analysis_reliability_ties.json`_** - Reliability data related to building ties between reporters and reporters and reporters and sources based on attribution over time.
+- **_`context_analysis_reliability_names.json`_** - Reliability data related to detecting and categorizing names.
+- **_`context_analysis_reliability_ties.json`_** - Reliability data related to building ties between reporters and reporters and reporters and sources based on attribution over time.
 
 
 ### Using unittest data for development
@@ -253,8 +253,8 @@ First, follow the instructions to set up sourcenet test data in the sourcenet re
 
 - load the unit test fixtures into the database:
 
-        python manage.py loaddata sourcenet_analysis_reliability_names.json
-        python manage.py loaddata sourcenet_analysis_reliability_ties.json
+        python manage.py loaddata context_analysis_reliability_names.json
+        python manage.py loaddata context_analysis_reliability_ties.json
 
 # Troubleshooting
 
@@ -268,7 +268,7 @@ If you get the message "RConnectionRefused: Connection denied, server not reacha
 
 Copyright 2010-present (2016) Jonathan Morgan
 
-This file is part of [http://github.com/jonathanmorgan/sourcenet_analysis](http://github.com/jonathanmorgan/sourcenet_analysis).
+This file is part of [http://github.com/jonathanmorgan/context_analysis](http://github.com/jonathanmorgan/context_analysis).
 
 sourcenet\_analysis is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -281,5 +281,5 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with [http://github.com/jonathanmorgan/sourcenet_analysis](http://github.com/jonathanmorgan/sourcenet_analysis).  If not, see
+along with [http://github.com/jonathanmorgan/context_analysis](http://github.com/jonathanmorgan/context_analysis).  If not, see
 [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).

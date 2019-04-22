@@ -11,9 +11,9 @@ from sourcenet.models import Article
 from sourcenet.models import Article_Data
 from sourcenet.models import Person
 
-# sourcenet_analysis imports
-from sourcenet_analysis.models import Reliability_Ties
-from sourcenet_analysis.network.network_person_info import NetworkPersonInfo
+# context_analysis imports
+from context_analysis.models import Reliability_Ties
+from context_analysis.network.network_person_info import NetworkPersonInfo
 
 # declare variables
 my_info_instance = None

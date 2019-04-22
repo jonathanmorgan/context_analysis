@@ -63,7 +63,7 @@ coder_id_to_index_dict[ 6 ] = 1
 coder_id_to_index_dict[ 2 ] = 2
 coder_id_to_index_dict[ 4 ] = 3
 
-# loop over "sourcenet_analysis_reliability_names" with label = 'prelim_network'
+# loop over "context_analysis_reliability_names" with label = 'prelim_network'
 reliability_qs = Analysis_Reliability_Names.objects.filter( label = 'prelim_network' )
 
 # order by article ID ASC

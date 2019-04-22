@@ -35,10 +35,10 @@
                     <p><strong>User:</strong> {{ request.user.username }}&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/">Home</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{% url 'sourcenet-logout' %}{% if base_post_login_redirect %}?post_logout_redirect={{ base_post_login_redirect }}{% endif %}">Logout</a></p>
                     <ul>
                         <li>
-                            View: <a href="{% url 'sourcenet_analysis-reliability-names-disagreement-view' %}">Reliability_Names disagreements</a> | <a href="{% url 'sourcenet_analysis-reliability-names-results-view' %}">Reliability_Names_Results</a>
+                            View: <a href="{% url 'context_analysis-reliability-names-disagreement-view' %}">Reliability_Names disagreements</a> | <a href="{% url 'context_analysis-reliability-names-results-view' %}">Reliability_Names_Results</a>
                         </li>
                         <li>
-                            <a href="{% url 'sourcenet_analysis-index' %}">Sourcenet Analysis</a> | <a href="{% url 'sourcenet-index' %}">Sourcenet</a>
+                            <a href="{% url 'context_analysis-index' %}">Context Analysis</a> | <a href="{% url 'sourcenet-index' %}">Sourcenet</a>
                         </li>
                     </ul>
                     <hr />

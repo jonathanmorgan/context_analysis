@@ -5,11 +5,11 @@ from __future__ import division
 '''
 Copyright 2016 Jonathan Morgan
 
-This file is part of http://github.com/jonathanmorgan/sourcenet_analysis.
+This file is part of http://github.com/jonathanmorgan/context_analysis.
 
-sourcenet_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+context_analysis is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-sourcenet_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+context_analysis is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with http://github.com/jonathanmorgan/sourcenet. If not, see http://www.gnu.org/licenses/.
 '''
@@ -66,9 +66,9 @@ from python_utilities.R.rserve_helper import RserveHelper
 from sourcenet.article_coding.manual_coding.manual_article_coder import ManualArticleCoder
 from sourcenet.shared.sourcenet_base import SourcenetBase
 
-# sourcenet_analysis imports
-from sourcenet_analysis.models import Reliability_Names
-from sourcenet_analysis.models import Reliability_Names_Results
+# context_analysis imports
+from context_analysis.models import Reliability_Names
+from context_analysis.models import Reliability_Names_Results
 
 
 #-------------------------------------------------------------------------------
@@ -908,7 +908,7 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
                     pandas_db = sqlalchemy.create_engine( "postgresql://%s:%s@%s/%s" % ( db_username, db_password, db_host, db_name ) )
                     
                     # create SQL to load data from database into pandas data frame.
-                    reliability_names_sql = "SELECT * FROM sourcenet_analysis_reliability_names WHERE label = %s" % ( cleaned_label )
+                    reliability_names_sql = "SELECT * FROM context_analysis_reliability_names WHERE label = %s" % ( cleaned_label )
     
                     self.output_debug_message( "Reliability_Names SQL Query: " + reliability_names_sql, method_IN = me )
                     

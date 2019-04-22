@@ -9,8 +9,8 @@ from __future__ import division
 # grouped by functional area, then alphabetical order by package, then
 #     alphabetical order by name of thing being imported.
 
-# sourcenet_analysis imports
-from sourcenet_analysis.reliability.reliability_names_analyzer import ReliabilityNamesAnalyzer
+# context_analysis imports
+from context_analysis.reliability.reliability_names_analyzer import ReliabilityNamesAnalyzer
 
 #==============================================================================#
 # ! logic
