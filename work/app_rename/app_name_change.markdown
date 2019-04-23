@@ -99,9 +99,19 @@
                 # pattern - grep -r -i -l "<old_name>\." . | xargs sed -i 's/<old_name>\./<new_name>\./g'
                 grep -r -i -l "sourcenet_analysis\." . | xargs sed -i 's/sourcenet_analysis\./context_analysis\./g'
 
+    - URLs:
+    
+        - from /research/sourcenet/analysis/ to /research/context/analysis/
+
+                cd migrations
+                grep -r -i -l "\/research\/sourcenet\/analysis\/" .
+                grep -r -i -n "\/research\/sourcenet\/analysis\/" .
+                # pattern - grep -r -i -l "<old>" . | xargs sed -i 's/<old>/<new>/g'
+                grep -r -i -l "\/research\/sourcenet\/analysis\/" . | xargs sed -i 's/\/research\/sourcenet\/analysis\//\/research\/context\/analysis\//g'
+
 8. For the next 4 steps (7, 8, 9 and 10), I built update_database.pg.sql and added it to the `work/app_rename` sub-directory. It's not a standard django thing, but each test copy and each production copy of the database was going to need the same set of steps.
 9. `UPDATE django_content_type SET app_label='<new_name>' WHERE app_label='<old_name>';`
-10. `UPDATE django_migrations SET app='<new_name>' WHERE app='<old_name>';
+10. `UPDATE django_migrations SET app='<new_name>' WHERE app='<old_name>';`
 11. Now... in your database (mine is PostgreSQL) there will be a bunch of tables that start with "<old_name>". You need to list all of these. In PostgreSQL, in addition to tables, there will be sequences for each AutoField, and many related indexes.
 
     - Indexes (do first, since it depends on name of table)
