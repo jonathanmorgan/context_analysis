@@ -59,10 +59,18 @@
     
     - Imports:
     
-            grep -r -i -l "from sourcenet_analysis" .
-            # pattern: grep -r -i -l "from <old_name>" . | xargs sed -i 's/from <old_name>/from <new_name>/g'
-            grep -r -i -l "from sourcenet_analysis" . | xargs sed -i 's/from sourcenet_analysis/from context_analysis/g'
+            grep -r -i -l "from sourcenet_analysis\." .
+            grep -r -i -n "from sourcenet_analysis\." .
+            # pattern: grep -r -i -l "from <old_name>\." . | xargs sed -i 's/from <old_name>\./from <new_name>\./g'
+            grep -r -i -l "from sourcenet_analysis\." . | xargs sed -i 's/from sourcenet_analysis\./from context\_analysis\./g'
     
+    - Table name prefix:
+    
+            grep -r -i -l "sourcenet_analysis\_" .
+            grep -r -i -n "sourcenet_analysis\_" .
+            # pattern: grep -r -i -l "<old_name>\_" . | xargs sed -i 's/<old_name>\_/<new_name>\_/g'
+            grep -r -i -l "sourcenet_analysis\_" . | xargs sed -i 's/sourcenet_analysis\_/context\_analysis\_/g'
+        
     - Update paths in "templates" and "static" folders, if you name-spaced your files with the name of the application (as you should).
 
         - If application is in git, use "git mv", not just "mv".
