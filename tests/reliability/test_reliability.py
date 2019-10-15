@@ -9,6 +9,7 @@ Functions tested:
 import django.test
 
 # context_text imports
+from context_text.models import Person
 from context_text.tests.test_helper import TestHelper
 
 
