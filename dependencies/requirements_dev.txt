@@ -1,11 +1,9 @@
-django-basic-config
 django-taggit
 ipykernel
 numpy
 pandas
 patsy
 pyRserve
-python-utilities-jsm
 scikit-learn
 scipy
 sqlalchemy
