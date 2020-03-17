@@ -35,7 +35,6 @@ from django.db import models
 
 # django encoding imports (for supporting 2 and 3).
 import django.utils.encoding
-from django.utils.encoding import python_2_unicode_compatible
 
 # python utilities
 from python_utilities.analysis.statistics.stats_helper import StatsHelper
@@ -123,7 +122,6 @@ def output_debug( message_IN, method_IN = "", indent_with_IN = "", logger_name_I
 #==============================================================================#
 
 
-@python_2_unicode_compatible
 class Reliability_Names( models.Model ):
 
     '''
@@ -1448,7 +1446,6 @@ class Reliability_Names( models.Model ):
 #= END Reliability_Names model ===============================================#
 
 
-@python_2_unicode_compatible
 class Reliability_Names_Evaluation( models.Model ):
 
     '''
@@ -2600,7 +2597,6 @@ class Reliability_Names_Evaluation( models.Model ):
 #= END Reliability_Names_Evaluation model ===============================================#
 
 
-@python_2_unicode_compatible
 class Reliability_Ties( models.Model ):
 
     '''
@@ -2787,7 +2783,6 @@ class Reliability_Ties( models.Model ):
 #==============================================================================#
 
 
-@python_2_unicode_compatible
 class Field_Spec( models.Model ):
     
     '''
@@ -2930,7 +2925,6 @@ class Field_Spec( models.Model ):
 #= END Field_Spec model ================================================#
 
 
-@python_2_unicode_compatible
 class Field_Spec_Value( models.Model ):
     
     '''
@@ -3003,7 +2997,6 @@ class Field_Spec_Value( models.Model ):
 #= END Field_Spec_Value model ================================================#
 
 
-@python_2_unicode_compatible
 class Reliability_Names_Coder_Data( models.Model ):
 
     '''
@@ -3105,7 +3098,6 @@ class Reliability_Names_Coder_Data( models.Model ):
 #= END Reliability_Names_Coder_Data model =====================================#
 
 
-@python_2_unicode_compatible
 class Reliability_Names_Results( models.Model ):
 
     '''
@@ -3301,7 +3293,6 @@ class Reliability_Names_Results( models.Model ):
 #= END Reliability_Names_Results model ========================================#
 
 
-@python_2_unicode_compatible
 class Reliability_Result_Details( models.Model ):
 
     '''
