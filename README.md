@@ -185,15 +185,9 @@ Next, we run migrations for context_analysis using `python manage.py migrate.
             from django.conf.urls import include
             from django.contrib import admin
 
-            # django-ajax-selects URLs
-            from ajax_select import urls as ajax_select_urls
-
             urlpatterns = [
                 url(r'^admin/', admin.site.urls),
                 url( r'^admin/doc/', include( 'django.contrib.admindocs.urls' ) ),
-
-                # django-ajax-select URLs
-                url( r'^admin/lookups/', include( ajax_select_urls ) ),
 
                 # context_text URLs:
                 url( r'^context/text/', include( 'context_text.urls' ) ),

@@ -5,10 +5,6 @@ from django.contrib import admin
 import six
 from six.moves import range
 
-# import code for AJAX select
-from ajax_select import make_ajax_form
-from ajax_select.admin import AjaxSelectAdmin
-
 # Import models
 from context_analysis.models import Reliability_Names
 from context_analysis.models import Reliability_Names_Evaluation
@@ -24,14 +20,8 @@ admin.site.register( Reliability_Ties )
 
 class Reliability_NamesAdmin( admin.ModelAdmin ):
 
-    # set up ajax-selects - for make_ajax_form, 1st argument is the model you
-    #     are looking to make ajax selects form fields for; 2nd argument is a
-    #     dict of pairs of field names in the model in argument 1 (with no quotes
-    #     around them) mapped to lookup channels used to service them (lookup
-    #     channels are defined in settings.py, implemented in a separate module -
-    #     in this case, implemented in context_text/lookups.py and
-    #     context_analysis/lookups.py
-    form = make_ajax_form( Reliability_Names, dict( person = 'person', article = 'article' ) )
+    # ajax-based autocomplete
+    autocomplete_fields = [ 'person', 'article' ]
 
     fieldsets = [
         (
@@ -101,14 +91,8 @@ admin.site.register( Reliability_Names, Reliability_NamesAdmin )
 
 class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
 
-    # set up ajax-selects - for make_ajax_form, 1st argument is the model you
-    #     are looking to make ajax selects form fields for; 2nd argument is a
-    #     dict of pairs of field names in the model in argument 1 (with no quotes
-    #     around them) mapped to lookup channels used to service them (lookup
-    #     channels are defined in settings.py, implemented in a separate module -
-    #     in this case, implemented in context_text/lookups.py and
-    #     context_analysis/lookups.py
-    form = make_ajax_form( Reliability_Names_Evaluation, dict( reliability_names = 'reliability_names', persons = 'person', article = 'article', article_datas = 'article_data', merged_from_article_datas = 'article_data', merged_to_article_datas = 'article_data' ) )
+    # ajax-based autocomplete
+    autocomplete_fields = [ 'reliability_names', 'persons', 'article', 'article_datas', 'merged_from_article_datas', 'merged_to_article_datas' ]
 
     fieldsets = [
         (
