@@ -1446,7 +1446,7 @@ class Reliability_Names( models.Model ):
 #= END Reliability_Names model ===============================================#
 
 
-class Reliability_Names_Evaluation( models.Model ):
+class Reliability_Names_Eval( models.Model ):
 
     '''
     Class to hold details on individual Reliability_Names rows that have been
@@ -1564,8 +1564,8 @@ class Reliability_Names_Evaluation( models.Model ):
     # need to add fields for merge from/to Reliability_Names ID and Article_Data.
     merged_from_reliability_names_id = models.IntegerField( blank = True, null = True )
     merged_to_reliability_names_id = models.IntegerField( blank = True, null = True )
-    merged_from_article_datas = models.ManyToManyField( Article_Data, blank = True, related_name = "rne_merged_from_article_data" )
-    merged_to_article_datas = models.ManyToManyField( Article_Data, blank = True, related_name = "rne_merged_to_article_data" )
+    merged_from_ad = models.ManyToManyField( Article_Data, blank = True, related_name = "rne_merged_from_ad" )
+    merged_to_ad = models.ManyToManyField( Article_Data, blank = True, related_name = "rne_merged_to_ad" )
     
     # time stamps
     create_date = models.DateTimeField( auto_now_add = True )
@@ -1641,13 +1641,13 @@ class Reliability_Names_Evaluation( models.Model ):
         person_title = None
         person_organization = None
         
-        # do we have Reliability_Names_Evaluation (rne) instance?
+        # do we have Reliability_Names_Eval (rne) instance?
         if ( rne_instance_IN is not None ):
         
             # we do.  Use it.
             rne_instance = rne_instance_IN
             
-        #-- END check to see if Reliability_Names_Evaluation instance --#
+        #-- END check to see if Reliability_Names_Eval instance --#
         
         # get information for output
         reliability_names_id = reliability_names_id_IN
@@ -1711,15 +1711,15 @@ class Reliability_Names_Evaluation( models.Model ):
                     # build detail string.
                     detail_string = prefix_IN
                     
-                    # ==> Reliability_Names_Evaluation ID?
+                    # ==> Reliability_Names_Eval ID?
                     if ( rne_instance is not None ):
 
                         # make it a link
-                        # example: http://research.local/research/admin/context_analysis/reliability_names_evaluation/6/change/
+                        # example: http://research.local/research/admin/context_analysis/reliability_names_eval/6/change/
                         detail_string += "<a href=\""
                         detail_string += str( protocol_IN ) + "://"
                         detail_string += str( host_IN ) + "/" + str( app_path_IN )
-                        detail_string += "admin/context_analysis/reliability_names_evaluation/"
+                        detail_string += "admin/context_analysis/reliability_names_eval/"
                         detail_string += str( rne_instance.id )
                         detail_string += "/change/\">"
                         detail_string += str( rne_instance.id )
@@ -1728,7 +1728,7 @@ class Reliability_Names_Evaluation( models.Model ):
                         # and add a delimiter
                         detail_string += " " + delimiter_IN + " "
                         
-                    #-- END check to see if Reliability_Names_Evaluation ID --#
+                    #-- END check to see if Reliability_Names_Eval ID --#
             
                     # ==> Reliability_Names ID
                     detail_string += str( reliability_names_id )
@@ -1860,13 +1860,13 @@ class Reliability_Names_Evaluation( models.Model ):
         article_data_link_list = []
         article_data_link = ""
         
-        # do we have Reliability_Names_Evaluation (rne) instance?
+        # do we have Reliability_Names_Eval (rne) instance?
         if ( rne_instance_IN is not None ):
         
             # we do.  Use it.
             rne_instance = rne_instance_IN
             
-        #-- END check to see if Reliability_Names_Evaluation instance --#
+        #-- END check to see if Reliability_Names_Eval instance --#
         
         # get information for output
         reliability_names_id = reliability_names_id_IN
@@ -1954,15 +1954,15 @@ class Reliability_Names_Evaluation( models.Model ):
             # build detail string.
             detail_string = prefix_IN
             
-            # ==> Reliability_Names_Evaluation ID?
+            # ==> Reliability_Names_Eval ID?
             if ( rne_instance is not None ):
 
                 # make it a link
-                # example: http://research.local/research/admin/context_analysis/reliability_names_evaluation/6/change/
+                # example: http://research.local/research/admin/context_analysis/reliability_names_eval/6/change/
                 detail_string += "<a href=\""
                 detail_string += str( protocol_IN ) + "://"
                 detail_string += str( host_IN ) + "/" + str( app_path_IN )
-                detail_string += "admin/context_analysis/reliability_names_evaluation/"
+                detail_string += "admin/context_analysis/reliability_names_eval/"
                 detail_string += str( rne_instance.id )
                 detail_string += "/change/\">"
                 detail_string += str( rne_instance.id )
@@ -1971,7 +1971,7 @@ class Reliability_Names_Evaluation( models.Model ):
                 # and add a delimiter
                 detail_string += " " + delimiter_IN + " "
                 
-            #-- END check to see if Reliability_Names_Evaluation ID --#
+            #-- END check to see if Reliability_Names_Eval ID --#
             
             # ==> Reliability_Names ID
             detail_string += str( reliability_names_id )
@@ -2034,7 +2034,7 @@ class Reliability_Names_Evaluation( models.Model ):
         
         '''
         Accepts Reliability_Names ID and a few optional parameters.  Uses
-            information from it to populate a Reliability_Names_Evaluation
+            information from it to populate a Reliability_Names_Eval
             instance.
         '''
         
@@ -2076,7 +2076,7 @@ class Reliability_Names_Evaluation( models.Model ):
         reliability_names_id = reliability_names_id_IN
         if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
         
-            # create Reliability_Names_Evaluation instance
+            # create Reliability_Names_Eval instance
             instance_OUT = cls()
             
             # ==> status and status_message
@@ -2265,7 +2265,7 @@ class Reliability_Names_Evaluation( models.Model ):
         
         '''
         Accepts Reliability_Names ID and a few optional parameters.  Uses
-            information from it to populate a Reliability_Names_Evaluation
+            information from it to populate a Reliability_Names_Eval
             instance.
         '''
         
@@ -2314,7 +2314,7 @@ class Reliability_Names_Evaluation( models.Model ):
                                                                   
             except Reliability_Names.DoesNotExist as rn_dne:
             
-                # create Reliability_Names_Evaluation instance
+                # create Reliability_Names_Eval instance
                 instance_OUT = cls()
                 
                 # ==> status and status_message
@@ -2516,7 +2516,7 @@ class Reliability_Names_Evaluation( models.Model ):
         if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
         
             # call method
-            detail_string_OUT = Reliability_Names_Evaluation.build_detail_string_from_rn_id(
+            detail_string_OUT = Reliability_Names_Eval.build_detail_string_from_rn_id(
                     reliability_names_id,
                     delimiter_IN = delimiter_IN,
                     prefix_IN = prefix_IN,
@@ -2569,7 +2569,7 @@ class Reliability_Names_Evaluation( models.Model ):
         if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
         
             # call method
-            detail_string_OUT = Reliability_Names_Evaluation.build_summary_string_from_rn_id(
+            detail_string_OUT = Reliability_Names_Eval.build_summary_string_from_rn_id(
                      reliability_names_id,
                      delimiter_IN = delimiter_IN,
                      prefix_IN = prefix_IN,
@@ -2594,7 +2594,7 @@ class Reliability_Names_Evaluation( models.Model ):
     #-- END method build_summary_string() --#
 
 
-#= END Reliability_Names_Evaluation model ===============================================#
+#= END Reliability_Names_Eval model ===============================================#
 
 
 class Reliability_Ties( models.Model ):

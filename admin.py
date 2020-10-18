@@ -7,15 +7,15 @@ from six.moves import range
 
 # Import models
 from context_analysis.models import Reliability_Names
-from context_analysis.models import Reliability_Names_Evaluation
+from context_analysis.models import Reliability_Names_Eval
 from context_analysis.models import Reliability_Ties
 
 #admin.site.register( Reliability_Names )
-#admin.site.register( Reliability_Names_Evaluation )
+#admin.site.register( Reliability_Names_Eval )
 admin.site.register( Reliability_Ties )
 
 #-------------------------------------------------------------------------------
-# Reliability_Names_Evaluation admin definition
+# Reliability_Names_Eval admin definition
 #-------------------------------------------------------------------------------
 
 class Reliability_NamesAdmin( admin.ModelAdmin ):
@@ -86,13 +86,13 @@ class Reliability_NamesAdmin( admin.ModelAdmin ):
 admin.site.register( Reliability_Names, Reliability_NamesAdmin )
 
 #-------------------------------------------------------------------------------
-# Reliability_Names_Evaluation admin definition
+# Reliability_Names_Eval admin definition
 #-------------------------------------------------------------------------------
 
-class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
+class Reliability_Names_EvalAdmin( admin.ModelAdmin ):
 
     # ajax-based autocomplete
-    autocomplete_fields = [ 'reliability_names', 'persons', 'article', 'article_datas', 'merged_from_article_datas', 'merged_to_article_datas' ]
+    autocomplete_fields = [ 'reliability_names', 'persons', 'article', 'article_datas', 'merged_from_ad', 'merged_to_ad' ]
 
     fieldsets = [
         (
@@ -136,7 +136,7 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
         (
             "Merge Detail",
             {
-                'fields' : [ 'merged_from_reliability_names_id', 'merged_from_article_datas', 'merged_to_reliability_names_id', 'merged_to_article_datas' ],
+                'fields' : [ 'merged_from_reliability_names_id', 'merged_from_ad', 'merged_to_reliability_names_id', 'merged_to_ad' ],
                 'classes' : ( "collapse", )
             }
         ),
@@ -148,6 +148,6 @@ class Reliability_Names_EvaluationAdmin( admin.ModelAdmin ):
     search_fields = [ 'person_name', 'status', 'status_message', 'notes', 'event_type', 'work_status', 'label' ]
     date_hierarchy = 'create_date'
     
-#-- END admin class Reliability_Names_EvaluationAdmin --#
+#-- END admin class Reliability_Names_EvalAdmin --#
 
-admin.site.register( Reliability_Names_Evaluation, Reliability_Names_EvaluationAdmin )
+admin.site.register( Reliability_Names_Eval, Reliability_Names_EvalAdmin )

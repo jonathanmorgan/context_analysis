@@ -80,7 +80,7 @@ from context_analysis.forms import ReliabilityNamesResultsForm
 
 # import models
 from context_analysis.models import Reliability_Names
-from context_analysis.models import Reliability_Names_Evaluation
+from context_analysis.models import Reliability_Names_Eval
 from context_analysis.models import Reliability_Names_Results
 
 #================================================================================
@@ -169,7 +169,7 @@ def build_reliability_name_detail_string( reliability_names_id_IN,
     if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
     
         # call method
-        detail_string_OUT = Reliability_Names_Evaluation.build_detail_string_from_rn_id(
+        detail_string_OUT = Reliability_Names_Eval.build_detail_string_from_rn_id(
                 reliability_names_id,
                 delimiter_IN = delimiter_IN,
                 prefix_IN = prefix_IN,
@@ -221,7 +221,7 @@ def build_reliability_name_summary_string( reliability_names_id_IN,
         if ( ( reliability_names_id is not None ) and ( reliability_names_id > 0 ) ):
         
             # call method
-            detail_string_OUT = Reliability_Names_Evaluation.build_summary_string_from_rn_id(
+            detail_string_OUT = Reliability_Names_Eval.build_summary_string_from_rn_id(
                      reliability_names_id,
                      delimiter_IN = delimiter_IN,
                      prefix_IN = prefix_IN,
@@ -340,7 +340,7 @@ def reliability_names_disagreement_view( request_IN ):
     coder_index = -1
     coder_string = ""
     current_field_name = ""
-    reliability_names_evaluation_instance = None
+    reliability_names_eval_instance = None
     
     # declare variables - delete
     delete_count = -1
@@ -774,23 +774,23 @@ def reliability_names_disagreement_view( request_IN ):
                             reliability_names_instance = Reliability_Names.objects.get( pk = reliability_names_id )
                             
                             # make database record...
-                            reliability_names_evaluation_instance = Reliability_Names_Evaluation.create_from_reliability_names(
+                            reliability_names_eval_instance = Reliability_Names_Eval.create_from_reliability_names(
                                     reliability_names_id,
                                     label_IN = reliability_names_label,
                                     notes_IN = "Deleting Reliability_Names row with ID " + str( reliability_names_id ),
                                     reliability_names_instance_IN = reliability_names_instance,
-                                    event_type_IN = Reliability_Names_Evaluation.EVENT_TYPE_DELETE
+                                    event_type_IN = Reliability_Names_Eval.EVENT_TYPE_DELETE
                                 )
                             
                             # ...then use it to build detail string:
                             #detail_string = build_reliability_name_detail_string( reliability_names_id )
-                            detail_string = reliability_names_evaluation_instance.build_detail_string()
+                            detail_string = reliability_names_eval_instance.build_detail_string()
                             detail_string_list.append( detail_string )
                             
                             # remove reference to Reliability_Names row
-                            reliability_names_evaluation_instance.reliability_names = None
-                            reliability_names_evaluation_instance.is_deleted = True
-                            reliability_names_evaluation_instance.save()
+                            reliability_names_eval_instance.reliability_names = None
+                            reliability_names_eval_instance.is_deleted = True
+                            reliability_names_eval_instance.save()
                             
                             # delete it
                             reliability_names_instance.delete()
@@ -886,24 +886,24 @@ def reliability_names_disagreement_view( request_IN ):
                         action_detail_list.extend( merge_status_message_list )
                         
                         # Make an evaluation row for the destination (into).
-                        reliability_names_evaluation_instance = Reliability_Names_Evaluation.create_from_reliability_names(
+                        reliability_names_eval_instance = Reliability_Names_Eval.create_from_reliability_names(
                                 into_id,
                                 label_IN = reliability_names_label,
                                 notes_IN = "; ".join( action_detail_list ),
-                                event_type_IN = Reliability_Names_Evaluation.EVENT_TYPE_MERGE
+                                event_type_IN = Reliability_Names_Eval.EVENT_TYPE_MERGE
                             )
                             
                         # add Reliability_Names IDs
-                        reliability_names_evaluation_instance.merged_from_reliability_names_id = from_id
-                        reliability_names_evaluation_instance.merged_to_reliability_names_id = into_id
-                        reliability_names_evaluation_instance.save()
+                        reliability_names_eval_instance.merged_from_reliability_names_id = from_id
+                        reliability_names_eval_instance.merged_to_reliability_names_id = into_id
+                        reliability_names_eval_instance.save()
                         
                         # add Article_Data references
-                        reliability_names_evaluation_instance.merged_from_article_datas.set( from_article_data_list )
-                        reliability_names_evaluation_instance.merged_to_article_datas.set( into_article_data_list )
+                        reliability_names_eval_instance.merged_from_ad.set( from_article_data_list )
+                        reliability_names_eval_instance.merged_to_ad.set( into_article_data_list )
                                                 
                         # Add summary string to the output (includes link).
-                        detail_string = reliability_names_evaluation_instance.build_summary_string()
+                        detail_string = reliability_names_eval_instance.build_summary_string()
                         action_detail_list.append( detail_string )
 
                     else:
@@ -940,14 +940,14 @@ def reliability_names_disagreement_view( request_IN ):
                                 reliability_names_instance.tags.add( *reliability_names_action_tag_list )
                                                                 
                                 # build a detail string:
-                                reliability_names_evaluation_instance = Reliability_Names_Evaluation.create_from_reliability_names(
+                                reliability_names_eval_instance = Reliability_Names_Eval.create_from_reliability_names(
                                         reliability_names_id,
                                         label_IN = reliability_names_label,
                                         notes_IN = "Added tag(s): " + ", ".join( reliability_names_action_tag_list ),
                                         reliability_names_instance_IN = reliability_names_instance,
-                                        event_type_IN = Reliability_Names_Evaluation.EVENT_TYPE_ADD_TAGS
+                                        event_type_IN = Reliability_Names_Eval.EVENT_TYPE_ADD_TAGS
                                     )
-                                #detail_string = reliability_names_evaluation_instance.build_summary_string()
+                                #detail_string = reliability_names_eval_instance.build_summary_string()
                                 #detail_string_list.append( detail_string )
 
                             #-- END loop over selected IDs. --#
@@ -997,14 +997,14 @@ def reliability_names_disagreement_view( request_IN ):
                                 reliability_names_instance.tags.remove( *reliability_names_action_tag_list )
                                                                 
                                 # build a detail string:
-                                reliability_names_evaluation_instance = Reliability_Names_Evaluation.create_from_reliability_names(
+                                reliability_names_eval_instance = Reliability_Names_Eval.create_from_reliability_names(
                                         reliability_names_id,
                                         label_IN = reliability_names_label,
                                         notes_IN = "Removed tag(s): " + ", ".join( reliability_names_action_tag_list ),
                                         reliability_names_instance_IN = reliability_names_instance,
-                                        event_type_IN = Reliability_Names_Evaluation.EVENT_TYPE_REMOVE_TAGS
+                                        event_type_IN = Reliability_Names_Eval.EVENT_TYPE_REMOVE_TAGS
                                     )
-                                detail_string = reliability_names_evaluation_instance.build_summary_string()
+                                detail_string = reliability_names_eval_instance.build_summary_string()
                                 detail_string_list.append( detail_string )
     
                             #-- END loop over selected IDs. --#
