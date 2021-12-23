@@ -14,8 +14,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 
 # import djanfgo.conf.urls.defaults stuff.
 #from django.conf.urls.defaults import *
-from django.conf.urls import include
-from django.conf.urls import url
+from django.urls import include
+from django.urls import re_path
 
 # and import stuff to use the admin's login page for all authentication.
 from django.contrib.auth import views as auth_views
@@ -40,11 +40,11 @@ v1_api.register( ArticleResource() )
 urlpatterns = [
 
     # index page
-    url( r'^index$', context_analysis.views.index, name = "context_analysis-index" ),
+    re_path( r'^index$', context_analysis.views.index, name = "context_analysis-index" ),
 
     # view disagreements
-    url( r'^reliability/names/disagreement/view$', context_analysis.views.reliability_names_disagreement_view, name = "context_analysis-reliability-names-disagreement-view" ),
+    re_path( r'^reliability/names/disagreement/view$', context_analysis.views.reliability_names_disagreement_view, name = "context_analysis-reliability-names-disagreement-view" ),
 
     # view reliability results
-    url( r'^reliability/names/results/view$', context_analysis.views.reliability_names_results_view, name = "context_analysis-reliability-names-results-view" ),
+    re_path( r'^reliability/names/results/view$', context_analysis.views.reliability_names_results_view, name = "context_analysis-reliability-names-results-view" ),
 ]
