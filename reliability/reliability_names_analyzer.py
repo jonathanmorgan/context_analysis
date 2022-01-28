@@ -49,10 +49,10 @@ Example of getting properties from django_config:
 
 # get settings from django_config.
 email_smtp_server_host = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_HOST )
-email_smtp_server_port = Config_Property.get_property_int_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_PORT, -1 )
-email_smtp_server_username = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_USERNAME, "" )
-email_smtp_server_password = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_PASSWORD, "" )
-use_SSL = Config_Property.get_property_boolean_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_USE_SSL, False )
+email_smtp_server_port = Config_Property.get_property_int_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_PORT, default_IN = -1 )
+email_smtp_server_username = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_USERNAME, default_IN = "" )
+email_smtp_server_password = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_PASSWORD, default_IN = "" )
+use_SSL = Config_Property.get_property_boolean_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_SMTP_USE_SSL, default_IN = False )
 email_from_address = Config_Property.get_property_value( Issue.CONFIG_APPLICATION, Issue.CONFIG_PROP_FROM_EMAIL )
 '''
 
@@ -274,23 +274,23 @@ class ReliabilityNamesAnalyzer( RserveHelper ):
         self.db_username = Config_Property.get_property_value(
             ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
             ContextTextBase.DJANGO_CONFIG_PROP_DB_USERNAME,
-            None )
+            default_IN = None )
         self.db_password = Config_Property.get_property_value(
             ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
             ContextTextBase.DJANGO_CONFIG_PROP_DB_PASSWORD,
-            None )
+            default_IN = None )
         self.db_host = Config_Property.get_property_value(
             ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
             ContextTextBase.DJANGO_CONFIG_PROP_DB_HOST,
-            None )
+            default_IN = None )
         self.db_port = Config_Property.get_property_int_value(
             ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
             ContextTextBase.DJANGO_CONFIG_PROP_DB_PORT,
-            -1 )
+            default_IN = -1 )
         self.db_name = Config_Property.get_property_value(
             ContextTextBase.DJANGO_CONFIG_APPLICATION_CONTEXT_TEXT_DB_ADMIN,
             ContextTextBase.DJANGO_CONFIG_PROP_DB_NAME,
-            None )
+            default_IN = None )
         
     #-- END method __init__() --#
     
