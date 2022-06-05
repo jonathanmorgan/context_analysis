@@ -12,7 +12,15 @@ library( "sna" )
 #==============================================================================#
 
 
-compareMatricesQAP <- function( matrix1IN, matrix2IN, outputPrefixIN = "matrix1-to-matrix2", outputPlotsIN = FALSE, debugFlagIN = FALSE, repsIN = 1000, doQapIN = TRUE ) {
+compareMatricesQAP <- function(
+    matrix1IN,
+    matrix2IN,
+    outputPrefixIN = "matrix1-to-matrix2",
+    outputPlotsIN = FALSE,
+    debugFlagIN = FALSE,
+    repsIN = 1000,
+    doQapIN = TRUE,
+    debugIncludeDataInOutputIN = FALSE ) {
 
     # Function compareMatricesQAP()
     #
@@ -82,8 +90,8 @@ compareMatricesQAP <- function( matrix1IN, matrix2IN, outputPrefixIN = "matrix1-
     graphSetArray[ 1, , ] <- matrix1IN
     graphSetArray[ 2, , ] <- matrix2IN
     
-    # debug?
-    if ( debugFlag == TRUE ){
+    # debug, and asked to include data in output?
+    if ( ( debugFlag == TRUE ) && ( debugIncludeDataInOutputIN == TRUE ) ){
 
         # add it to return list.
         matrixComparisonDetailsOUT$graphSetArray <- graphSetArray
@@ -93,15 +101,21 @@ compareMatricesQAP <- function( matrix1IN, matrix2IN, outputPrefixIN = "matrix1-
     # ! ==> first, try a graph correlation
     graphCorrelation <- sna::gcor( matrix1IN, matrix2IN )
     matrixComparisonDetailsOUT$graphCorrelation <- graphCorrelation
-    message( paste( "---->", outputPrefixIN, "graph correlation =", graphCorrelation, "( @", Sys.time(), ")", sep = " " ) )
+    
+    if ( debugFlag == TRUE ){
+        message( paste( "---->", outputPrefixIN, "graph correlation =", graphCorrelation, "( @", Sys.time(), ")", sep = " " ) )
+    }
     
     # try a qaptest...?
     if ( doQapIN == TRUE ){
 
         qapGcorResult <- sna::qaptest( graphSetArray, sna::gcor, g1 = 1, g2 = 2, reps = repsIN )
         matrixComparisonDetailsOUT$qapGcorResult <- qapGcorResult
-        message( paste( "----> ", outputPrefixIN, " QAP correlation analysis complete at ", Sys.time(), ".  Summary:", sep = "" ) )
-        message( print( summary( qapGcorResult ) ) )
+
+        if ( debugFlag == TRUE ){
+            message( paste( "----> ", outputPrefixIN, " QAP correlation analysis complete at ", Sys.time(), ".  Summary:", sep = "" ) )
+            message( print( summary( qapGcorResult ) ) )
+        }
     
         # output plot?
         if ( outputPlotsIN == TRUE ){
@@ -113,22 +127,29 @@ compareMatricesQAP <- function( matrix1IN, matrix2IN, outputPrefixIN = "matrix1-
 
     } else {
 
-        message( paste( "----> ", outputPrefixIN, " SKIPPED QAP correlation analysis", sep = "" ) )
+        if ( debugFlag == TRUE ){
+            message( paste( "----> ", outputPrefixIN, " SKIPPED QAP correlation analysis", sep = "" ) )
+        }
 
     }
     
     # ! ==> graph covariance...
     graphCovariance <- sna::gcov( matrix1IN, matrix2IN )
     matrixComparisonDetailsOUT$graphCovariance <- graphCovariance
-    message( paste( "---->", outputPrefixIN, "graph covariance =", graphCovariance, "( @", Sys.time(), ")", sep = " " ) )
+    
+    if ( debugFlag == TRUE ){
+        message( paste( "---->", outputPrefixIN, "graph covariance =", graphCovariance, "( @", Sys.time(), ")", sep = " " ) )
+    }
     
     # try a qaptest...?
     if ( doQapIN == TRUE ){
 
         qapGcovResult <- sna::qaptest( graphSetArray, sna::gcov, g1 = 1, g2 = 2, reps = repsIN )
         matrixComparisonDetailsOUT$qapGcovResult <- qapGcovResult
-        message( paste( "----> ", outputPrefixIN, " QAP covariance analysis complete at ", Sys.time(), ".  Summary:", sep = "" ) )
-        message( print( summary( qapGcovResult ) ) )
+        if ( debugFlag == TRUE ){
+            message( paste( "----> ", outputPrefixIN, " QAP covariance analysis complete at ", Sys.time(), ".  Summary:", sep = "" ) )
+            message( print( summary( qapGcovResult ) ) )
+        }
 
         # output plot?
         if ( outputPlotsIN == TRUE ){
@@ -140,22 +161,29 @@ compareMatricesQAP <- function( matrix1IN, matrix2IN, outputPrefixIN = "matrix1-
 
     } else {
 
-        message( paste( "----> ", outputPrefixIN, " SKIPPED QAP covariance analysis", sep = "" ) )
+        if ( debugFlag == TRUE ){
+            message( paste( "----> ", outputPrefixIN, " SKIPPED QAP covariance analysis", sep = "" ) )
+        }
 
     }
     
     # ! ==> Hamming Distance
     graphHammingDist <- sna::hdist( matrix1IN, matrix2IN )
     matrixComparisonDetailsOUT$graphHammingDist <- graphHammingDist
-    message( paste( "---->", outputPrefixIN, "graph hamming distance =", graphHammingDist, "( @", Sys.time(), ")", sep = " " ) )
+    
+    if ( debugFlag == TRUE ){
+        message( paste( "---->", outputPrefixIN, "graph hamming distance =", graphHammingDist, "( @", Sys.time(), ")", sep = " " ) )
+    }
     
     # try a qaptest...?
     if ( doQapIN == TRUE ){
 
         qapHdistResult <- sna::qaptest( graphSetArray, sna::hdist, g1 = 1, g2 = 2, reps = repsIN )
         matrixComparisonDetailsOUT$qapHdistResult <- qapHdistResult
-        message( paste( "----> ", outputPrefixIN, " QAP hamming distance analysis complete at ", Sys.time(), ".  Summary:", sep = "" ) )
-        message( print( summary( qapHdistResult ) ) )
+        if ( debugFlag == TRUE ){
+            message( paste( "----> ", outputPrefixIN, " QAP hamming distance analysis complete at ", Sys.time(), ".  Summary:", sep = "" ) )
+            message( print( summary( qapHdistResult ) ) )
+        }
 
         # output plot?
         if ( outputPlotsIN == TRUE ){
@@ -167,7 +195,9 @@ compareMatricesQAP <- function( matrix1IN, matrix2IN, outputPrefixIN = "matrix1-
 
     } else {
 
-        message( paste( "----> ", outputPrefixIN, " SKIPPED QAP hamming distance analysis", sep = "" ) )
+        if ( debugFlag == TRUE ){
+            message( paste( "----> ", outputPrefixIN, " SKIPPED QAP hamming distance analysis", sep = "" ) )
+        }
 
     }
     

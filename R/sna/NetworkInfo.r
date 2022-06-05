@@ -21,6 +21,7 @@ networkInfo_fields <- list(
     myDataDF = "data.frame",
     myDataFileName = "character",
     myDataPath = "character",
+    myDebugFlag = "logical",
     myDegreeAverage = "numeric",
     myDegreeAverageAuthor2And4 = "numeric",
     myDegreeAverageAuthorOnly2 = "numeric",
@@ -43,7 +44,12 @@ networkInfo_fields <- list(
 
 NetworkInfo <- setRefClass(
     "NetworkInfo",
-    fields = networkInfo_fields
+    fields = networkInfo_fields,
+    methods = list(
+        initialize=function( debugFlagIN = FALSE ) {
+            myDebugFlag <<- debugFlagIN
+        }
+    )
 )
 
 #==============================================================================#
@@ -57,38 +63,62 @@ NetworkInfo$methods(
         
         # what is the average (mean) degree?
         myDegreeAverage <<- mean( myDegreeVector )
-        message( paste( "average degree = ", myDegreeAverage, sep = "" ) )
+
+        if ( myDebugFlag == TRUE ){
+            message( paste( "average degree = ", myDegreeAverage, sep = "" ) )
+        }
 
         # subset vector to get only those that are above mean
         #testAboveMeanVector <- testDegreeVector[ testDegreeVector > testAvgDegree ]
 
         # average author degree (person types 2 and 4)
         myDegreeAverageAuthor2And4 <<- calcAuthorMeanDegree( dataFrameIN = myDataDF, includeBothIN = TRUE )
-        message( paste( "average author degree (2 and 4) = ", myDegreeAverageAuthor2And4, sep = "" ) )
+
+        if ( myDebugFlag == TRUE ){
+            message( paste( "average author degree (2 and 4) = ", myDegreeAverageAuthor2And4, sep = "" ) )
+        }
 
         # average author degree (person type 2 only)
         myDegreeAverageAuthorOnly2 <<- calcAuthorMeanDegree( dataFrameIN = myDataDF, includeBothIN = FALSE )
-        message( paste( "average author degree (only 2) = ", myDegreeAverageAuthorOnly2, sep = "" ) )
+
+        if ( myDebugFlag == TRUE ){
+            message( paste( "average author degree (only 2) = ", myDegreeAverageAuthorOnly2, sep = "" ) )
+        }
 
         # average source degree (person types 3 and 4)
         myDegreeAverageSource3And4 <<- calcSourceMeanDegree( dataFrameIN = myDataDF, includeBothIN = TRUE )
-        message( paste( "average source degree (3 and 4) = ", myDegreeAverageSource3And4, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "average source degree (3 and 4) = ", myDegreeAverageSource3And4, sep = "" ) )
+        }
 
         # average source degree (person type 3 only)
         myDegreeAverageSourceOnly3 <<- calcSourceMeanDegree( dataFrameIN = myDataDF, includeBothIN = FALSE )
-        message( paste( "average source degree (only 3) = ", myDegreeAverageSourceOnly3, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "average source degree (only 3) = ", myDegreeAverageSourceOnly3, sep = "" ) )
+        }
 
         # what is the standard deviation of the degrees?
         myDegreeStandardDeviation <<- sd( myDegreeVector )
-        message( paste( "degree SD = ", myDegreeStandardDeviation, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "degree SD = ", myDegreeStandardDeviation, sep = "" ) )
+        }
 
         # what is the variance of the degrees?
         myDegreeVariance <<- var( myDegreeVector )
-        message( paste( "degree variance = ", myDegreeVariance, sep = "" ) )
+
+        if ( myDebugFlag == TRUE ){
+            message( paste( "degree variance = ", myDegreeVariance, sep = "" ) )
+        }
 
         # what is the max value among the degrees?
         myDegreeMax <<- max( myDegreeVector )
-        message( paste( "degree max = ", myDegreeMax, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "degree max = ", myDegreeMax, sep = "" ) )
+        }
 
         # calculate and plot degree distributions
         myDegreeFrequenciesTable <<- table( myDegreeVector )
@@ -105,23 +135,38 @@ NetworkInfo$methods(
 
         # graph-level degree centrality
         myDegreeCentrality <<- sna::centralization( myNetworkStatnet, sna::degree, mode = "graph" )
-        message( paste( "degree centrality = ", myDegreeCentrality, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "degree centrality = ", myDegreeCentrality, sep = "" ) )
+        }
 
         # graph-level betweenness centrality
         myBetweennessCentrality <<- sna::centralization( myNetworkStatnet, sna::betweenness, mode = "graph", cmode = "undirected" )
-        message( paste( "betweenness centrality = ", myBetweennessCentrality, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "betweenness centrality = ", myBetweennessCentrality, sep = "" ) )
+        }
 
         # graph-level connectedness
         myConnectedness <<- sna::connectedness( myNetworkStatnet )
-        message( paste( "connectedness = ", myConnectedness, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "connectedness = ", myConnectedness, sep = "" ) )
+        }
 
         # graph-level transitivity
         myTransitivity <<- sna::gtrans( myNetworkStatnet, mode = "graph" )
-        message( paste( "transitivity = ", myTransitivity, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "transitivity = ", myTransitivity, sep = "" ) )
+        }
 
         # graph-level density
         myDensity <<- sna::gden( myNetworkStatnet, mode = "graph" )
-        message( paste( "density = ", myDensity, sep = "" ) )
+        
+        if ( myDebugFlag == TRUE ){
+            message( paste( "density = ", myDensity, sep = "" ) )
+        }
 
     } #-- END method calculateNetworkLevelMetrics() --#
 )
@@ -229,3 +274,137 @@ NetworkInfo$methods(
 )
     
 message( paste( "ReferenceClass NetworkInfo defined @ ", date(), sep = "" ) )
+
+processBeforeAfterNetworks <- function(
+    beforeDataDirectoryIN,
+    beforeFileIN,
+    afterDataDirectoryIN,
+    afterFileIN,
+    dateIN,
+    networkDurationIN,
+    labelIN,
+    debugFlagIN = FALSE ) {
+
+    # Accepts path info for before and after network data. Loads and processes
+    #     each to create individual network information, then compares them
+    #     to create correlation and other information about how the pair of
+    #     networks compare, then packages all in a list with common column names
+    #     to be included in a data.frame of information about a series of
+    #     pairs of data.
+    
+    # return reference
+    listOUT <- list()
+    
+    # declare variables
+    beforeNetworkInfo <- NULL
+    beforeMatrix <- NULL
+    afterMatrix <- NULL
+    matrixComparison <- NULL
+    graphCorrelation <- matrixComparison$graphCorrelation
+    graphCorrelationQAPResult <- matrixComparison$qapGcorResult
+    graphCovariance <- matrixComparison$graphCovariance
+    graphCovarianceQAPResult <- matrixComparison$qapGcovResult
+    graphHammingDistance <- matrixComparison$graphHammingDist
+    graphHammingDistanceQAPResult <- matrixComparison$qapHdistResult
+    
+    # store the date, network duration, and label
+    listOUT$baseDate <- dateIN
+    listOUT$networkDuration <- networkDurationIN
+    listOUT$label <- labelIN
+    
+    #--------------------------------------------------------------------------#
+    # load and process before network.
+    beforeNetworkInfo <- NetworkInfo( debugFlagIN = debugFlagIN )
+    beforeNetworkInfo$initFromTabData(
+        beforeDataDirectoryIN,
+        beforeFileIN
+    )
+    beforeNetworkInfo$processNetwork()
+    
+    # TODO - add before information to the list
+    listOUT$beforeBetweennessCentrality = beforeNetworkInfo$myBetweennessCentrality
+    listOUT$beforeConnectedness = beforeNetworkInfo$myConnectedness
+    listOUT$beforeColumnCount = beforeNetworkInfo$myColumnCount
+    listOUT$beforeDataFileName = beforeNetworkInfo$myDataFileName
+    listOUT$beforeDataPath = beforeNetworkInfo$myDataPath
+    listOUT$beforeDegreeAverage = beforeNetworkInfo$myDegreeAverage
+    listOUT$beforeDegreeAverageAuthor2And4 = beforeNetworkInfo$myDegreeAverageAuthor2And4
+    listOUT$beforeDegreeAverageAuthorOnly2 = beforeNetworkInfo$myDegreeAverageAuthorOnly2
+    listOUT$beforeDegreeAverageSource3And4 = beforeNetworkInfo$myDegreeAverageSource3And4
+    listOUT$beforeDegreeAverageSourceOnly3 = beforeNetworkInfo$myDegreeAverageSourceOnly3
+    listOUT$beforeDegreeCentrality = beforeNetworkInfo$myDegreeCentrality
+    listOUT$beforeDegreeMax = beforeNetworkInfo$myDegreeMax
+    listOUT$beforeDegreeVariance = beforeNetworkInfo$myDegreeVariance
+    listOUT$beforeDegreeStandardDeviation = beforeNetworkInfo$myDegreeStandardDeviation
+    listOUT$beforeDensity = beforeNetworkInfo$myDensity
+    listOUT$beforeRowCount = beforeNetworkInfo$myRowCount
+    listOUT$beforeTransitivity = beforeNetworkInfo$myTransitivity
+    
+    #--------------------------------------------------------------------------#
+    # process after network
+    afterNetworkInfo <- NetworkInfo( debugFlagIN = debugFlagIN )
+    afterNetworkInfo$initFromTabData(
+        afterDataDirectoryIN,
+        afterFileIN
+    )
+    afterNetworkInfo$processNetwork()
+    
+    # TODO - add after information to the list
+    listOUT$afterBetweennessCentrality = afterNetworkInfo$myBetweennessCentrality
+    listOUT$afterConnectedness = afterNetworkInfo$myConnectedness
+    listOUT$afterColumnCount = afterNetworkInfo$myColumnCount
+    listOUT$afterDataFileName = afterNetworkInfo$myDataFileName
+    listOUT$afterDataPath = afterNetworkInfo$myDataPath
+    listOUT$afterDegreeAverage = afterNetworkInfo$myDegreeAverage
+    listOUT$afterDegreeAverageAuthor2And4 = afterNetworkInfo$myDegreeAverageAuthor2And4
+    listOUT$afterDegreeAverageAuthorOnly2 = afterNetworkInfo$myDegreeAverageAuthorOnly2
+    listOUT$afterDegreeAverageSource3And4 = afterNetworkInfo$myDegreeAverageSource3And4
+    listOUT$afterDegreeAverageSourceOnly3 = afterNetworkInfo$myDegreeAverageSourceOnly3
+    listOUT$afterDegreeCentrality = afterNetworkInfo$myDegreeCentrality
+    listOUT$afterDegreeMax = afterNetworkInfo$myDegreeMax
+    listOUT$afterDegreeVariance = afterNetworkInfo$myDegreeVariance
+    listOUT$afterDegreeStandardDeviation = afterNetworkInfo$myDegreeStandardDeviation
+    listOUT$afterDensity = afterNetworkInfo$myDensity
+    listOUT$afterRowCount = afterNetworkInfo$myRowCount
+    listOUT$afterTransitivity = afterNetworkInfo$myTransitivity
+    
+    #--------------------------------------------------------------------------#
+    # get matrices from each and compare.
+    beforeMatrix = beforeNetworkInfo$myNetworkMatrix
+    afterMatrix = afterNetworkInfo$myNetworkMatrix
+
+    # call compare method
+    matrixComparison <- compareMatricesQAP(
+        beforeMatrix,
+        afterMatrix,
+        outputPrefixIN = labelIN,
+        outputPlotsIN = FALSE,
+        debugFlagIN = debugFlagIN,
+        repsIN = 10,
+        doQapIN = FALSE )
+
+    # retrieve and store individual values.
+    graphCorrelation <- matrixComparison$graphCorrelation
+    graphCorrelationQAPResult <- matrixComparison$qapGcorResult
+    graphCovariance <- matrixComparison$graphCovariance
+    graphCovarianceQAPResult <- matrixComparison$qapGcovResult
+    graphHammingDistance <- matrixComparison$graphHammingDist
+    graphHammingDistanceQAPResult <- matrixComparison$qapHdistResult
+    
+    # add them to list.
+    listOUT$graphCorrelation <- graphCorrelation
+    listOUT$graphCovariance <- graphCovariance
+    listOUT$graphHammingDistance <- graphHammingDistance
+
+    # cleanup
+    rm( beforeNetworkInfo )
+    rm( afterNetworkInfo )
+    rm( matrixComparison )
+    gc()
+
+    # return list
+    return( listOUT )
+    
+} #-- END function processBeforeAfterNetworks() --#
+
+message( paste( "Function processBeforeAfterNetworks defined @ ", date(), sep = "" ) )
