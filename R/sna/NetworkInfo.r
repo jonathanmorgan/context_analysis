@@ -46,6 +46,10 @@ NetworkInfo <- setRefClass(
     fields = networkInfo_fields
 )
 
+#==============================================================================#
+# instance methods
+#==============================================================================#
+
 NetworkInfo$methods(
     calculateDegreeAverages = function() {
 
@@ -177,7 +181,7 @@ NetworkInfo$methods(
         # initialize variables
         myDataFolder <- dataDirPathIN
         myDataFileName <<- fileNameIN
-        myDataPath <<- paste( myDataFolder, "/", myDataFile, sep = "" )
+        myDataPath <<- paste( myDataFolder, "/", myDataFileName, sep = "" )
 
         # tab-delimited:
         myDataDF <<- read.delim( myDataPath, header = TRUE, row.names = 1, check.names = FALSE )
