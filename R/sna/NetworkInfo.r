@@ -293,7 +293,18 @@ NetworkInfo$methods(
         }
 
         # author and source counts
+        myAuthorCount2And4 <<- calcMyAuthorCount( includeBothIN = TRUE )
+        myAuthorCountOnly2 <<- calcMyAuthorCount( includeBothIN = FALSE )
+        mySourceCount3And4 <<- calcMySourceCount( includeBothIN = TRUE )
+        mySourceCountOnly3 <<- calcMySourceCount( includeBothIN = FALSE )
 
+        if ( myDebugFlag == TRUE ){
+            message( paste( "AuthorCount2And4 = ", myAuthorCount2And4, sep = "" ) )
+            message( paste( "AuthorCountOnly2 = ", myAuthorCountOnly2, sep = "" ) )
+            message( paste( "SourceCount3And4 = ", mySourceCount3And4, sep = "" ) )
+            message( paste( "SourceCountOnly3 = ", mySourceCountOnly3, sep = "" ) )
+        }
+    
     } #-- END method calculateNetworkLevelMetrics() --#
 )
 
@@ -513,7 +524,9 @@ processBeforeAfterNetworks <- function(
     )
     beforeNetworkInfo$processNetwork()
     
-    # TODO - add before information to the list
+    # add before information to the list
+    listOUT$beforeAuthorCount2And4 = beforeNetworkInfo$myAuthorCount2And4
+    listOUT$beforeAuthorCountOnly2 = beforeNetworkInfo$myAuthorCountOnly2
     listOUT$beforeBetweennessCentrality = beforeNetworkInfo$myBetweennessCentrality
     listOUT$beforeConnectedness = beforeNetworkInfo$myConnectedness
     listOUT$beforeColumnCount = beforeNetworkInfo$myColumnCount
@@ -530,6 +543,8 @@ processBeforeAfterNetworks <- function(
     listOUT$beforeDegreeStandardDeviation = beforeNetworkInfo$myDegreeStandardDeviation
     listOUT$beforeDensity = beforeNetworkInfo$myDensity
     listOUT$beforeRowCount = beforeNetworkInfo$myRowCount
+    listOUT$beforeSourceCount3And4 = beforeNetworkInfo$mySourceCount3And4
+    listOUT$beforeSourceCountOnly3 = beforeNetworkInfo$mySourceCountOnly3
     listOUT$beforeTransitivity = beforeNetworkInfo$myTransitivity
     
     #--------------------------------------------------------------------------#
@@ -541,7 +556,9 @@ processBeforeAfterNetworks <- function(
     )
     afterNetworkInfo$processNetwork()
     
-    # TODO - add after information to the list
+    # add after information to the list
+    listOUT$afterAuthorCount2And4 = afterNetworkInfo$myAuthorCount2And4
+    listOUT$afterAuthorCountOnly2 = afterNetworkInfo$myAuthorCountOnly2
     listOUT$afterBetweennessCentrality = afterNetworkInfo$myBetweennessCentrality
     listOUT$afterConnectedness = afterNetworkInfo$myConnectedness
     listOUT$afterColumnCount = afterNetworkInfo$myColumnCount
@@ -558,6 +575,8 @@ processBeforeAfterNetworks <- function(
     listOUT$afterDegreeStandardDeviation = afterNetworkInfo$myDegreeStandardDeviation
     listOUT$afterDensity = afterNetworkInfo$myDensity
     listOUT$afterRowCount = afterNetworkInfo$myRowCount
+    listOUT$afterSourceCount3And4 = afterNetworkInfo$mySourceCount3And4
+    listOUT$afterSourceCountOnly3 = afterNetworkInfo$mySourceCountOnly3
     listOUT$afterTransitivity = afterNetworkInfo$myTransitivity
     
     #--------------------------------------------------------------------------#
