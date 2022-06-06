@@ -354,7 +354,7 @@ NetworkInfo$methods(
 
 
 NetworkInfo$methods(
-    getMyAuthorDF <- function( includeBothIN = TRUE ) {
+    getMyAuthorDF = function( includeBothIN = TRUE ) {
 
         # Function getMyAuthorDF()
         #
@@ -385,7 +385,7 @@ NetworkInfo$methods(
 
 
 NetworkInfo$methods(
-    getMySourceDF <- function( includeBothIN = TRUE ) {
+    getMySourceDF = function( includeBothIN = TRUE ) {
 
         # Function getMySourceDF()
         #
