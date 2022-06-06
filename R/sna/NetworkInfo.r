@@ -511,7 +511,7 @@ processBeforeAfterNetworks <- function(
     graphHammingDistanceQAPResult <- matrixComparison$qapHdistResult
     
     # store the date, network duration, and label
-    listOUT$baseDate <- dateIN
+    listOUT$baseDate <- as.Date( dateIN )
     listOUT$networkDuration <- networkDurationIN
     listOUT$label <- labelIN
     
