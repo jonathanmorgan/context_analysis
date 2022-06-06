@@ -14,6 +14,8 @@ library( statnet )
 #==============================================================================#
 
 networkInfo_fields <- list(
+    myAuthorCount2And4 = "numeric",
+    myAuthorCountOnly2 = "numeric",
     myBetweennessCentrality = "numeric",
     myConnectedness = "numeric",
     myBetweennessVector = "vector",
@@ -39,6 +41,8 @@ networkInfo_fields <- list(
     myNetworkMatrix = "matrix",
     myNetworkStatnet = "ANY",
     myRowCount = "integer",
+    mySourceCount3And4 = "numeric",
+    mySourceCountOnly3 = "numeric",
     myTransitivity = "numeric"
 )
 
@@ -55,6 +59,125 @@ NetworkInfo <- setRefClass(
 #==============================================================================#
 # instance methods
 #==============================================================================#
+
+
+NetworkInfo$methods(
+    calcMyAuthorCount <- function( includeBothIN = TRUE ) {
+
+        # Function calcMyAuthorCount()
+        #
+        # Filters data frame to just authors using myDataDF$person_type (2 or 4),
+        #    then counts rows and returns that count.
+        #
+        # preconditions: data frame passed in must have $person_type column.
+
+        # return reference
+        valueOUT <- -1
+
+        # declare variables
+        authorDF <- NULL
+
+        # filter data frame
+        authorDF <- getMyAuthorDF( includeBothIN = includeBothIN )
+
+        # calculate mean of $degree column.
+        valueOUT <- nrow( authorDF )
+
+        # return value
+        return( valueOUT )
+    
+    } #-- END function calcMyAuthorCount() --#
+)
+
+
+NetworkInfo$methods(
+    calcMyAuthorMeanDegree <- function( includeBothIN = TRUE ) {
+
+        # Function calcMyAuthorMeanDegree()
+        #
+        # Filters data frame to just authors using dataFrameIN$person_type (2 or 4),
+        #    then calculates and returns the mean of the column dataFrameIN$degree.
+        #
+        # preconditions: data frame passed in must have $person_type and $degree
+        #    columns.
+
+        # return reference
+        valueOUT <- -1
+
+        # declare variables
+        authorDF <- NULL
+
+        # filter data frame
+        authorDF <- getMyAuthorDF( includeBothIN = includeBothIN )
+
+        # calculate mean of $degree column.
+        valueOUT <- mean( authorDF$degree )
+
+        # return value
+        return( valueOUT )
+
+    } #-- END function calcMyAuthorMeanDegree() --#
+)
+
+
+NetworkInfo$methods(
+    calcMySourceCount <- function( includeBothIN = TRUE ) {
+
+        # Function calcMySourceCount()
+        #
+        # Filters data frame to just sources using dataFrameIN$person_type (3 or 4),
+        #    then calculates and returns count of rows.
+        #
+        # preconditions: data frame passed in must have $person_type column.
+
+        # return reference
+        valueOUT <- -1
+
+        # declare variables
+        sourceDF <- NULL
+
+        # filter data frame
+        sourceDF <- getMySourceDF( includeBothIN = includeBothIN )
+
+        # calculate mean of $degree column.
+        valueOUT <- nrow( sourceDF )
+
+        # return value
+        return( valueOUT )
+
+    } #-- END function calcMySourceCount() --#
+)
+
+
+NetworkInfo$methods(
+    calcMySourceMeanDegree <- function( includeBothIN = TRUE ) {
+
+        # Function calcMySourceMeanDegree()
+        #
+        # Filters data frame to just sources using dataFrameIN$person_type (3 or 4),
+        #    then calculates and returns the mean of the column dataFrameIN$degree.
+        #
+        # preconditions: data frame passed in must have $person_type and $degree
+        #    columns.
+
+        # return reference
+        valueOUT <- -1
+
+        # declare variables
+        sourceDF <- NULL
+
+        # filter data frame
+        sourceDF <- getMySourceDF( includeBothIN = includeBothIN )
+
+        # calculate mean of $degree column.
+        valueOUT <- mean( sourceDF$degree )
+
+        # return value
+        return( valueOUT )
+
+    } #-- END function calcMySourceMeanDegree() --#
+)
+
 
 NetworkInfo$methods(
     calculateDegreeAverages = function() {
@@ -126,6 +249,7 @@ NetworkInfo$methods(
     } #-- END method calculateDegreeAverages() --#
 )
 
+
 NetworkInfo$methods(
     calculateNetworkLevelMetrics = function() {
 
@@ -168,8 +292,11 @@ NetworkInfo$methods(
             message( paste( "density = ", myDensity, sep = "" ) )
         }
 
+        # author and source counts
+
     } #-- END method calculateNetworkLevelMetrics() --#
 )
+
 
 NetworkInfo$methods(
     createBetweennessVector = function() {
@@ -188,6 +315,7 @@ NetworkInfo$methods(
     } #-- END method createBetweennessVector() --#
 )
     
+
 NetworkInfo$methods(
     createDegreeVector = function() {
 
@@ -212,6 +340,69 @@ NetworkInfo$methods(
         
     } #-- END method createDegreeVector() --#
 )
+
+
+NetworkInfo$methods(
+    getMyAuthorDF <- function( includeBothIN = TRUE ) {
+
+        # Function getMyAuthorDF()
+        #
+        # Filters data frame to just authors using dataFrameIN$person_type (2 or 4),
+        #     returns resulting data.frame.
+        #
+        # preconditions: data frame passed in must have $person_type column.
+
+        # return reference
+        authorDFOUT <- NULL
+
+        # filter data frame
+        authorDFOUT <- myDataDF[ myDataDF$person_type == 2 | myDataDF$person_type == 4, ]
+
+        # include both?
+        if ( includeBothIN == FALSE ){
+
+            # don't include both - just person_type = 2.
+            authorDFOUT <- authorDFOUT[ authorDFOUT$person_type == 2, ]
+
+        }
+
+        # return value
+        return( authorDFOUT )
+
+    } #-- END function getMyAuthorDF() --#
+)
+
+
+NetworkInfo$methods(
+    getMySourceDF <- function( includeBothIN = TRUE ) {
+
+        # Function getMySourceDF()
+        #
+        # Filters data frame to just sources using dataFrameIN$person_type (3 or 4),
+        #     returns resulting data.frame.
+        #
+        # preconditions: data frame passed in must have $person_type column.
+
+        # return reference
+        sourceDFOUT <- NULL
+
+        # filter data frame
+        sourceDFOUT <- myDataDF[ myDataDF$person_type == 3 | myDataDF$person_type == 4, ]
+
+        # include both?
+        if ( includeBothIN == FALSE ){
+
+            # don't include both - just person_type = 3.
+            sourceDFOUT <- sourceDFOUT[ sourceDFOUT$person_type == 3, ]
+
+        }
+
+        # return value
+        return( sourceDFOUT )
+
+    } #-- END method getMySourceDF() --#
+)
+
 
 NetworkInfo$methods(
     initFromTabData = function( dataDirPathIN, fileNameIN ) {
@@ -258,6 +449,7 @@ NetworkInfo$methods(
 
     } #-- END method initFromTabData() --#
 )
+
 
 NetworkInfo$methods(
     processNetwork = function() {
