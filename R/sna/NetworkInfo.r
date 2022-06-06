@@ -62,7 +62,7 @@ NetworkInfo <- setRefClass(
 
 
 NetworkInfo$methods(
-    calcMyAuthorCount <- function( includeBothIN = TRUE ) {
+    calcMyAuthorCount = function( includeBothIN = TRUE ) {
 
         # Function calcMyAuthorCount()
         #
@@ -91,7 +91,7 @@ NetworkInfo$methods(
 
 
 NetworkInfo$methods(
-    calcMyAuthorMeanDegree <- function( includeBothIN = TRUE ) {
+    calcMyAuthorMeanDegree = function( includeBothIN = TRUE ) {
 
         # Function calcMyAuthorMeanDegree()
         #
@@ -121,7 +121,7 @@ NetworkInfo$methods(
 
 
 NetworkInfo$methods(
-    calcMySourceCount <- function( includeBothIN = TRUE ) {
+    calcMySourceCount = function( includeBothIN = TRUE ) {
 
         # Function calcMySourceCount()
         #
@@ -150,7 +150,7 @@ NetworkInfo$methods(
 
 
 NetworkInfo$methods(
-    calcMySourceMeanDegree <- function( includeBothIN = TRUE ) {
+    calcMySourceMeanDegree = function( includeBothIN = TRUE ) {
 
         # Function calcMySourceMeanDegree()
         #
