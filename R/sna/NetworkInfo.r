@@ -195,28 +195,28 @@ NetworkInfo$methods(
         #testAboveMeanVector <- testDegreeVector[ testDegreeVector > testAvgDegree ]
 
         # average author degree (person types 2 and 4)
-        myDegreeAverageAuthor2And4 <<- calcAuthorMeanDegree( dataFrameIN = myDataDF, includeBothIN = TRUE )
+        myDegreeAverageAuthor2And4 <<- calcMyAuthorMeanDegree( includeBothIN = TRUE )
 
         if ( myDebugFlag == TRUE ){
             message( paste( "average author degree (2 and 4) = ", myDegreeAverageAuthor2And4, sep = "" ) )
         }
 
         # average author degree (person type 2 only)
-        myDegreeAverageAuthorOnly2 <<- calcAuthorMeanDegree( dataFrameIN = myDataDF, includeBothIN = FALSE )
+        myDegreeAverageAuthorOnly2 <<- calcMyAuthorMeanDegree( includeBothIN = FALSE )
 
         if ( myDebugFlag == TRUE ){
             message( paste( "average author degree (only 2) = ", myDegreeAverageAuthorOnly2, sep = "" ) )
         }
 
         # average source degree (person types 3 and 4)
-        myDegreeAverageSource3And4 <<- calcSourceMeanDegree( dataFrameIN = myDataDF, includeBothIN = TRUE )
+        myDegreeAverageSource3And4 <<- calcMySourceMeanDegree( includeBothIN = TRUE )
         
         if ( myDebugFlag == TRUE ){
             message( paste( "average source degree (3 and 4) = ", myDegreeAverageSource3And4, sep = "" ) )
         }
 
         # average source degree (person type 3 only)
-        myDegreeAverageSourceOnly3 <<- calcSourceMeanDegree( dataFrameIN = myDataDF, includeBothIN = FALSE )
+        myDegreeAverageSourceOnly3 <<- calcMySourceMeanDegree( includeBothIN = FALSE )
         
         if ( myDebugFlag == TRUE ){
             message( paste( "average source degree (only 3) = ", myDegreeAverageSourceOnly3, sep = "" ) )
