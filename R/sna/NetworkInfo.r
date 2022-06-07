@@ -794,4 +794,4 @@ beforeAfterBinaryNetworks <- function(
     
 } #-- END function beforeAfterBinaryNetworks() --#
 
-message( paste( "Function processBeforeAfterNetworks defined @ ", date(), sep = "" ) )
+message( paste( "Function beforeAfterBinaryNetworks defined @ ", date(), sep = "" ) )
