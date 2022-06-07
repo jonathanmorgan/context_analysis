@@ -82,13 +82,17 @@ compareMatricesQAP <- function(
     
     message( paste( "==> Start of ", me, " at ", Sys.time(), sep = " " ) )
 
-    # package up data for calling qaptest() - first make 3-dimensional array to hold
-    #    our two matrices - this is known as a "graph set".
-    graphSetArray <- array( dim = c( 2, ncol( matrix1IN ), nrow( matrix1IN ) ) )
-    
-    # then, place each matrix in one dimension of the array.
-    graphSetArray[ 1, , ] <- matrix1IN
-    graphSetArray[ 2, , ] <- matrix2IN
+    if ( doQapIN == TRUE ){
+        
+        # package up data for calling qaptest() - first make 3-dimensional array to hold
+        #    our two matrices - this is known as a "graph set".
+        graphSetArray <- array( dim = c( 2, ncol( matrix1IN ), nrow( matrix1IN ) ) )
+        
+        # then, place each matrix in one dimension of the array.
+        graphSetArray[ 1, , ] <- matrix1IN
+        graphSetArray[ 2, , ] <- matrix2IN
+        
+    }
     
     # debug, and asked to include data in output?
     if ( ( debugFlag == TRUE ) && ( debugIncludeDataInOutputIN == TRUE ) ){
