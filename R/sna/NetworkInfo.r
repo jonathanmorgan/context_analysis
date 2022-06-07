@@ -564,27 +564,27 @@ processBeforeAfterNetworks <- function(
     beforeNetworkInfo$processNetwork()
     
     # add before information to the list
-    listOUT$beforeAuthorCount2And4 = beforeNetworkInfo$myAuthorCount2And4
-    listOUT$beforeAuthorCountOnly2 = beforeNetworkInfo$myAuthorCountOnly2
-    listOUT$beforeBetweennessCentrality = beforeNetworkInfo$myBetweennessCentrality
-    listOUT$beforeConnectedness = beforeNetworkInfo$myConnectedness
-    listOUT$beforeColumnCount = beforeNetworkInfo$myColumnCount
-    listOUT$beforeDataFileName = beforeNetworkInfo$myDataFileName
-    listOUT$beforeDataPath = beforeNetworkInfo$myDataPath
-    listOUT$beforeDegreeAverage = beforeNetworkInfo$myDegreeAverage
-    listOUT$beforeDegreeAverageAuthor2And4 = beforeNetworkInfo$myDegreeAverageAuthor2And4
-    listOUT$beforeDegreeAverageAuthorOnly2 = beforeNetworkInfo$myDegreeAverageAuthorOnly2
-    listOUT$beforeDegreeAverageSource3And4 = beforeNetworkInfo$myDegreeAverageSource3And4
-    listOUT$beforeDegreeAverageSourceOnly3 = beforeNetworkInfo$myDegreeAverageSourceOnly3
-    listOUT$beforeDegreeCentrality = beforeNetworkInfo$myDegreeCentrality
-    listOUT$beforeDegreeMax = beforeNetworkInfo$myDegreeMax
-    listOUT$beforeDegreeVariance = beforeNetworkInfo$myDegreeVariance
-    listOUT$beforeDegreeStandardDeviation = beforeNetworkInfo$myDegreeStandardDeviation
-    listOUT$beforeDensity = beforeNetworkInfo$myDensity
-    listOUT$beforeRowCount = beforeNetworkInfo$myRowCount
-    listOUT$beforeSourceCount3And4 = beforeNetworkInfo$mySourceCount3And4
-    listOUT$beforeSourceCountOnly3 = beforeNetworkInfo$mySourceCountOnly3
-    listOUT$beforeTransitivity = beforeNetworkInfo$myTransitivity
+    listOUT$beforeAuthorCount2And4 <- beforeNetworkInfo$myAuthorCount2And4
+    listOUT$beforeAuthorCountOnly2 <- beforeNetworkInfo$myAuthorCountOnly2
+    listOUT$beforeBetweennessCentrality <- beforeNetworkInfo$myBetweennessCentrality
+    listOUT$beforeConnectedness <- beforeNetworkInfo$myConnectedness
+    listOUT$beforeColumnCount <- beforeNetworkInfo$myColumnCount
+    listOUT$beforeDataFileName <- beforeNetworkInfo$myDataFileName
+    listOUT$beforeDataPath <- beforeNetworkInfo$myDataPath
+    listOUT$beforeDegreeAverage <- beforeNetworkInfo$myDegreeAverage
+    listOUT$beforeDegreeAverageAuthor2And4 <- beforeNetworkInfo$myDegreeAverageAuthor2And4
+    listOUT$beforeDegreeAverageAuthorOnly2 <- beforeNetworkInfo$myDegreeAverageAuthorOnly2
+    listOUT$beforeDegreeAverageSource3And4 <- beforeNetworkInfo$myDegreeAverageSource3And4
+    listOUT$beforeDegreeAverageSourceOnly3 <- beforeNetworkInfo$myDegreeAverageSourceOnly3
+    listOUT$beforeDegreeCentrality <- beforeNetworkInfo$myDegreeCentrality
+    listOUT$beforeDegreeMax <- beforeNetworkInfo$myDegreeMax
+    listOUT$beforeDegreeVariance <- beforeNetworkInfo$myDegreeVariance
+    listOUT$beforeDegreeStandardDeviation <- beforeNetworkInfo$myDegreeStandardDeviation
+    listOUT$beforeDensity <- beforeNetworkInfo$myDensity
+    listOUT$beforeRowCount <- beforeNetworkInfo$myRowCount
+    listOUT$beforeSourceCount3And4 <- beforeNetworkInfo$mySourceCount3And4
+    listOUT$beforeSourceCountOnly3 <- beforeNetworkInfo$mySourceCountOnly3
+    listOUT$beforeTransitivity <- beforeNetworkInfo$myTransitivity
     
     #--------------------------------------------------------------------------#
     # process after network
@@ -596,32 +596,32 @@ processBeforeAfterNetworks <- function(
     afterNetworkInfo$processNetwork()
     
     # add after information to the list
-    listOUT$afterAuthorCount2And4 = afterNetworkInfo$myAuthorCount2And4
-    listOUT$afterAuthorCountOnly2 = afterNetworkInfo$myAuthorCountOnly2
-    listOUT$afterBetweennessCentrality = afterNetworkInfo$myBetweennessCentrality
-    listOUT$afterConnectedness = afterNetworkInfo$myConnectedness
-    listOUT$afterColumnCount = afterNetworkInfo$myColumnCount
-    listOUT$afterDataFileName = afterNetworkInfo$myDataFileName
-    listOUT$afterDataPath = afterNetworkInfo$myDataPath
-    listOUT$afterDegreeAverage = afterNetworkInfo$myDegreeAverage
-    listOUT$afterDegreeAverageAuthor2And4 = afterNetworkInfo$myDegreeAverageAuthor2And4
-    listOUT$afterDegreeAverageAuthorOnly2 = afterNetworkInfo$myDegreeAverageAuthorOnly2
-    listOUT$afterDegreeAverageSource3And4 = afterNetworkInfo$myDegreeAverageSource3And4
-    listOUT$afterDegreeAverageSourceOnly3 = afterNetworkInfo$myDegreeAverageSourceOnly3
-    listOUT$afterDegreeCentrality = afterNetworkInfo$myDegreeCentrality
-    listOUT$afterDegreeMax = afterNetworkInfo$myDegreeMax
-    listOUT$afterDegreeVariance = afterNetworkInfo$myDegreeVariance
-    listOUT$afterDegreeStandardDeviation = afterNetworkInfo$myDegreeStandardDeviation
-    listOUT$afterDensity = afterNetworkInfo$myDensity
-    listOUT$afterRowCount = afterNetworkInfo$myRowCount
-    listOUT$afterSourceCount3And4 = afterNetworkInfo$mySourceCount3And4
-    listOUT$afterSourceCountOnly3 = afterNetworkInfo$mySourceCountOnly3
-    listOUT$afterTransitivity = afterNetworkInfo$myTransitivity
+    listOUT$afterAuthorCount2And4 <- afterNetworkInfo$myAuthorCount2And4
+    listOUT$afterAuthorCountOnly2 <- afterNetworkInfo$myAuthorCountOnly2
+    listOUT$afterBetweennessCentrality <- afterNetworkInfo$myBetweennessCentrality
+    listOUT$afterConnectedness <- afterNetworkInfo$myConnectedness
+    listOUT$afterColumnCount <- afterNetworkInfo$myColumnCount
+    listOUT$afterDataFileName <- afterNetworkInfo$myDataFileName
+    listOUT$afterDataPath <- afterNetworkInfo$myDataPath
+    listOUT$afterDegreeAverage <- afterNetworkInfo$myDegreeAverage
+    listOUT$afterDegreeAverageAuthor2And4 <- afterNetworkInfo$myDegreeAverageAuthor2And4
+    listOUT$afterDegreeAverageAuthorOnly2 <- afterNetworkInfo$myDegreeAverageAuthorOnly2
+    listOUT$afterDegreeAverageSource3And4 <- afterNetworkInfo$myDegreeAverageSource3And4
+    listOUT$afterDegreeAverageSourceOnly3 <- afterNetworkInfo$myDegreeAverageSourceOnly3
+    listOUT$afterDegreeCentrality <- afterNetworkInfo$myDegreeCentrality
+    listOUT$afterDegreeMax <- afterNetworkInfo$myDegreeMax
+    listOUT$afterDegreeVariance <- afterNetworkInfo$myDegreeVariance
+    listOUT$afterDegreeStandardDeviation <- afterNetworkInfo$myDegreeStandardDeviation
+    listOUT$afterDensity <- afterNetworkInfo$myDensity
+    listOUT$afterRowCount <- afterNetworkInfo$myRowCount
+    listOUT$afterSourceCount3And4 <- afterNetworkInfo$mySourceCount3And4
+    listOUT$afterSourceCountOnly3 <- afterNetworkInfo$mySourceCountOnly3
+    listOUT$afterTransitivity <- afterNetworkInfo$myTransitivity
     
     #--------------------------------------------------------------------------#
     # get matrices from each and compare.
-    beforeMatrix = beforeNetworkInfo$myNetworkMatrix
-    afterMatrix = afterNetworkInfo$myNetworkMatrix
+    beforeMatrix <- beforeNetworkInfo$myNetworkMatrix
+    afterMatrix <- afterNetworkInfo$myNetworkMatrix
 
     # call compare method
     matrixComparison <- compareMatricesQAP(
@@ -736,10 +736,10 @@ beforeAfterBinaryNetworks <- function(
     )
 
     # add before information to the list
-    listOUT$beforeColumnCount = beforeNetworkInfo$myColumnCount
-    listOUT$beforeDataFileName = beforeNetworkInfo$myDataFileName
-    listOUT$beforeDataPath = beforeNetworkInfo$myDataPath
-    listOUT$beforeRowCount = beforeNetworkInfo$myRowCount
+    listOUT$beforeColumnCount <- beforeNetworkInfo$myColumnCount
+    listOUT$beforeDataFileName <- beforeNetworkInfo$myDataFileName
+    listOUT$beforeDataPath <- beforeNetworkInfo$myDataPath
+    listOUT$beforeRowCount <- beforeNetworkInfo$myRowCount
 
     #--------------------------------------------------------------------------#
     # process after network
@@ -750,15 +750,15 @@ beforeAfterBinaryNetworks <- function(
     )
 
     # add after information to the list
-    listOUT$afterColumnCount = afterNetworkInfo$myColumnCount
-    listOUT$afterDataFileName = afterNetworkInfo$myDataFileName
-    listOUT$afterDataPath = afterNetworkInfo$myDataPath
-    listOUT$afterRowCount = afterNetworkInfo$myRowCount
+    listOUT$afterColumnCount <- afterNetworkInfo$myColumnCount
+    listOUT$afterDataFileName <- afterNetworkInfo$myDataFileName
+    listOUT$afterDataPath <- afterNetworkInfo$myDataPath
+    listOUT$afterRowCount <- afterNetworkInfo$myRowCount
 
     #--------------------------------------------------------------------------#
     # get binary matrices from each and compare.
-    beforeBinMatrix = beforeNetworkInfo$getBinaryNetworkMatrix
-    afterBinMatrix = afterNetworkInfo$getBinaryNetworkMatrix
+    beforeBinMatrix <- beforeNetworkInfo$getBinaryNetworkMatrix
+    afterBinMatrix <- afterNetworkInfo$getBinaryNetworkMatrix
     
     # call compare method
     binMatrixComparison <- compareMatricesQAP(
