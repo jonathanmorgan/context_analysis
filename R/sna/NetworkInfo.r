@@ -370,10 +370,10 @@ NetworkInfo$methods(
         matrixOUT <- myNetworkMatrix
 
         # assign 1 for all values greater than 0
-        #matrixOUT[ matrixOUT > 0 ] <- 1
+        matrixOUT[ matrixOUT > 0 ] <- 1
         
         # OR
-        matrixOUT <- ifelse( matrixOUT > 0, 1, 0 )
+        #matrixOUT <- ifelse( matrixOUT > 0, 1, 0 )
         
         # make sure it is a matrix...?
         #matrixOUT <- as.matrix( matrixOUT )
@@ -651,8 +651,8 @@ processBeforeAfterNetworks <- function(
 
     #--------------------------------------------------------------------------#
     # get binary matrices from each and compare.
-    beforeBinMatrix = beforeNetworkInfo$getBinaryNetworkMatrix
-    afterBinMatrix = afterNetworkInfo$getBinaryNetworkMatrix
+    beforeBinMatrix = beforeNetworkInfo$getBinaryNetworkMatrix()
+    afterBinMatrix = afterNetworkInfo$getBinaryNetworkMatrix()
     
     # call compare method
     binMatrixComparison <- compareMatricesQAP(
@@ -760,8 +760,8 @@ beforeAfterBinaryNetworks <- function(
 
     #--------------------------------------------------------------------------#
     # get binary matrices from each and compare.
-    beforeBinMatrix <- beforeNetworkInfo$getBinaryNetworkMatrix
-    afterBinMatrix <- afterNetworkInfo$getBinaryNetworkMatrix
+    beforeBinMatrix <- beforeNetworkInfo$getBinaryNetworkMatrix()
+    afterBinMatrix <- afterNetworkInfo$getBinaryNetworkMatrix()
     
     # call compare method
     binMatrixComparison <- compareMatricesQAP(
