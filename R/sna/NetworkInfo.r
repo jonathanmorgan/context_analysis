@@ -370,13 +370,13 @@ NetworkInfo$methods(
         matrixOUT <- myNetworkMatrix
 
         # assign 1 for all values greater than 0
-        matrixOUT[ matrixOUT > 0 ] <- 1
+        #matrixOUT[ matrixOUT > 0 ] <- 1
         
         # OR
-        # matrixOUT <- ifelse( matrixOUT > 0, 1, matrixOUT )
+        matrixOUT <- ifelse( matrixOUT > 0, 1, 0 )
         
         # make sure it is a matrix...?
-        matrixOUT <- as.matrix( matrixOUT )
+        #matrixOUT <- as.matrix( matrixOUT )
 
         # return value
         return( matrixOUT )
