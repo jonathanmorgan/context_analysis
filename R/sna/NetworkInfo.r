@@ -374,6 +374,9 @@ NetworkInfo$methods(
         
         # OR
         # matrixOUT <- ifelse( matrixOUT > 0, 1, matrixOUT )
+        
+        # make sure it is a matrix...?
+        matrixOUT <- as.matrix( matrixOUT )
 
         # return value
         return( matrixOUT )
