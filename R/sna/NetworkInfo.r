@@ -354,6 +354,35 @@ NetworkInfo$methods(
 
 
 NetworkInfo$methods(
+    getBinaryNetworkMatrix = function() {
+        
+        # Function getBinaryNetworkMatrix()
+        #
+        # Filters data frame to just authors using dataFrameIN$person_type (2 or 4),
+        #     returns resulting data.frame.
+        #
+        # preconditions: data frame passed in must have $person_type column.
+        
+        # return reference
+        matrixOUT <- NULL
+        
+        # start with matrix.
+        matrixOUT <- myNetworkMatrix
+
+        # assign 1 for all values greater than 0
+        matrixOUT[ matrixOUT > 0 ] <- 1
+        
+        # OR
+        # matrixOUT <- ifelse( matrixOUT > 0, 1, matrixOUT )
+
+        # return value
+        return( matrixOUT )
+        
+    } #-- END function getBinaryNetworkMatrix() --#
+)
+
+
+NetworkInfo$methods(
     getMyAuthorDF = function( includeBothIN = TRUE ) {
 
         # Function getMyAuthorDF()
@@ -501,14 +530,24 @@ processBeforeAfterNetworks <- function(
     # declare variables
     beforeNetworkInfo <- NULL
     beforeMatrix <- NULL
+    afterNetworkInfo <- NULL
     afterMatrix <- NULL
     matrixComparison <- NULL
-    graphCorrelation <- matrixComparison$graphCorrelation
-    graphCorrelationQAPResult <- matrixComparison$qapGcorResult
-    graphCovariance <- matrixComparison$graphCovariance
-    graphCovarianceQAPResult <- matrixComparison$qapGcovResult
-    graphHammingDistance <- matrixComparison$graphHammingDist
-    graphHammingDistanceQAPResult <- matrixComparison$qapHdistResult
+    graphCorrelation <- NULL
+    graphCorrelationQAPResult <- NULL
+    graphCovariance <- NULL
+    graphCovarianceQAPResult <- NULL
+    graphHammingDistance <- NULL
+    graphHammingDistanceQAPResult <- NULL
+    beforeBinMatrix <- NULL
+    afterBinMatrix <- NULL
+    binMatrixComparison <- NULL
+    binGraphCorrelation <- NULL
+    binGraphCorrelationQAPResult <- NULL
+    binGraphCovariance <- NULL
+    binGraphCovarianceQAPResult <- NULL
+    binGraphHammingDistance <- NULL
+    binGraphHammingDistanceQAPResult <- NULL
     
     # store the date, network duration, and label
     listOUT$baseDate <- as.Date( dateIN )
@@ -607,10 +646,39 @@ processBeforeAfterNetworks <- function(
     listOUT$graphCovariance <- graphCovariance
     listOUT$graphHammingDistance <- graphHammingDistance
 
+    #--------------------------------------------------------------------------#
+    # get binary matrices from each and compare.
+    beforeBinMatrix = beforeNetworkInfo$getBinaryNetworkMatrix
+    afterBinMatrix = afterNetworkInfo$getBinaryNetworkMatrix
+    
+    # call compare method
+    binMatrixComparison <- compareMatricesQAP(
+        beforeBinMatrix,
+        afterBinMatrix,
+        outputPrefixIN = labelIN,
+        outputPlotsIN = FALSE,
+        debugFlagIN = debugFlagIN,
+        repsIN = 10,
+        doQapIN = FALSE )
+    
+    # retrieve and store individual values.
+    binGraphCorrelation <- binMatrixComparison$graphCorrelation
+    binGraphCorrelationQAPResult <- binMatrixComparison$qapGcorResult
+    binGraphCovariance <- binMatrixComparison$graphCovariance
+    binGraphCovarianceQAPResult <- binMatrixComparison$qapGcovResult
+    binGraphHammingDistance <- binMatrixComparison$graphHammingDist
+    binGraphHammingDistanceQAPResult <- binMatrixComparison$qapHdistResult
+    
+    # add them to list.
+    listOUT$binGraphCorrelation <- binGraphCorrelation
+    listOUT$binGraphCovariance <- binGraphCovariance
+    listOUT$binGraphHammingDistance <- binGraphHammingDistance
+
     # cleanup
     rm( beforeNetworkInfo )
     rm( afterNetworkInfo )
     rm( matrixComparison )
+    rm( binMatrixComparison )
     gc()
 
     # return list
