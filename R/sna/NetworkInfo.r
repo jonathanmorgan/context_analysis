@@ -6,6 +6,7 @@
 # imports
 #==============================================================================#
 
+library( irr )
 library( sna )
 library( statnet )
 
@@ -17,9 +18,10 @@ networkInfo_fields <- list(
     myAuthorCount2And4 = "numeric",
     myAuthorCountOnly2 = "numeric",
     myBetweennessCentrality = "numeric",
-    myConnectedness = "numeric",
     myBetweennessVector = "vector",
+    myBinaryDegreeVector = "vector",
     myColumnCount = "integer",
+    myConnectedness = "numeric",
     myDataDF = "data.frame",
     myDataFileName = "character",
     myDataPath = "character",
@@ -182,7 +184,7 @@ NetworkInfo$methods(
 NetworkInfo$methods(
     calculateDegreeAverages = function() {
 
-        'preconditions: must have already called "createDegreeVector()".'
+        'preconditions: must have already called "createDegreeVectors()".'
         
         # what is the average (mean) degree?
         myDegreeAverage <<- mean( myDegreeVector )
@@ -328,7 +330,10 @@ NetworkInfo$methods(
     
 
 NetworkInfo$methods(
-    createDegreeVector = function() {
+    createDegreeVectors = function() {
+      
+        # declare variables
+        workDegreeVector <- NULL
 
         # assuming that our statnet network object is in reference myNetworkStatnet
 
@@ -342,6 +347,12 @@ NetworkInfo$methods(
         #    can also call this with package name:
         myDegreeVector <<- sna::degree( myNetworkStatnet, gmode = "graph" )
         
+        # also, convert the degree vector to binary, where degree >= 1 becomes
+        #     degree of 1.
+        workDegreeVector <- myDegreeVector
+        workDegreeVector[ workDegreeVector > 1 ] <- 1
+        myBinaryDegreeVector <<- workDegreeVector
+        
         # Take the degree and associate it with each node as a node attribute.
         #    (%v% is a shortcut for the get.vertex.attribute command)
         myNetworkStatnet %v% "degree" <<- myDegreeVector
@@ -349,7 +360,7 @@ NetworkInfo$methods(
         # also add degree vector to original data frame
         myDataDF$degree <<- myDegreeVector
         
-    } #-- END method createDegreeVector() --#
+    } #-- END method createDegreeVectors() --#
 )
 
 
@@ -500,7 +511,7 @@ NetworkInfo$methods(
         'Call all of the create*() and calculate*() methods.
          - preconditions: assumes you have already called initFromTabData().'
         
-        createDegreeVector()
+        createDegreeVectors()
         createBetweennessVector()
         calculateDegreeAverages()
         calculateNetworkLevelMetrics()
@@ -532,8 +543,22 @@ processBeforeAfterNetworks <- function(
     
     # declare variables
     beforeNetworkInfo <- NULL
-    beforeMatrix <- NULL
     afterNetworkInfo <- NULL
+    
+    # declare variables - degree vector correlations
+    workMatrix <- NULL
+    agreeOutput <- NULL
+    beforeDegreeVector <- NULL
+    afterDegreeVector <- NULL
+    degreeCorrelation <- NULL
+    degreePercentAgree <- NULL
+    beforeBinaryDegreeVector <- NULL
+    afterBinaryDegreeVector <- NULL
+    binaryDegreeCorrelation <- NULL
+    binaryDegreePercentAgree <- NULL
+    
+    # declare variables - network comparisons
+    beforeMatrix <- NULL
     afterMatrix <- NULL
     matrixComparison <- NULL
     graphCorrelation <- NULL
@@ -622,6 +647,39 @@ processBeforeAfterNetworks <- function(
     listOUT$afterTransitivity <- afterNetworkInfo$myTransitivity
     
     #--------------------------------------------------------------------------#
+    # correlate before and after degree and binary degree vectors
+
+    # degree vector correlation
+    beforeDegreeVector <- beforeNetworkInfo$myDegreeVector
+    afterDegreeVector <- afterNetworkInfo$myDegreeVector
+    degreeCorrelation <- cor( beforeDegreeVector, afterDegreeVector )
+    
+    # degree vector percent agreement
+    # - for irr::agree(), each column is a set of values that you want to
+    #     compare (so, create matrix using cbind to combine lists as columns).
+    workMatrix <- cbind( beforeDegreeVector, afterDegreeVector )
+    agreeOutput <- irr::agree( workMatrix )
+    degreePercentAgree <- agreeOutput$value
+
+    # binary degree vector correlation
+    beforeBinaryDegreeVector <- beforeNetworkInfo$myBinaryDegreeVector
+    afterBinaryDegreeVector <- afterNetworkInfo$myBinaryDegreeVector
+    binaryDegreeCorrelation <- cor( beforeBinaryDegreeVector, afterBinaryDegreeVector )
+    
+    # binary degree vector percent agreement
+    # - for irr::agree(), each column is a set of values that you want to
+    #     compare (so, create matrix using cbind to combine lists as columns).
+    workMatrix <- cbind( beforeBinaryDegreeVector, afterBinaryDegreeVector )
+    agreeOutput <- irr::agree( workMatrix )
+    binaryDegreePercentAgree <- agreeOutput$value
+    
+    # add them to list.
+    listOUT$degreeCorrelation <- degreeCorrelation
+    listOUT$degreePercentAgree <- degreePercentAgree
+    listOUT$binaryDegreeCorrelation <- binaryDegreeCorrelation
+    listOUT$binaryDegreePercentAgree <- binaryDegreePercentAgree
+    
+    #--------------------------------------------------------------------------#
     # get matrices from each and compare.
     beforeMatrix <- beforeNetworkInfo$myNetworkMatrix
     afterMatrix <- afterNetworkInfo$myNetworkMatrix
@@ -677,12 +735,25 @@ processBeforeAfterNetworks <- function(
     listOUT$binGraphCovariance <- binGraphCovariance
     listOUT$binGraphHammingDistance <- binGraphHammingDistance
 
-    # cleanup
-    rm( beforeNetworkInfo )
-    rm( afterNetworkInfo )
-    rm( matrixComparison )
-    rm( binMatrixComparison )
-    gc()
+    # debug?
+    if ( debugFlagIN == TRUE ){
+        
+        # DEBUG - push the before and after NetworkInfo instances up into
+        #     parent environment.
+        #myTimeStamp <- format( Sys.time(), format = "%Y-%m-%d_%H-%M-%S" )
+        debugLatestBeforeNetInfo <<- beforeNetworkInfo
+        debugLatestAfterNetInfo <<- afterNetworkInfo
+        
+    } else {
+        
+        # not DEBUG - cleanup
+        rm( beforeNetworkInfo )
+        rm( afterNetworkInfo )
+        rm( matrixComparison )
+        rm( binMatrixComparison )
+        gc()
+    
+    }
 
     # return list
     return( listOUT )
@@ -708,6 +779,9 @@ beforeAfterBinaryNetworks <- function(
     #     networks compare, then packages all in a list with common column names
     #     to be included in a data.frame of information about a series of
     #     pairs of data.
+    # NOTE: this only needs to be called if you just want binary network
+    #     analysis - this binary network analysis is also included in
+    #     processBeforeAfterNetworks().
     
     # return reference
     listOUT <- list()
